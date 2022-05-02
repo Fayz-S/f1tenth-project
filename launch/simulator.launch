@@ -1,7 +1,12 @@
 <?xml version="1.0"?>
 <launch>
+  <!-- https://wiki.ros.org/roslaunch/XML/node -->
+  <!-- https://wiki.ros.org/roslaunch/XML/rosparam -->
+  <!-- https://wiki.ros.org/roslaunch/XML#substitution_args -->
+  <!-- https://answers.ros.org/question/37916/when-to-use-param-and-rosparam-on-launch-file/ -->
   <!-- Listen to messages from joysicks -->
   <node pkg="joy" name="joy_node" type="joy_node"/>
+  <arg name="parameters_file" default="params.yaml"/>
 
   <!-- Launch a map from the maps folder-->
   <arg name="map" default="$(find f1tenth_simulator)/maps/levine.yaml"/>
@@ -12,27 +17,27 @@
 
   <!-- Begin the simulator with the parameters from params.yaml -->
   <node pkg="f1tenth_simulator" name="f1tenth_simulator" type="simulator" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the mux node with the parameters from params.yaml -->
   <node pkg="f1tenth_simulator" name="mux_controller" type="mux" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the behavior controller node with the parameters from params.yaml -->
   <node pkg="f1tenth_simulator" name="behavior_controller" type="behavior_controller" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the Random Walker Node -->
   <node pkg="f1tenth_simulator" name="random_walker" type="random_walk" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the Keyboard Node -->
   <node pkg="f1tenth_simulator" name="keyboard" type="keyboard" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
   <!-- ***Put launch command for new planner here:-->

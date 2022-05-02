@@ -8,6 +8,8 @@
   <param name="robot_description" command="xacro --inorder '$(arg racecar_xacro)'"/>
   <!-- Add the transformations -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-  </group>
 
+    <!-- Add the transformations -->
+
+  </group>
 </launch>

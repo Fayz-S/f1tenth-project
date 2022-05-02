@@ -406,7 +406,7 @@ public:
 
 
             // Publish a transformation between base link and laser
-            pub_laser_link_transform(timestamp);
+            pub_lasfer_link_transform(timestamp);
 
         }
 
