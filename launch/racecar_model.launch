@@ -1,15 +1,31 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- group for racecar -->
-  <group ns="racecar">
-  <!-- Open the model file -->
-  <arg name="racecar_xacro" default="$(find f1tenth_simulator)/racecar.xacro"/>
-  <!--<param name="tf_prefix" value="racecar"/>-->
-  <param name="robot_description" command="xacro --inorder '$(arg racecar_xacro)'"/>
-  <!-- Add the transformations -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <!-- group for racecars -->
+  <!-- due to two cars are independent from each other, so we need namespace for them, this provides two different robot model in Rviz -->
 
-    <!-- Add the transformations -->
-
+  <group ns="racecar_blue">
+    <!-- Open the model file -->
+    <arg name="racecar_xacro_blue" default="racecar_blue.xacro"/>
+    <!-- However, we still need to distinct their tf, so that they are not share same tf -->
+    <!-- One way to distinct two car's tf is add blue/ to all link and joint manually in xacro file -->
+    <!--<param name="tf_prefix" value="blue"/>-->
+    <!-- remember also need to add racecar_blue/ on Robot Description: line in simulator.rviz config file, if not, an error will occur which said robot_description not found -->
+    <!-- https://answers.ros.org/question/337079/param-robot_description-not-found-by-searchparam/ -->
+    <param name="robot_description" command="xacro --inorder '$(find f1tenth_simulator)/$(arg racecar_xacro_blue)'"/>
+    <!-- Add the robot state publisher, which needed for broadcast frames -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
   </group>
+
+  <group ns="racecar_red">
+
+    <arg name="racecar_xacro_red" default="racecar_red.xacro"/>
+    <!-- Another way to distinct two car's tf is add tf prefix, so that doesn't need add red/ in xacro file manually -->
+    <param name="tf_prefix" value="red"></param>
+
+    <param name="robot_description" command="xacro --inorder '$(find f1tenth_simulator)/$(arg racecar_xacro_red)'"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  </group>
+  <!-- Launch RVIZ -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find f1tenth_simulator)/launch/simulator.rviz" output="screen"/>
 </launch>

@@ -304,7 +304,6 @@ public:
     }
 
     void update_pose(const ros::TimerEvent&) {
-
         // simulate P controller
         compute_accel(desired_speed);
         double actual_ang = 0.0;
@@ -406,7 +405,7 @@ public:
 
 
             // Publish a transformation between base link and laser
-            pub_lasfer_link_transform(timestamp);
+            pub_laser_link_transform(timestamp);
 
         }
 
@@ -632,11 +631,14 @@ public:
             ps.pose.orientation.z = quat.z();
             ps.pose.orientation.w = quat.w();
 
+//            ROS_INFO_STREAM(state.x);
+//            ROS_INFO_STREAM(state.y);
+
             // Add a header to the transformation
             geometry_msgs::TransformStamped ts;
             ts.transform = t;
             ts.header.stamp = timestamp;
-            ts.header.frame_id = map_frame;
+            ts.header.frame_id = "/map";
             ts.child_frame_id = base_frame;
 
             // Publish them
@@ -659,11 +661,11 @@ public:
             ts_wheel.transform.rotation.z = quat_wheel.z();
             ts_wheel.transform.rotation.w = quat_wheel.w();
             ts_wheel.header.stamp = timestamp;
-            ts_wheel.header.frame_id = "front_left_hinge";
-            ts_wheel.child_frame_id = "front_left_wheel";
+            ts_wheel.header.frame_id = "blue/front_left_hinge";
+            ts_wheel.child_frame_id = "blue/front_left_wheel";
             br.sendTransform(ts_wheel);
-            ts_wheel.header.frame_id = "front_right_hinge";
-            ts_wheel.child_frame_id = "front_right_wheel";
+            ts_wheel.header.frame_id = "blue/front_right_hinge";
+            ts_wheel.child_frame_id = "blue/front_right_wheel";
             br.sendTransform(ts_wheel);
         }
 
