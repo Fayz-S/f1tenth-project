@@ -39,7 +39,7 @@ private:
     ros::NodeHandle n;
 
     // The transformation frames used
-    std::string map_frame, base_frame, scan_frame;
+    std::string map_frame, base_frame_blue, scan_frame_blue, base_frame_red, scan_frame_red;
 
     // obstacle states (1D index) and parameters
     std::vector<int> added_obs;
@@ -50,15 +50,17 @@ private:
     // interactive markers' server
     interactive_markers::InteractiveMarkerServer im_server;
 
-    // The car state and parameters
-    CarState state;
+    // The car state_blue and parameters
+    CarState state_blue;
+    CarState state_red;
     double previous_seconds;
     double scan_distance_to_base_link;
     double max_speed, max_steering_angle;
     double max_accel, max_steering_vel, max_decel;
-    double desired_speed, desired_steer_ang;
-    double accel, steer_angle_vel;
-    CarParams params;
+    double desired_speed_blue, desired_steer_ang_blue, desired_speed_red, desired_steer_ang_red;
+    double accel_blue, steer_angle_vel_blue, accel_red, steer_angle_vel_red;
+    CarParams params_blue;
+    CarParams params_red;
     double width;
 
     // A simulator of the laser
@@ -69,17 +71,20 @@ private:
     tf2_ros::TransformBroadcaster br;
 
     // A timer to update the pose
-    ros::Timer update_pose_timer;
+    ros::Timer update_pose_timer_blue;
+    ros::Timer update_pose_timer_red;
 
     // Listen for drive commands
-    ros::Subscriber drive_sub;
+    ros::Subscriber drive_sub_blue;
+    ros::Subscriber drive_sub_red;
 
     // Listen for a map
     ros::Subscriber map_sub;
     bool map_exists = false;
 
     // Listen for updates to the pose
-    ros::Subscriber pose_sub;
+    ros::Subscriber pose_sub_blue;
+    ros::Subscriber pose_sub_red;
     ros::Subscriber pose_rviz_sub;
 
     // Publish a scan, odometry, and imu data
@@ -133,38 +138,51 @@ public:
         // Initialize the node handle
         n = ros::NodeHandle("~");
 
-        // Initialize car state and driving commands
-        state = {.x=0, .y=0, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
-        accel = 0.0;
-        steer_angle_vel = 0.0;
-        desired_speed = 0.0;
-        desired_steer_ang = 0.0;
+        // Initialize car state_blue and driving commands
+        state_blue = {.x=0, .y=0, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        accel_blue = 0.0;
+        steer_angle_vel_blue = 0.0;
+        desired_speed_blue = 0.0;
+        desired_steer_ang_blue = 0.0;
+        
         previous_seconds = ros::Time::now().toSec();
 
+        state_red = {.x=0, .y=0, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        accel_red = 0.0;
+        steer_angle_vel_red = 0.0;
+        desired_speed_red = 0.0;
+        desired_steer_ang_red = 0.0;
+        
+
         // Get the topic names
-        std::string drive_topic, map_topic, scan_topic, pose_topic, gt_pose_topic, 
+        std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic, pose_topic_blue, pose_topic_red, gt_pose_topic,
         pose_rviz_topic, odom_topic, imu_topic;
-        n.getParam("drive_topic", drive_topic);
+        n.getParam("drive_topic_blue", drive_topic_blue);
+        n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
         n.getParam("scan_topic", scan_topic);
-        n.getParam("pose_topic", pose_topic);
+        n.getParam("pose_topic_blue", pose_topic_blue);
+        n.getParam("pose_topic_red", pose_topic_red);
         n.getParam("odom_topic", odom_topic);
         n.getParam("pose_rviz_topic", pose_rviz_topic);
         n.getParam("imu_topic", imu_topic);
         n.getParam("ground_truth_pose_topic", gt_pose_topic);
 
-        // Get steering delay params
+        // Get steering delay params_blue
         n.getParam("buffer_length", buffer_length);
 
         // Get the transformation frame names
         n.getParam("map_frame", map_frame);
-        n.getParam("base_frame", base_frame);
-        n.getParam("scan_frame", scan_frame);
+        n.getParam("base_frame_blue", base_frame_blue);
+        n.getParam("scan_frame_blue", scan_frame_blue);
+        n.getParam("base_frame_red", base_frame_red);
+        n.getParam("scan_frame_red", scan_frame_red);
 
         // Fetch the car parameters
         int scan_beams;
         double update_pose_rate, scan_std_dev;
-        n.getParam("wheelbase", params.wheelbase);
+        n.getParam("wheelbase", params_blue.wheelbase);
+        n.getParam("wheelbase", params_red.wheelbase);
         n.getParam("update_pose_rate", update_pose_rate);
         n.getParam("scan_beams", scan_beams);
         n.getParam("scan_field_of_view", scan_fov);
@@ -176,15 +194,23 @@ public:
         n.getParam("max_accel", max_accel);
         n.getParam("max_decel", max_decel);
         n.getParam("max_steering_vel", max_steering_vel);
-        n.getParam("friction_coeff", params.friction_coeff);
-        n.getParam("height_cg", params.h_cg);
-        n.getParam("l_cg2rear", params.l_r);
-        n.getParam("l_cg2front", params.l_f);
-        n.getParam("C_S_front", params.cs_f);
-        n.getParam("C_S_rear", params.cs_r);
-        n.getParam("moment_inertia", params.I_z);
-        n.getParam("mass", params.mass);
+        n.getParam("friction_coeff", params_blue.friction_coeff);
+        n.getParam("height_cg", params_blue.h_cg);
+        n.getParam("l_cg2rear", params_blue.l_r);
+        n.getParam("l_cg2front", params_blue.l_f);
+        n.getParam("C_S_front", params_blue.cs_f);
+        n.getParam("C_S_rear", params_blue.cs_r);
+        n.getParam("moment_inertia", params_blue.I_z);
+        n.getParam("mass", params_blue.mass);
         n.getParam("width", width);
+        n.getParam("friction_coeff", params_red.friction_coeff);
+        n.getParam("height_cg", params_red.h_cg);
+        n.getParam("l_cg2rear", params_red.l_r);
+        n.getParam("l_cg2front", params_red.l_f);
+        n.getParam("C_S_front", params_red.cs_f);
+        n.getParam("C_S_rear", params_red.cs_r);
+        n.getParam("moment_inertia", params_red.I_z);
+        n.getParam("mass", params_red.mass);
 
         // clip velocity
         n.getParam("speed_clip_diff", speed_clip_diff);
@@ -218,16 +244,19 @@ public:
         pose_pub = n.advertise<geometry_msgs::PoseStamped>(gt_pose_topic, 1);
 
         // Start a timer to output the pose
-        update_pose_timer = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose, this);
+        update_pose_timer_blue = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_blue, this);
+        update_pose_timer_red = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_red, this);
 
         // Start a subscriber to listen to drive commands
-        drive_sub = n.subscribe(drive_topic, 1, &RacecarSimulator::drive_callback, this);
+        drive_sub_blue = n.subscribe(drive_topic_blue, 1, &RacecarSimulator::drive_callback_blue, this);
+        drive_sub_red = n.subscribe(drive_topic_red, 1, &RacecarSimulator::drive_callback_red, this);
 
         // Start a subscriber to listen to new maps
         map_sub = n.subscribe(map_topic, 1, &RacecarSimulator::map_callback, this);
 
         // Start a subscriber to listen to pose messages
-        pose_sub = n.subscribe(pose_topic, 1, &RacecarSimulator::pose_callback, this);
+        pose_sub_blue = n.subscribe(pose_topic_blue, 1, &RacecarSimulator::pose_callback_blue, this);
+        pose_sub_red = n.subscribe(pose_topic_red, 1, &RacecarSimulator::pose_callback_red, this);
         pose_rviz_sub = n.subscribe(pose_rviz_topic, 1, &RacecarSimulator::pose_rviz_callback, this);
 
         // obstacle subscriber
@@ -240,7 +269,7 @@ public:
         scan_ang_incr = scan_simulator.get_angle_increment();
 
         cosines = Precompute::get_cosines(scan_beams, -scan_fov/2.0, scan_ang_incr);
-        car_distances = Precompute::get_car_distances(scan_beams, params.wheelbase, width, 
+        car_distances = Precompute::get_car_distances(scan_beams, params_blue.wheelbase, width, 
                 scan_distance_to_base_link, -scan_fov/2.0, scan_ang_incr);
 
 
@@ -303,42 +332,43 @@ public:
         ROS_INFO("Simulator constructed.");
     }
 
-    void update_pose(const ros::TimerEvent&) {
+    void update_pose_blue(const ros::TimerEvent&) {
         // simulate P controller
-        compute_accel(desired_speed);
-        double actual_ang = 0.0;
+        compute_accel_blue(desired_speed_blue);
+        double actual_ang_blue = 0.0;
         if (steering_buffer.size() < buffer_length) {
-            steering_buffer.push_back(desired_steer_ang);
-            actual_ang = 0.0;
+            steering_buffer.push_back(desired_steer_ang_blue);
+            actual_ang_blue = 0.0;
         } else {
-            steering_buffer.insert(steering_buffer.begin(), desired_steer_ang);
-            actual_ang = steering_buffer.back();
+            steering_buffer.insert(steering_buffer.begin(), desired_steer_ang_blue);
+            actual_ang_blue = steering_buffer.back();
             steering_buffer.pop_back();
         }
-        set_steer_angle_vel(compute_steer_vel(actual_ang));
+        set_steer_angle_vel_blue(compute_steer_vel_blue(actual_ang_blue));
 
         // Update the pose
         ros::Time timestamp = ros::Time::now();
         double current_seconds = timestamp.toSec();
-        state = STKinematics::update(
-            state,
-            accel,
-            steer_angle_vel,
-            params,
+        state_blue = STKinematics::update(
+            state_blue,
+            accel_blue,
+            steer_angle_vel_blue,
+            params_blue,
             current_seconds - previous_seconds);
-        state.velocity = std::min(std::max(state.velocity, -max_speed), max_speed);
-        state.steer_angle = std::min(std::max(state.steer_angle, -max_steering_angle), max_steering_angle);
+        state_blue.velocity = std::min(std::max(state_blue.velocity, -max_speed), max_speed);
+        state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -max_steering_angle), max_steering_angle);
+        
 
         previous_seconds = current_seconds;
 
         /// Publish the pose as a transformation
-        pub_pose_transform(timestamp);
+        pub_pose_transform_blue(timestamp);
 
         /// Publish the steering angle as a transformation so the wheels move
-        pub_steer_ang_transform(timestamp);
+        pub_steer_ang_transform_blue(timestamp);
 
         // Make an odom message as well and publish it
-        pub_odom(timestamp);
+        pub_odom_blue(timestamp);
 
         // TODO: make and publish IMU message
         pub_imu(timestamp);
@@ -350,9 +380,9 @@ public:
             // Get the pose of the lidar, given the pose of base link
             // (base link is the center of the rear axle)
             Pose2D scan_pose;
-            scan_pose.x = state.x + scan_distance_to_base_link * std::cos(state.theta);
-            scan_pose.y = state.y + scan_distance_to_base_link * std::sin(state.theta);
-            scan_pose.theta = state.theta;
+            scan_pose.x = state_blue.x + scan_distance_to_base_link * std::cos(state_blue.theta);
+            scan_pose.y = state_blue.y + scan_distance_to_base_link * std::sin(state_blue.theta);
+            scan_pose.theta = state_blue.theta;
 
             // Compute the scan from the lidar
             std::vector<double> scan = scan_simulator.scan(scan_pose);
@@ -365,17 +395,17 @@ public:
             // TTC Calculations are done here so the car can be halted in the simulator:
             // to reset TTC
             bool no_collision = true;
-            if (state.velocity != 0) {
+            if (state_blue.velocity != 0) {
                 for (size_t i = 0; i < scan_.size(); i++) {
                     // TTC calculations
 
                     // calculate projected velocity
-                    double proj_velocity = state.velocity * cosines[i];
+                    double proj_velocity = state_blue.velocity * cosines[i];
                     double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
                     // if it's small enough to count as a collision
                     if ((ttc < ttc_threshold) && (ttc >= 0.0)) { 
                         if (!TTC) {
-                            first_ttc_actions();
+                            first_ttc_actions_blue();
                         }
 
                         no_collision = false;
@@ -393,7 +423,7 @@ public:
             // Publish the laser message
             sensor_msgs::LaserScan scan_msg;
             scan_msg.header.stamp = timestamp;
-            scan_msg.header.frame_id = scan_frame;
+            scan_msg.header.frame_id = scan_frame_blue;
             scan_msg.angle_min = -scan_simulator.get_field_of_view()/2.;
             scan_msg.angle_max =  scan_simulator.get_field_of_view()/2.;
             scan_msg.angle_increment = scan_simulator.get_angle_increment();
@@ -411,6 +441,116 @@ public:
 
     } // end of update_pose
 
+    void update_pose_red(const ros::TimerEvent&) {
+        // simulate P controller
+        compute_accel_red(desired_speed_red);
+        double actual_ang_red = 0.0;
+        if (steering_buffer.size() < buffer_length) {
+            steering_buffer.push_back(desired_steer_ang_red);
+            actual_ang_red = 0.0;
+        } else {
+            steering_buffer.insert(steering_buffer.begin(), desired_steer_ang_red);
+            actual_ang_red = steering_buffer.back();
+            steering_buffer.pop_back();
+        }
+        set_steer_angle_vel_red(compute_steer_vel_red(actual_ang_red));
+
+        // Update the pose
+        ros::Time timestamp = ros::Time::now();
+        double current_seconds = timestamp.toSec();
+        state_red = STKinematics::update(
+                state_red,
+                accel_red,
+                steer_angle_vel_red,
+                params_red,
+                current_seconds - previous_seconds);
+        state_red.velocity = std::min(std::max(state_red.velocity, -max_speed), max_speed);
+        state_red.steer_angle = std::min(std::max(state_red.steer_angle, -max_steering_angle), max_steering_angle);
+
+        previous_seconds = current_seconds;
+
+        /// Publish the pose as a transformation
+        pub_pose_transform_red(timestamp);
+
+        /// Publish the steering angle as a transformation so the wheels move
+        pub_steer_ang_transform_red(timestamp);
+
+        // Make an odom message as well and publish it
+        pub_odom_red(timestamp);
+
+        // TODO: make and publish IMU message
+        pub_imu(timestamp);
+
+
+        /// KEEP in sim
+        // If we have a map, perform a scan
+        if (map_exists) {
+            // Get the pose of the lidar, given the pose of base link
+            // (base link is the center of the rear axle)
+            Pose2D scan_pose;
+            scan_pose.x = state_red.x + scan_distance_to_base_link * std::cos(state_red.theta);
+            scan_pose.y = state_red.y + scan_distance_to_base_link * std::sin(state_red.theta);
+            scan_pose.theta = state_red.theta;
+
+            // Compute the scan from the lidar
+            std::vector<double> scan = scan_simulator.scan(scan_pose);
+
+            // Convert to float
+            std::vector<float> scan_(scan.size());
+            for (size_t i = 0; i < scan.size(); i++)
+                scan_[i] = scan[i];
+
+            // TTC Calculations are done here so the car can be halted in the simulator:
+            // to reset TTC
+            bool no_collision = true;
+            if (state_red.velocity != 0) {
+                for (size_t i = 0; i < scan_.size(); i++) {
+                    // TTC calculations
+
+                    // calculate projected velocity
+                    double proj_velocity = state_red.velocity * cosines[i];
+                    double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
+                    // if it's small enough to count as a collision
+                    if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
+                        if (!TTC) {
+                            first_ttc_actions_red();
+                        }
+
+                        no_collision = false;
+                        TTC = true;
+
+                        ROS_INFO("Collision detected");
+                    }
+                }
+            }
+
+            // reset TTC
+            if (no_collision)
+                TTC = false;
+
+            // Publish the laser message
+            sensor_msgs::LaserScan scan_msg;
+            scan_msg.header.stamp = timestamp;
+            //
+            // red
+            //
+            scan_msg.header.frame_id = scan_frame_blue;
+            scan_msg.angle_min = -scan_simulator.get_field_of_view()/2.;
+            scan_msg.angle_max =  scan_simulator.get_field_of_view()/2.;
+            scan_msg.angle_increment = scan_simulator.get_angle_increment();
+            scan_msg.range_max = 100;
+            scan_msg.ranges = scan_;
+            scan_msg.intensities = scan_;
+
+            scan_pub.publish(scan_msg);
+
+
+            // Publish a transformation between base link and laser
+            pub_laser_link_transform(timestamp);
+
+        }
+
+    } // end of update_pose
 
         /// ---------------------- GENERAL HELPER FUNCTIONS ----------------------
 
@@ -435,24 +575,44 @@ public:
         return rc;
     }
 
-    void first_ttc_actions() {
+    void first_ttc_actions_blue() {
         // completely stop vehicle
-        state.velocity = 0.0;
-        state.angular_velocity = 0.0;
-        state.slip_angle = 0.0;
-        state.steer_angle = 0.0;
-        steer_angle_vel = 0.0;
-        accel = 0.0;
-        desired_speed = 0.0;
-        desired_steer_ang = 0.0;
+        state_blue.velocity = 0.0;
+        state_blue.angular_velocity = 0.0;
+        state_blue.slip_angle = 0.0;
+        state_blue.steer_angle = 0.0;
+        steer_angle_vel_blue = 0.0;
+        accel_blue = 0.0;
+        desired_speed_blue = 0.0;
+        desired_steer_ang_blue = 0.0;
     }
 
-    void set_accel(double accel_) {
-        accel = std::min(std::max(accel_, -max_accel), max_accel);
+    void first_ttc_actions_red() {
+        // completely stop vehicle
+        state_red.velocity = 0.0;
+        state_red.angular_velocity = 0.0;
+        state_red.slip_angle = 0.0;
+        state_red.steer_angle = 0.0;
+        steer_angle_vel_red = 0.0;
+        accel_red = 0.0;
+        desired_speed_red = 0.0;
+        desired_steer_ang_red = 0.0;
     }
 
-    void set_steer_angle_vel(double steer_angle_vel_) {
-        steer_angle_vel = std::min(std::max(steer_angle_vel_, -max_steering_vel), max_steering_vel);
+    void set_accel_blue(double accel_) {
+        accel_blue = std::min(std::max(accel_, -max_accel), max_accel);
+    }
+
+    void set_accel_red(double accel_) {
+        accel_red = std::min(std::max(accel_, -max_accel), max_accel);
+    }
+    
+    void set_steer_angle_vel_blue(double steer_angle_vel_) {
+        steer_angle_vel_blue = std::min(std::max(steer_angle_vel_, -max_steering_vel), max_steering_vel);
+    }
+
+    void set_steer_angle_vel_red(double steer_angle_vel_) {
+        steer_angle_vel_red = std::min(std::max(steer_angle_vel_, -max_steering_vel), max_steering_vel);
     }
 
     void add_obs(int ind) {
@@ -482,9 +642,9 @@ public:
         map_pub.publish(current_map);
     }
 
-    double compute_steer_vel(double desired_angle) {
+    double compute_steer_vel_blue(double desired_angle) {
         // get difference between current and desired
-        double dif = (desired_angle - state.steer_angle);
+        double dif = (desired_angle - state_blue.steer_angle);
 
         // calculate velocity
         double steer_vel;
@@ -497,34 +657,79 @@ public:
         return steer_vel;
     }
 
-    void compute_accel(double desired_velocity) {
+    double compute_steer_vel_red(double desired_angle) {
         // get difference between current and desired
-        double dif = (desired_velocity - state.velocity);
+        double dif = (desired_angle - state_red.steer_angle);
 
-        if (state.velocity > 0) {
+        // calculate velocity
+        double steer_vel;
+        if (std::abs(dif) > .0001)  // if the difference is not trivial
+            steer_vel = dif / std::abs(dif) * max_steering_vel;
+        else {
+            steer_vel = 0;
+        }
+
+        return steer_vel;
+    }
+
+    void compute_accel_blue(double desired_velocity) {
+        // get difference between current and desired
+        double dif = (desired_velocity - state_blue.velocity);
+
+        if (state_blue.velocity > 0) {
             if (dif > 0) {
                 // accelerate
                 double kp = 2.0 * max_accel / max_speed;
-                set_accel(kp * dif);
+                set_accel_blue(kp * dif);
             } else {
                 // brake
-                accel = -max_decel; 
+                accel_blue = -max_decel; 
             }    
-        } else if (state.velocity < 0) {
+        } else if (state_blue.velocity < 0) {
             if (dif > 0) {
                 // brake
-                accel = max_decel;
+                accel_blue = max_decel;
 
             } else {
                 // accelerate
                 double kp = 2.0 * max_accel / max_speed;
-                set_accel(kp * dif);
+                set_accel_blue(kp * dif);
             }   
         } else {
-	    // zero speed, accel either way
+	    // zero speed, accel_blue either way
 	    double kp = 2.0 * max_accel / max_speed;
-	    set_accel(kp * dif);
-	}
+	    set_accel_blue(kp * dif);
+	    }
+    }
+
+    void compute_accel_red(double desired_velocity) {
+        // get difference between current and desired
+        double dif = (desired_velocity - state_red.velocity);
+
+        if (state_red.velocity > 0) {
+            if (dif > 0) {
+                // accelerate
+                double kp = 2.0 * max_accel / max_speed;
+                set_accel_red(kp * dif);
+            } else {
+                // brake
+                accel_red = -max_decel;
+            }
+        } else if (state_red.velocity < 0) {
+            if (dif > 0) {
+                // brake
+                accel_red = max_decel;
+
+            } else {
+                // accelerate
+                double kp = 2.0 * max_accel / max_speed;
+                set_accel_red(kp * dif);
+            }
+        } else {
+            // zero speed, accel_red either way
+            double kp = 2.0 * max_accel / max_speed;
+            set_accel_red(kp * dif);
+        }
     }
 
         /// ---------------------- CALLBACK FUNCTIONS ----------------------
@@ -538,24 +743,38 @@ public:
         add_obs(ind);
     }
 
-    void pose_callback(const geometry_msgs::PoseStamped & msg) {
-        state.x = msg.pose.position.x;
-        state.y = msg.pose.position.y;
+    void pose_callback_blue(const geometry_msgs::PoseStamped & msg) {
+        state_blue.x = msg.pose.position.x;
+        state_blue.y = msg.pose.position.y;
         geometry_msgs::Quaternion q = msg.pose.orientation;
         tf2::Quaternion quat(q.x, q.y, q.z, q.w);
-        state.theta = tf2::impl::getYaw(quat);
+        state_blue.theta = tf2::impl::getYaw(quat);
+    }
+    
+    void pose_callback_red(const geometry_msgs::PoseStamped & msg) {
+        state_red.x = msg.pose.position.x;
+        state_red.y = msg.pose.position.y;
+        geometry_msgs::Quaternion q = msg.pose.orientation;
+        tf2::Quaternion quat(q.x, q.y, q.z, q.w);
+        state_red.theta = tf2::impl::getYaw(quat);
     }
 
     void pose_rviz_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & msg) {
         geometry_msgs::PoseStamped temp_pose;
         temp_pose.header = msg->header;
         temp_pose.pose = msg->pose.pose;
-        pose_callback(temp_pose);
+        pose_callback_blue(temp_pose);
+        pose_callback_red(temp_pose);
     }
 
-    void drive_callback(const ackermann_msgs::AckermannDriveStamped & msg) {
-        desired_speed = msg.drive.speed;
-        desired_steer_ang = msg.drive.steering_angle;
+    void drive_callback_blue(const ackermann_msgs::AckermannDriveStamped & msg) {
+        desired_speed_blue = msg.drive.speed;
+        desired_steer_ang_blue = msg.drive.steering_angle;
+    }
+
+    void drive_callback_red(const ackermann_msgs::AckermannDriveStamped & msg) {
+        desired_speed_red = msg.drive.speed;
+        desired_steer_ang_red = msg.drive.steering_angle;
     }
 
     // button callbacks
@@ -609,13 +828,13 @@ public:
 
         /// ---------------------- PUBLISHING HELPER FUNCTIONS ----------------------
 
-        void pub_pose_transform(ros::Time timestamp) {
+        void pub_pose_transform_blue(ros::Time timestamp) {
             // Convert the pose into a transformation
             geometry_msgs::Transform t;
-            t.translation.x = state.x;
-            t.translation.y = state.y;
+            t.translation.x = state_blue.x;
+            t.translation.y = state_blue.y;
             tf2::Quaternion quat;
-            quat.setEuler(0., 0., state.theta);
+            quat.setEuler(0., 0., state_blue.theta);
             t.rotation.x = quat.x();
             t.rotation.y = quat.y();
             t.rotation.z = quat.z();
@@ -624,22 +843,22 @@ public:
             // publish ground truth pose
             geometry_msgs::PoseStamped ps;
             ps.header.frame_id = "/map";
-            ps.pose.position.x = state.x;
-            ps.pose.position.y = state.y;
+            ps.pose.position.x = state_blue.x;
+            ps.pose.position.y = state_blue.y;
             ps.pose.orientation.x = quat.x();
             ps.pose.orientation.y = quat.y();
             ps.pose.orientation.z = quat.z();
             ps.pose.orientation.w = quat.w();
 
-//            ROS_INFO_STREAM(state.x);
-//            ROS_INFO_STREAM(state.y);
+//            ROS_INFO_STREAM(state_blue.x);
+//            ROS_INFO_STREAM(state_blue.y);
 
             // Add a header to the transformation
             geometry_msgs::TransformStamped ts;
             ts.transform = t;
             ts.header.stamp = timestamp;
             ts.header.frame_id = "/map";
-            ts.child_frame_id = base_frame;
+            ts.child_frame_id = base_frame_blue;
 
             // Publish them
             if (broadcast_transform) {
@@ -650,11 +869,52 @@ public:
             }
         }
 
-        void pub_steer_ang_transform(ros::Time timestamp) {
+        void pub_pose_transform_red(ros::Time timestamp) {
+            // Convert the pose into a transformation
+            geometry_msgs::Transform t;
+            t.translation.x = state_red.x;
+            t.translation.y = state_red.y;
+            tf2::Quaternion quat;
+            quat.setEuler(0., 0., state_red.theta);
+            t.rotation.x = quat.x();
+            t.rotation.y = quat.y();
+            t.rotation.z = quat.z();
+            t.rotation.w = quat.w();
+    
+            // publish ground truth pose
+            geometry_msgs::PoseStamped ps;
+            ps.header.frame_id = "/map";
+            ps.pose.position.x = state_red.x;
+            ps.pose.position.y = state_red.y;
+            ps.pose.orientation.x = quat.x();
+            ps.pose.orientation.y = quat.y();
+            ps.pose.orientation.z = quat.z();
+            ps.pose.orientation.w = quat.w();
+    
+    //            ROS_INFO_STREAM(state_red.x);
+    //            ROS_INFO_STREAM(state_red.y);
+    
+            // Add a header to the transformation
+            geometry_msgs::TransformStamped ts;
+            ts.transform = t;
+            ts.header.stamp = timestamp;
+            ts.header.frame_id = "/map";
+            ts.child_frame_id = base_frame_red;
+    
+            // Publish them
+            if (broadcast_transform) {
+                br.sendTransform(ts);
+            }
+            if (pub_gt_pose) {
+                pose_pub.publish(ps);
+            }
+        }
+        
+        void pub_steer_ang_transform_blue(ros::Time timestamp) {
             // Set the steering angle to make the wheels move
             // Publish the steering angle
             tf2::Quaternion quat_wheel;
-            quat_wheel.setEuler(0., 0., state.steer_angle);
+            quat_wheel.setEuler(0., 0., state_blue.steer_angle);
             geometry_msgs::TransformStamped ts_wheel;
             ts_wheel.transform.rotation.x = quat_wheel.x();
             ts_wheel.transform.rotation.y = quat_wheel.y();
@@ -668,6 +928,25 @@ public:
             ts_wheel.child_frame_id = "blue/front_right_wheel";
             br.sendTransform(ts_wheel);
         }
+    
+        void pub_steer_ang_transform_red(ros::Time timestamp) {
+            // Set the steering angle to make the wheels move
+            // Publish the steering angle
+            tf2::Quaternion quat_wheel;
+            quat_wheel.setEuler(0., 0., state_red.steer_angle);
+            geometry_msgs::TransformStamped ts_wheel;
+            ts_wheel.transform.rotation.x = quat_wheel.x();
+            ts_wheel.transform.rotation.y = quat_wheel.y();
+            ts_wheel.transform.rotation.z = quat_wheel.z();
+            ts_wheel.transform.rotation.w = quat_wheel.w();
+            ts_wheel.header.stamp = timestamp;
+            ts_wheel.header.frame_id = "red/front_left_hinge";
+            ts_wheel.child_frame_id = "red/front_left_wheel";
+            br.sendTransform(ts_wheel);
+            ts_wheel.header.frame_id = "red/front_right_hinge";
+            ts_wheel.child_frame_id = "red/front_right_wheel";
+            br.sendTransform(ts_wheel);
+        }
 
         void pub_laser_link_transform(ros::Time timestamp) {
             // Publish a transformation between base link and laser
@@ -675,30 +954,49 @@ public:
             scan_ts.transform.translation.x = scan_distance_to_base_link;
             scan_ts.transform.rotation.w = 1;
             scan_ts.header.stamp = timestamp;
-            scan_ts.header.frame_id = base_frame;
-            scan_ts.child_frame_id = scan_frame;
+            scan_ts.header.frame_id = base_frame_blue;
+            scan_ts.child_frame_id = scan_frame_blue;
             br.sendTransform(scan_ts);
         }
 
-        void pub_odom(ros::Time timestamp) {
+        void pub_odom_blue(ros::Time timestamp) {
             // Make an odom message and publish it
             nav_msgs::Odometry odom;
             odom.header.stamp = timestamp;
             odom.header.frame_id = map_frame;
-            odom.child_frame_id = base_frame;
-            odom.pose.pose.position.x = state.x;
-            odom.pose.pose.position.y = state.y;
+            odom.child_frame_id = base_frame_blue;
+            odom.pose.pose.position.x = state_blue.x;
+            odom.pose.pose.position.y = state_blue.y;
             tf2::Quaternion quat;
-            quat.setEuler(0., 0., state.theta);
+            quat.setEuler(0., 0., state_blue.theta);
             odom.pose.pose.orientation.x = quat.x();
             odom.pose.pose.orientation.y = quat.y();
             odom.pose.pose.orientation.z = quat.z();
             odom.pose.pose.orientation.w = quat.w();
-            odom.twist.twist.linear.x = state.velocity;
-            odom.twist.twist.angular.z = state.angular_velocity;
+            odom.twist.twist.linear.x = state_blue.velocity;
+            odom.twist.twist.angular.z = state_blue.angular_velocity;
             odom_pub.publish(odom);
         }
 
+        void pub_odom_red(ros::Time timestamp) {
+            // Make an odom message and publish it
+            nav_msgs::Odometry odom;
+            odom.header.stamp = timestamp;
+            odom.header.frame_id = map_frame;
+            odom.child_frame_id = base_frame_red;
+            odom.pose.pose.position.x = state_red.x;
+            odom.pose.pose.position.y = state_red.y;
+            tf2::Quaternion quat;
+            quat.setEuler(0., 0., state_red.theta);
+            odom.pose.pose.orientation.x = quat.x();
+            odom.pose.pose.orientation.y = quat.y();
+            odom.pose.pose.orientation.z = quat.z();
+            odom.pose.pose.orientation.w = quat.w();
+            odom.twist.twist.linear.x = state_red.velocity;
+            odom.twist.twist.angular.z = state_red.angular_velocity;
+            odom_pub.publish(odom);
+        }
+    
         void pub_imu(ros::Time timestamp) {
             // Make an IMU message and publish it
             // TODO: make imu message

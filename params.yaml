@@ -73,8 +73,8 @@ nav_button_idx: 5 # RB button
 new_button_idx: -1
 
 # Keyboard characters for toggling mux
-joy_key_char: "j"
-keyboard_key_char: "k"
+joy_key_char: "y"
+keyboard_key_char: "t"
 brake_key_char: "b"
 random_walk_key_char: "r"
 nav_key_char: "n"
@@ -90,16 +90,18 @@ obstacle_size: 2
 
 # The names of topics to listen and publish to
 joy_topic: "/joy"
-drive_topic: "/drive"
+keyboard_topic: "/key"
+drive_topic_blue: "/drive_blue"
+drive_topic_red: "/drive_red"
 map_topic: "/map"
 distance_transform_topic: "/dt"
 scan_topic: "/scan"
-pose_topic: "/pose"
+pose_topic_blue: "blue/pose"
+pose_topic_red: "red/pose"
 ground_truth_pose_topic: "/gt_pose"
 odom_topic: "/odom"
 imu_topic: "/imu"
 pose_rviz_topic: "/initialpose"
-keyboard_topic: "/key"
 brake_bool_topic: "/brake_bool"
 mux_topic: "/mux"
 
@@ -115,8 +117,10 @@ collision_file: "collision_file"
 
 # The names of the transformation frames published to
 map_frame: "map"
-base_frame: "blue/base_link"
-scan_frame: "blue/laser"
+base_frame_blue: "blue/base_link"
+scan_frame_blue: "blue/laser"
+base_frame_red: "red/base_link"
+scan_frame_red: "red/laser"
 
 broadcast_transform: true
 publish_ground_truth_pose: true

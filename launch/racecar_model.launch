@@ -19,8 +19,8 @@
   <group ns="racecar_red">
 
     <arg name="racecar_xacro_red" default="racecar_red.xacro"/>
-    <!-- Another way to distinct two car's tf is add tf prefix, so that doesn't need add red/ in xacro file manually -->
-    <param name="tf_prefix" value="red"></param>
+    <!-- Another way to distinct two car's tf is add tf prefix, so that doesn't need add red/ in xacro file manually
+    <param name="tf_prefix" value="red"></param> -->
 
     <param name="robot_description" command="xacro --inorder '$(find f1tenth_simulator)/$(arg racecar_xacro_red)'"/>
 

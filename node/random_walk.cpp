@@ -38,8 +38,8 @@ public:
         n = ros::NodeHandle("~");
 
         // get topic names
-        std::string drive_topic, odom_topic;
-        n.getParam("rand_drive_topic", drive_topic);
+        std::string drive_topic_blue, odom_topic;
+        n.getParam("rand_drive_topic", drive_topic_blue);
         n.getParam("odom_topic", odom_topic);
 
         // get car parameters
@@ -47,7 +47,7 @@ public:
         n.getParam("max_steering_angle", max_steering_angle);
 
         // Make a publisher for drive messages
-        drive_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>(drive_topic, 10);
+        drive_pub = n.advertise<ackermann_msgs::AckermannDriveStamped>(drive_topic_blue, 10);
 
         // Start a subscriber to listen to odom messages
         odom_sub = n.subscribe(odom_topic, 1, &RandomWalker::odom_callback, this);
