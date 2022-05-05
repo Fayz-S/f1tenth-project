@@ -129,7 +129,8 @@ private:
 
     // steering delay
     int buffer_length;
-    std::vector<double> steering_buffer;
+    std::vector<double> steering_buffer_blue;
+    std::vector<double> steering_buffer_red;
 
 
 public:
@@ -139,7 +140,7 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=0, .y=0, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -147,7 +148,7 @@ public:
         
         previous_seconds = ros::Time::now().toSec();
 
-        state_red = {.x=0, .y=0, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=0, .y=-0.3, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_red = 0.0;
         steer_angle_vel_red = 0.0;
         desired_speed_red = 0.0;
@@ -274,7 +275,8 @@ public:
 
 
         // steering delay buffer
-        steering_buffer = std::vector<double>(buffer_length);
+        steering_buffer_blue = std::vector<double>(buffer_length);
+        steering_buffer_red = std::vector<double>(buffer_length);
 
         // OBSTACLE BUTTON:
         // wait for one map message to get the map data array
@@ -336,13 +338,13 @@ public:
         // simulate P controller
         compute_accel_blue(desired_speed_blue);
         double actual_ang_blue = 0.0;
-        if (steering_buffer.size() < buffer_length) {
-            steering_buffer.push_back(desired_steer_ang_blue);
+        if (steering_buffer_blue.size() < buffer_length) {
+            steering_buffer_blue.push_back(desired_steer_ang_blue);
             actual_ang_blue = 0.0;
         } else {
-            steering_buffer.insert(steering_buffer.begin(), desired_steer_ang_blue);
-            actual_ang_blue = steering_buffer.back();
-            steering_buffer.pop_back();
+            steering_buffer_blue.insert(steering_buffer_blue.begin(), desired_steer_ang_blue);
+            actual_ang_blue = steering_buffer_blue.back();
+            steering_buffer_blue.pop_back();
         }
         set_steer_angle_vel_blue(compute_steer_vel_blue(actual_ang_blue));
 
@@ -445,13 +447,13 @@ public:
         // simulate P controller
         compute_accel_red(desired_speed_red);
         double actual_ang_red = 0.0;
-        if (steering_buffer.size() < buffer_length) {
-            steering_buffer.push_back(desired_steer_ang_red);
+        if (steering_buffer_red.size() < buffer_length) {
+            steering_buffer_red.push_back(desired_steer_ang_red);
             actual_ang_red = 0.0;
         } else {
-            steering_buffer.insert(steering_buffer.begin(), desired_steer_ang_red);
-            actual_ang_red = steering_buffer.back();
-            steering_buffer.pop_back();
+            steering_buffer_red.insert(steering_buffer_red.begin(), desired_steer_ang_red);
+            actual_ang_red = steering_buffer_red.back();
+            steering_buffer_red.pop_back();
         }
         set_steer_angle_vel_red(compute_steer_vel_red(actual_ang_red));
 
@@ -763,16 +765,19 @@ public:
         geometry_msgs::PoseStamped temp_pose;
         temp_pose.header = msg->header;
         temp_pose.pose = msg->pose.pose;
+        ROS_INFO_STREAM(msg);
         pose_callback_blue(temp_pose);
         pose_callback_red(temp_pose);
     }
 
     void drive_callback_blue(const ackermann_msgs::AckermannDriveStamped & msg) {
+        ROS_INFO_STREAM("blue"<<msg.drive);
         desired_speed_blue = msg.drive.speed;
         desired_steer_ang_blue = msg.drive.steering_angle;
     }
 
     void drive_callback_red(const ackermann_msgs::AckermannDriveStamped & msg) {
+        ROS_INFO_STREAM("red"<<msg.drive);
         desired_speed_red = msg.drive.speed;
         desired_steer_ang_red = msg.drive.steering_angle;
     }

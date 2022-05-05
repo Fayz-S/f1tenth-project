@@ -44,7 +44,7 @@ private:
     std::vector<bool> prev_mux;
 
     // Params for joystick calculations
-    int joy_speed_axis, joy_angle_axis;
+    int joy_speed_axis_blue, joy_angle_axis_blue, joy_speed_axis_red, joy_angle_axis_red;
     double max_speed, max_steering_angle;
     // For keyboard driving
     double prev_key_velocity_blue=0.0;
@@ -82,8 +82,10 @@ public:
         n.getParam("key_mux_idx", key_mux_idx);
 
         // get params for joystick calculations
-        n.getParam("joy_speed_axis", joy_speed_axis);
-        n.getParam("joy_angle_axis", joy_angle_axis);
+        n.getParam("joy_speed_axis_blue", joy_speed_axis_blue);
+        n.getParam("joy_angle_axis_blue", joy_angle_axis_blue);
+        n.getParam("joy_speed_axis_red", joy_speed_axis_red);
+        n.getParam("joy_angle_axis_red", joy_angle_axis_red);
         n.getParam("max_steering_angle", max_steering_angle);
         n.getParam("max_speed", max_speed);
 
@@ -216,10 +218,10 @@ public:
         // make drive message from joystick if turned on
         if (mux_controller[joy_mux_idx]) {
             // Calculate desired velocity and steering angle
-            double desired_velocity_blue = max_speed * msg.axes[joy_speed_axis];
-            double desired_steer_blue = max_steering_angle * msg.axes[joy_angle_axis];
-            double desired_velocity_red = max_speed * msg.axes[joy_speed_axis];
-            double desired_steer_red = max_steering_angle * msg.axes[joy_angle_axis];
+            double desired_velocity_blue = max_speed * msg.axes[joy_speed_axis_blue];
+            double desired_steer_blue = max_steering_angle * msg.axes[joy_angle_axis_blue];
+            double desired_velocity_red = max_speed * msg.axes[joy_speed_axis_red];
+            double desired_steer_red = max_steering_angle * msg.axes[joy_angle_axis_red];
 
             publish_to_drive_blue(desired_velocity_blue, desired_steer_blue);
             publish_to_drive_red(desired_velocity_red, desired_steer_red);
@@ -236,21 +238,27 @@ public:
             double desired_steer_red = 0.0;
             
             bool publish = true;
+            bool is_blue = false;
+            bool is_red = false;
 
             if (msg.data == "w") {
                 // Forward
                 desired_velocity_blue = keyboard_speed; // a good speed for keyboard control
+                is_blue = true;
             } else if (msg.data == "s") {
                 // Backwards
                 desired_velocity_blue = -keyboard_speed;
+                is_blue = true;
             } else if (msg.data == "a") {
                 // Steer left and keep speed
                 desired_steer_blue = keyboard_steer_ang;
                 desired_velocity_blue = prev_key_velocity_blue;
+                is_blue = true;
             } else if (msg.data == "d") {
                 // Steer right and keep speed
                 desired_steer_blue = -keyboard_steer_ang;
                 desired_velocity_blue = prev_key_velocity_blue;
+                is_blue = true;
             }
 //            else if (msg.data == "") {
 //                // publish zeros to slow down/straighten out car
@@ -260,18 +268,21 @@ public:
             else if (msg.data == "i") {
                 // Forward
                 desired_velocity_red = keyboard_speed; // a good speed for keyboard control
+                is_red = true;
             } else if (msg.data == "k") {
                 // Backwards
                 desired_velocity_red = -keyboard_speed;
+                is_red = true;
             } else if (msg.data == "j") {
-                ROS_INFO_STREAM(prev_key_velocity_red);
                 // Steer left and keep speed
                 desired_steer_red = keyboard_steer_ang;
                 desired_velocity_red = prev_key_velocity_red;
+                is_red = true;
             } else if (msg.data == "l") {
                 // Steer right and keep speed
                 desired_steer_red = -keyboard_steer_ang;
                 desired_velocity_red = prev_key_velocity_red;
+                is_red = true;
             }
             else {
                 // so that it doesn't constantly publish zeros when you press other keys
@@ -279,10 +290,14 @@ public:
             }
 
             if (publish) {
-                publish_to_drive_blue(desired_velocity_blue, desired_steer_blue);
-                publish_to_drive_red(desired_velocity_red, desired_steer_red);
-                prev_key_velocity_blue = desired_velocity_blue;
-                prev_key_velocity_red = desired_velocity_red;
+                if (is_blue){
+                    publish_to_drive_blue(desired_velocity_blue, desired_steer_blue);
+                    prev_key_velocity_blue = desired_velocity_blue;
+                }
+                if (is_red){
+                    publish_to_drive_red(desired_velocity_red, desired_steer_red);
+                    prev_key_velocity_red = desired_velocity_red;
+                }
             }
         }
     }

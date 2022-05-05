@@ -5,7 +5,7 @@ wheelbase: 0.3302 # meters
 width: 0.2032 # meters
 
 # steering delay
-buffer_length: 5
+buffer_length: 4
 
 # Limits on the speed and steering angle
 max_speed: 7. #  meters/second
@@ -60,15 +60,17 @@ new_method_mux_idx: -1
 # Enables joystick if true
 joy: true
 # Joystick indices
-joy_speed_axis: 1
-joy_angle_axis: 3
+joy_speed_axis_blue: 1
+joy_angle_axis_blue: 0
+joy_speed_axis_red: 4
+joy_angle_axis_red: 3
 joy_max_speed: 2. # meters/second
 # Joystick indices for toggling mux
 joy_button_idx: 4  # LB button
-key_button_idx: 6 # not sure 
+key_button_idx: 5 # not sure
 brake_button_idx: 0 # A button
 random_walk_button_idx: 1 # ? button
-nav_button_idx: 5 # RB button
+nav_button_idx: 6 # RB button
 # **Add button for new planning method here**
 new_button_idx: -1
 
