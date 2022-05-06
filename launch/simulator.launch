@@ -9,8 +9,8 @@
     <!-- depends on different environment, joy can have different index, can be found by command ls /dev/input/.
          and referred by jsX. after known which index you want to use, replace below index, value="/dev/input/jsX", with that. -->
     <param name="dev" type="string" value="/dev/input/js1" />
-    <!-- due to the joy usually cannot reset to 0, we need a threshold for that-->
-    <param name="deadzone" value="0.1" />
+    <!-- due to the joy usually cannot reset to 0, we need a threshold for that which is in percentage-->
+    <param name="deadzone" value="0.01" />
   </node>
 
   <arg name="parameters_file" default="params.yaml"/>

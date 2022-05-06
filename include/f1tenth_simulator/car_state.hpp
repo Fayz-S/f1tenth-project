@@ -5,7 +5,7 @@ namespace racecar_simulator {
 struct CarState {
     double x; // x position
     double y; // y position
-    double theta; // orientation
+    double theta; // orientation, anticlockwise from 0 to 2Pi in radian
     double velocity;
     double steer_angle;
     double angular_velocity;

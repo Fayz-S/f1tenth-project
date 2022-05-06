@@ -9,7 +9,7 @@
     <!-- However, we still need to distinct their tf, so that they are not share same tf -->
     <!-- One way to distinct two car's tf is add blue/ to all link and joint manually in xacro file -->
     <!--<param name="tf_prefix" value="blue"/>-->
-    <!-- remember also need to add racecar_blue/ on Robot Description: line in simulator.rviz config file, if not, an error will occur which said robot_description not found -->
+    <!-- remember also need to add racecar_blue/ on Robot Description line in the simulator.rviz config file, if not, an error will occur which said robot_description not found -->
     <!-- https://answers.ros.org/question/337079/param-robot_description-not-found-by-searchparam/ -->
     <param name="robot_description" command="xacro --inorder '$(find f1tenth_simulator)/$(arg racecar_xacro_blue)'"/>
     <!-- Add the robot state publisher, which needed for broadcast frames -->
@@ -20,8 +20,9 @@
 
     <arg name="racecar_xacro_red" default="racecar_red.xacro"/>
     <!-- Another way to distinct two car's tf is add tf prefix, so that doesn't need add red/ in xacro file manually
-    <param name="tf_prefix" value="red"></param> -->
-
+    <param name="tf_prefix" value="red"></param>
+    Although this will add prefix to tf indeed and can be checked in tf tree, when Rviz initialize the robot model, the prefix has not added to tf yet
+    -->
     <param name="robot_description" command="xacro --inorder '$(find f1tenth_simulator)/$(arg racecar_xacro_red)'"/>
 
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />

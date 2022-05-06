@@ -536,7 +536,7 @@ public:
             //
             // red
             //
-            scan_msg.header.frame_id = scan_frame_blue;
+            scan_msg.header.frame_id = scan_frame_red;
             scan_msg.angle_min = -scan_simulator.get_field_of_view()/2.;
             scan_msg.angle_max =  scan_simulator.get_field_of_view()/2.;
             scan_msg.angle_increment = scan_simulator.get_angle_increment();
@@ -751,6 +751,7 @@ public:
         geometry_msgs::Quaternion q = msg.pose.orientation;
         tf2::Quaternion quat(q.x, q.y, q.z, q.w);
         state_blue.theta = tf2::impl::getYaw(quat);
+        ROS_INFO_STREAM(state_blue.theta);
     }
     
     void pose_callback_red(const geometry_msgs::PoseStamped & msg) {
@@ -759,6 +760,7 @@ public:
         geometry_msgs::Quaternion q = msg.pose.orientation;
         tf2::Quaternion quat(q.x, q.y, q.z, q.w);
         state_red.theta = tf2::impl::getYaw(quat);
+        ROS_INFO_STREAM(state_red.theta);
     }
 
     void pose_rviz_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & msg) {
@@ -771,13 +773,11 @@ public:
     }
 
     void drive_callback_blue(const ackermann_msgs::AckermannDriveStamped & msg) {
-        ROS_INFO_STREAM("blue"<<msg.drive);
         desired_speed_blue = msg.drive.speed;
         desired_steer_ang_blue = msg.drive.steering_angle;
     }
 
     void drive_callback_red(const ackermann_msgs::AckermannDriveStamped & msg) {
-        ROS_INFO_STREAM("red"<<msg.drive);
         desired_speed_red = msg.drive.speed;
         desired_steer_ang_red = msg.drive.steering_angle;
     }
@@ -804,11 +804,14 @@ public:
             double resolution = msg.info.resolution;
             // Convert the ROS origin to a pose
             Pose2D origin;
+            // bottom right conner is the origin point
             origin.x = msg.info.origin.position.x;
             origin.y = msg.info.origin.position.y;
             geometry_msgs::Quaternion q = msg.info.origin.orientation;
             tf2::Quaternion quat(q.x, q.y, q.z, q.w);
+            ROS_INFO_STREAM(height);
             origin.theta = tf2::impl::getYaw(quat);
+            ROS_INFO_STREAM(width);
 
             // Convert the map to probability values
             std::vector<double> map(msg.data.size());
