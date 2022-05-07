@@ -15,7 +15,7 @@ class ScanSimulator2D {
     double field_of_view;
     double scan_std_dev;
     double angle_increment;
-
+    double scan_max_range;
     // Ray tracing settings
     double ray_tracing_epsilon;
 
@@ -41,13 +41,15 @@ class ScanSimulator2D {
   public:
     std::vector<double> sines;
     std::vector<double> cosines;
+    std::vector<double> arctanes;
 
     ScanSimulator2D() {}
 
     ScanSimulator2D(
         int num_beams_, 
         double field_of_view_, 
-        double scan_std_dev_, 
+        double scan_std_dev_,
+        double scan_max_range,
         double ray_tracing_epsilon=0.0001,
         int theta_discretization=2000);
 
@@ -60,12 +62,12 @@ class ScanSimulator2D {
         double free_threshold);
     void set_map(const std::vector<double> &map, double free_threshold);
 
-    void scan(const Pose2D & pose, double * scan_data);
-    const std::vector<double> scan(const Pose2D & pose);
+    void scan(const Pose2D & pose, const Pose2D &opponent_pose, double * scan_data);
+    const std::vector<double> scan(const Pose2D & pose, const Pose2D &opponent_pose);
 
     double distance_transform(double x, double y) const;
 
-    double trace_ray(double x, double y, double theta_index) const;
+    double trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta) const;
 
     void xy_to_row_col(double x, double y, int * row, int * col) const;
     int row_col_to_cell(int row, int col) const;

@@ -1,18 +1,24 @@
 #include "f1tenth_simulator/pose_2d.hpp"
 #include "f1tenth_simulator/scan_simulator_2d.hpp"
 #include "f1tenth_simulator/distance_transform.hpp"
+#include <ros/ros.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
 
 using namespace racecar_simulator;
 
 ScanSimulator2D::ScanSimulator2D(
     int num_beams_, 
     double field_of_view_, 
-    double scan_std_dev_, 
+    double scan_std_dev_,
+    double scan_max_range_,
     double ray_tracing_epsilon_,
     int theta_discretization) 
   : num_beams(num_beams_),
     field_of_view(field_of_view_),
     scan_std_dev(scan_std_dev_),
+    scan_max_range(scan_max_range_),
     ray_tracing_epsilon(ray_tracing_epsilon_),
     theta_discretization(theta_discretization)
 {
@@ -27,30 +33,49 @@ ScanSimulator2D::ScanSimulator2D(
   noise_dist = std::normal_distribution<double>(0., scan_std_dev);
 
   // Precompute sines and cosines
-  //
+  // angle_increment/(2 * M_PI) means how many beams there are if we scan 360 degree with current angular_increment
+  // we know that with current angular_increment, there are 1080+1 beams for 270 degree
+  // in our case, there will be 1440+1 beams for 360 degree
+  // theta_discretization/theta_index_increment = 1440
+  // hence, theta_index_increment = theta_discretization/1440
+  // due to we are going to slice 360 degree into theta_discretization(2000+1) parts, we need to know how many beams for 360 degree
+  // so that we could know how many increments on theta_discretization if one beam incremented, in our case, that is 1.3888889
   theta_index_increment = theta_discretization * angle_increment/(2 * M_PI);
+
   sines = std::vector<double>(theta_discretization + 1);
   cosines = std::vector<double>(theta_discretization + 1);
-
+  arctanes = std::vector<double>(theta_discretization + 1);
+  // slice 2PI into theta_discretization(2000+1) parts, and calculate sin and cos
   for (int i = 0; i <= theta_discretization; i++) {
       // calculate theta on the discretization from 0 to 2Pi
     double theta = (2 * M_PI * i)/((double) theta_discretization);
     // calculate sin and cos of that theta value
+    // the reason we precompute all sin and cos is that we can only compute sin and cos for each theta just one time
+    // although we can calculate theta of beam easily and then calculate the sin and cos, imagine there are 1081 beams in one scan,
+    // and in every second there are hundreds scans happened, but a lot of theta actually be calculated over and over again.
+    // hence, better have a copy of all sin and cos, and when we need it, just directly get from vector.
     sines[i] = std::sin(theta);
     cosines[i] = std::cos(theta);
+    // this is for calculating slope of beams, so that we will know whether a beam intersects with the opponent car
+    if (theta != M_PI/2 or theta != 3*M_PI/2){
+        arctanes[i] = std::atan(theta);
+    }
   }
 }
 
-const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose) {
-  scan(pose, scan_output.data());
+const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose, const Pose2D &opponent_pose) {
+  scan(pose, opponent_pose, scan_output.data());
   return scan_output;
 }
 
-void ScanSimulator2D::scan(const Pose2D & pose, double * scan_data) {
+void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D &opponent_pose, double * scan_data) {
   // Make theta discrete by mapping the range [-pi,pi] onto [0, theta_discretization)
   // field_of_view/2 = 3/4 PI
-  // (pose.theta - field_of_view/2.)/(2 * M_PI) is to calculate the difference between current car orientation and lidar scan start orientation
+  // (pose.theta - field_of_view/2.)/(2 * M_PI) is to calculate the orientation of lidar scan starting beam
+  // and after it times theta_discretization, the meaning becomes the start index in theta_discretization
+  // theta_index can be treated as degree in coordinate, after reach 2PI will start from 0 again and -PI/4 equal to 7PI/4
   // the result range is [-3/8, 5/8) * theta_discretization
+  // hence, theta_index probably not start from 0
   double theta_index = theta_discretization * (pose.theta - field_of_view/2.)/(2 * M_PI);
 
   // Make sure it is wrapped into [0, theta_discretization)
@@ -58,10 +83,10 @@ void ScanSimulator2D::scan(const Pose2D & pose, double * scan_data) {
   theta_index = std::fmod(theta_index, theta_discretization);
   while (theta_index < 0) theta_index += theta_discretization;
 
-  // process through each beam (1081)
+  // process through each beam (1081). For theta_index, we will only use number of theta_index that equal to number of beams
   for (int i = 0; i < num_beams; i++) {
     // Compute the distance to the nearest point
-    scan_data[i] = trace_ray(pose.x, pose.y, theta_index);
+    scan_data[i] = trace_ray(pose.x, pose.y, theta_index, opponent_pose.x, opponent_pose.y, opponent_pose.theta);
 
     // Add Gaussian noise to the ray trace
     if (scan_std_dev > 0)
@@ -70,17 +95,20 @@ void ScanSimulator2D::scan(const Pose2D & pose, double * scan_data) {
     // Increment the scan
     theta_index += theta_index_increment;
     // Make sure it stays in the range [0, theta_discretization)
+    // although theta_index not start from 0, this will make sure after it reaches boundary, it will start from 0 again
     while (theta_index >= theta_discretization) 
       theta_index -= theta_discretization;
   }
 }
 
-double ScanSimulator2D::trace_ray(double x, double y, double theta_index) const {
+double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta) const {
   // Add 0.5 to make this operation round to ceil rather than floor
-  // why?
+  // why? Maybe don't want theta_index_ be 0?
   int theta_index_ = theta_index + 0.5;
   double s = sines[theta_index_];
   double c = cosines[theta_index_];
+  // slope
+  double k = arctanes[theta_index_];
 
   // Initialize the distance to the nearest obstacle
   double distance_to_nearest = distance_transform(x, y);
@@ -88,7 +116,14 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index) const 
 
   while (distance_to_nearest > ray_tracing_epsilon) {
     // Move in the direction of the ray
-    // by distance_to_nearest
+    // REMEMBER, pose.theta 0 is the positive direction of X axis not Y axis, and ALL theta related value starts from X axis not Y axis
+    // hence, the idea is we know that the distance to nearest obstacle of current car position,
+    // in order to get the distance to obstacle in a certain beam, we want to move distance to nearest obstacle to that beam direction,
+    // because we just move a distance to nearest obstacle, so we can make sure that this move will not overlap with an obstacle.
+    // then, repeat the step, keep moving in the direction of that beam until reach an obstacle.
+    // the result is sum of all the distance to nearest obstacle along the way.
+    // And the movement can be divided into x direction and y direction,
+    // due to theta value is angle between current beam and x direction, so x need to time cos, and y need to time sin.
     x += distance_to_nearest * c;
     y += distance_to_nearest * s;
     
@@ -97,7 +132,22 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index) const 
     total_distance += distance_to_nearest;
   }
 
-  return total_distance;
+  if (total_distance > scan_max_range){
+      return scan_max_range;
+  }else{
+      // bias
+      double b = x - k * y;
+      // decided whether this beam (line) intersects with opponent car (square) or not
+      // calculate coordinate of four points of opponent car first
+      double x1 =
+      double distance_to_opponent = sqrt(pow((x - opponent_X), 2) + pow((y - opponent_Y), 2));
+      if (distance_to_opponent < total_distance){
+          return ;
+      } else {
+          return total_distance;
+      }
+  }
+
 }
 
 double ScanSimulator2D::distance_transform(double x, double y) const {
@@ -182,6 +232,11 @@ void ScanSimulator2D::set_map(
         }
     }
     // this is to calculate the distance from each pixel to the nearest occupied pixel in coordinate
-    // so the elements in dt vector represent the distance where we can directly use them.
+    // so the elements in dt vector represent the distance and we can directly use them.
     DistanceTransform::distance_2d(dt, width, height, resolution);
+
+//    for(double i : dt)
+//    {
+//        ROS_INFO_STREAM(i);
+//    }
 }

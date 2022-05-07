@@ -182,12 +182,14 @@ public:
         // Fetch the car parameters
         int scan_beams;
         double update_pose_rate, scan_std_dev;
+        double scan_max_range;
         n.getParam("wheelbase", params_blue.wheelbase);
         n.getParam("wheelbase", params_red.wheelbase);
         n.getParam("update_pose_rate", update_pose_rate);
         n.getParam("scan_beams", scan_beams);
         n.getParam("scan_field_of_view", scan_fov);
         n.getParam("scan_std_dev", scan_std_dev);
+        n.getParam("scan_max_range", scan_max_range);
         n.getParam("map_free_threshold", map_free_threshold);
         n.getParam("scan_distance_to_base_link", scan_distance_to_base_link);
         n.getParam("max_speed", max_speed);
@@ -227,7 +229,8 @@ public:
         scan_simulator = ScanSimulator2D(
             scan_beams,
             scan_fov,
-            scan_std_dev);
+            scan_std_dev,
+            scan_max_range);
 
         // Make a publisher for laser scan messages
         scan_pub = n.advertise<sensor_msgs::LaserScan>(scan_topic, 1);
@@ -385,9 +388,13 @@ public:
             scan_pose.x = state_blue.x + scan_distance_to_base_link * std::cos(state_blue.theta);
             scan_pose.y = state_blue.y + scan_distance_to_base_link * std::sin(state_blue.theta);
             scan_pose.theta = state_blue.theta;
-
+            // we need the center position of opponent car
+            Pose2D opponent_pose;
+            opponent_pose.x = state_red.x;
+            opponent_pose.y = state_red.y;
+            opponent_pose.theta = state_red.theta;
             // Compute the scan from the lidar
-            std::vector<double> scan = scan_simulator.scan(scan_pose);
+            std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose);
 
             // Convert to float
             std::vector<float> scan_(scan.size());
@@ -493,9 +500,12 @@ public:
             scan_pose.x = state_red.x + scan_distance_to_base_link * std::cos(state_red.theta);
             scan_pose.y = state_red.y + scan_distance_to_base_link * std::sin(state_red.theta);
             scan_pose.theta = state_red.theta;
-
+            Pose2D opponent_pose;
+            opponent_pose.x = state_blue.x;
+            opponent_pose.y = state_blue.y;
+            opponent_pose.theta = state_blue.theta;
             // Compute the scan from the lidar
-            std::vector<double> scan = scan_simulator.scan(scan_pose);
+            std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose);
 
             // Convert to float
             std::vector<float> scan_(scan.size());
@@ -751,7 +761,6 @@ public:
         geometry_msgs::Quaternion q = msg.pose.orientation;
         tf2::Quaternion quat(q.x, q.y, q.z, q.w);
         state_blue.theta = tf2::impl::getYaw(quat);
-        ROS_INFO_STREAM(state_blue.theta);
     }
     
     void pose_callback_red(const geometry_msgs::PoseStamped & msg) {
@@ -760,14 +769,12 @@ public:
         geometry_msgs::Quaternion q = msg.pose.orientation;
         tf2::Quaternion quat(q.x, q.y, q.z, q.w);
         state_red.theta = tf2::impl::getYaw(quat);
-        ROS_INFO_STREAM(state_red.theta);
     }
 
     void pose_rviz_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & msg) {
         geometry_msgs::PoseStamped temp_pose;
         temp_pose.header = msg->header;
         temp_pose.pose = msg->pose.pose;
-        ROS_INFO_STREAM(msg);
         pose_callback_blue(temp_pose);
         pose_callback_red(temp_pose);
     }
