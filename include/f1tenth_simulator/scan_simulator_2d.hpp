@@ -16,6 +16,7 @@ class ScanSimulator2D {
     double scan_std_dev;
     double angle_increment;
     double scan_max_range;
+    double cube_width;
     // Ray tracing settings
     double ray_tracing_epsilon;
 
@@ -50,6 +51,7 @@ class ScanSimulator2D {
         double field_of_view_, 
         double scan_std_dev_,
         double scan_max_range,
+        double cube_width,
         double ray_tracing_epsilon=0.0001,
         int theta_discretization=2000);
 
@@ -62,8 +64,8 @@ class ScanSimulator2D {
         double free_threshold);
     void set_map(const std::vector<double> &map, double free_threshold);
 
-    void scan(const Pose2D & pose, const Pose2D &opponent_pose, double * scan_data);
-    const std::vector<double> scan(const Pose2D & pose, const Pose2D &opponent_pose);
+    void scan(const Pose2D & pose, const Pose2D opponent_pose, double * scan_data);
+    const std::vector<double> scan(const Pose2D & pose, const Pose2D opponent_pose);
 
     double distance_transform(double x, double y) const;
 

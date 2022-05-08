@@ -59,6 +59,7 @@ private:
     double max_accel, max_steering_vel, max_decel;
     double desired_speed_blue, desired_steer_ang_blue, desired_speed_red, desired_steer_ang_red;
     double accel_blue, steer_angle_vel_blue, accel_red, steer_angle_vel_red;
+    double cube_width;
     CarParams params_blue;
     CarParams params_red;
     double width;
@@ -90,8 +91,11 @@ private:
     // Publish a scan, odometry, and imu data
     bool broadcast_transform;
     bool pub_gt_pose;
-    ros::Publisher scan_pub;
+    ros::Publisher scan_pub_blue;
+    ros::Publisher scan_pub_red;
     ros::Publisher pose_pub;
+
+
     ros::Publisher odom_pub;
     ros::Publisher imu_pub;
 
@@ -156,19 +160,20 @@ public:
         
 
         // Get the topic names
-        std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic, pose_topic_blue, pose_topic_red, gt_pose_topic,
+        std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red, gt_pose_topic,
         pose_rviz_topic, odom_topic, imu_topic;
         n.getParam("drive_topic_blue", drive_topic_blue);
         n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
-        n.getParam("scan_topic", scan_topic);
+        n.getParam("scan_topic_blue", scan_topic_blue);
+        n.getParam("scan_topic_red", scan_topic_red);
         n.getParam("pose_topic_blue", pose_topic_blue);
         n.getParam("pose_topic_red", pose_topic_red);
         n.getParam("odom_topic", odom_topic);
         n.getParam("pose_rviz_topic", pose_rviz_topic);
         n.getParam("imu_topic", imu_topic);
         n.getParam("ground_truth_pose_topic", gt_pose_topic);
-
+        n.getParam("cube_width", cube_width);
         // Get steering delay params_blue
         n.getParam("buffer_length", buffer_length);
 
@@ -230,10 +235,12 @@ public:
             scan_beams,
             scan_fov,
             scan_std_dev,
-            scan_max_range);
+            scan_max_range,
+            cube_width);
 
         // Make a publisher for laser scan messages
-        scan_pub = n.advertise<sensor_msgs::LaserScan>(scan_topic, 1);
+        scan_pub_blue = n.advertise<sensor_msgs::LaserScan>(scan_topic_blue, 1);
+        scan_pub_red = n.advertise<sensor_msgs::LaserScan>(scan_topic_red, 1);
 
         // Make a publisher for odometry messages
         odom_pub = n.advertise<nav_msgs::Odometry>(odom_topic, 1);
@@ -245,11 +252,13 @@ public:
         map_pub = n.advertise<nav_msgs::OccupancyGrid>("/map", 1);
 
         // Make a publisher for ground truth pose
-        pose_pub = n.advertise<geometry_msgs::PoseStamped>(gt_pose_topic, 1);
+        pose_pub = n.advertise<geometry_msgs::PoseStamped>(gt_pose_topic, 10);
 
         // Start a timer to output the pose
-        update_pose_timer_blue = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_blue, this);
+        //
         update_pose_timer_red = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_red, this);
+        update_pose_timer_blue = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_blue, this);
+
 
         // Start a subscriber to listen to drive commands
         drive_sub_blue = n.subscribe(drive_topic_blue, 1, &RacecarSimulator::drive_callback_blue, this);
@@ -440,11 +449,11 @@ public:
             scan_msg.ranges = scan_;
             scan_msg.intensities = scan_;
 
-            scan_pub.publish(scan_msg);
+            scan_pub_blue.publish(scan_msg);
 
 
             // Publish a transformation between base link and laser
-            pub_laser_link_transform(timestamp);
+            pub_laser_link_transform_blue(timestamp);
 
         }
 
@@ -554,11 +563,11 @@ public:
             scan_msg.ranges = scan_;
             scan_msg.intensities = scan_;
 
-            scan_pub.publish(scan_msg);
+            scan_pub_red.publish(scan_msg);
 
 
             // Publish a transformation between base link and laser
-            pub_laser_link_transform(timestamp);
+            pub_laser_link_transform_red(timestamp);
 
         }
 
@@ -963,7 +972,7 @@ public:
             br.sendTransform(ts_wheel);
         }
 
-        void pub_laser_link_transform(ros::Time timestamp) {
+        void pub_laser_link_transform_blue(ros::Time timestamp) {
             // Publish a transformation between base link and laser
             geometry_msgs::TransformStamped scan_ts;
             scan_ts.transform.translation.x = scan_distance_to_base_link;
@@ -973,6 +982,17 @@ public:
             scan_ts.child_frame_id = scan_frame_blue;
             br.sendTransform(scan_ts);
         }
+
+    void pub_laser_link_transform_red(ros::Time timestamp) {
+        // Publish a transformation between base link and laser
+        geometry_msgs::TransformStamped scan_ts;
+        scan_ts.transform.translation.x = scan_distance_to_base_link;
+        scan_ts.transform.rotation.w = 1;
+        scan_ts.header.stamp = timestamp;
+        scan_ts.header.frame_id = base_frame_red;
+        scan_ts.child_frame_id = scan_frame_red;
+        br.sendTransform(scan_ts);
+    }
 
         void pub_odom_blue(ros::Time timestamp) {
             // Make an odom message and publish it

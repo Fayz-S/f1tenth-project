@@ -290,14 +290,15 @@ public:
             }
 
             if (publish) {
-                if (is_blue){
-                    publish_to_drive_blue(desired_velocity_blue, desired_steer_blue);
-                    prev_key_velocity_blue = desired_velocity_blue;
-                }
                 if (is_red){
                     publish_to_drive_red(desired_velocity_red, desired_steer_red);
                     prev_key_velocity_red = desired_velocity_red;
                 }
+                if (is_blue){
+                    publish_to_drive_blue(desired_velocity_blue, desired_steer_blue);
+                    prev_key_velocity_blue = desired_velocity_blue;
+                }
+
             }
         }
     }

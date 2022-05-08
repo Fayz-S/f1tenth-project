@@ -6,7 +6,8 @@ width: 0.2032 # meters
 
 # steering delay
 buffer_length: 4
-
+# according to rules https://iros2021.f1tenth.org/rules.html#25-head-to-head-race, 2.5.2.c
+cube_width: 0.12
 # Limits on the speed and steering angle
 max_speed: 7. #  meters/second
 max_steering_angle: 0.4189 # radians
@@ -23,7 +24,8 @@ mass: 3.47 # kg (measured on car 'lidart')
 moment_inertia: .04712 # kg m^2 (estimated as a rectangle with width and height of car and evenly distributed mass, then shifted to account for center of mass location)
 
 # The rate at which the pose and the lidar publish
-update_pose_rate: 0.02
+# change this will lead to two car have asynchronous position update
+update_pose_rate: 0.001
 
 # Lidar simulation parameters
 scan_beams: 1081
@@ -97,7 +99,8 @@ drive_topic_blue: "/drive_blue"
 drive_topic_red: "/drive_red"
 map_topic: "/map"
 distance_transform_topic: "/dt"
-scan_topic: "/scan"
+scan_topic_red: "red/scan"
+scan_topic_blue: "blue/scan"
 pose_topic_blue: "blue/pose"
 pose_topic_red: "red/pose"
 ground_truth_pose_topic: "/gt_pose"

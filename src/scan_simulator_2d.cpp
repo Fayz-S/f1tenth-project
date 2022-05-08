@@ -13,12 +13,14 @@ ScanSimulator2D::ScanSimulator2D(
     double field_of_view_, 
     double scan_std_dev_,
     double scan_max_range_,
+    double cube_width_,
     double ray_tracing_epsilon_,
     int theta_discretization) 
   : num_beams(num_beams_),
     field_of_view(field_of_view_),
     scan_std_dev(scan_std_dev_),
     scan_max_range(scan_max_range_),
+    cube_width(cube_width_),
     ray_tracing_epsilon(ray_tracing_epsilon_),
     theta_discretization(theta_discretization)
 {
@@ -63,12 +65,12 @@ ScanSimulator2D::ScanSimulator2D(
   }
 }
 
-const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose, const Pose2D &opponent_pose) {
+const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose, const Pose2D opponent_pose) {
   scan(pose, opponent_pose, scan_output.data());
   return scan_output;
 }
 
-void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D &opponent_pose, double * scan_data) {
+void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D opponent_pose, double * scan_data) {
   // Make theta discrete by mapping the range [-pi,pi] onto [0, theta_discretization)
   // field_of_view/2 = 3/4 PI
   // (pose.theta - field_of_view/2.)/(2 * M_PI) is to calculate the orientation of lidar scan starting beam
@@ -139,10 +141,28 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
       double b = x - k * y;
       // decided whether this beam (line) intersects with opponent car (square) or not
       // calculate coordinate of four points of opponent car first
-      double x1 =
+      double theta_reversed = 2*M_PI-(2 * M_PI * theta_index)/((double) theta_discretization);
+      double center_to_corner = sqrt(2) * cube_width / 2;
+
+      double x1 = center_to_corner * std::cos(M_PI/4 - theta_reversed) + opponent_X;
+      double y1 = center_to_corner * std::sin(M_PI/4 - theta_reversed) + opponent_Y;
+
+      double x2 = center_to_corner * std::cos(3*M_PI/4 - theta_reversed) + opponent_X;
+      double y2 = center_to_corner * std::sin(3*M_PI/4 - theta_reversed) + opponent_Y;
+
+      double x3 = center_to_corner * std::cos(5*M_PI/4 - theta_reversed) + opponent_X;
+      double y3 = center_to_corner * std::sin(5*M_PI/4 - theta_reversed) + opponent_Y;
+
+      double x4 = center_to_corner * std::cos(7*M_PI/4 - theta_reversed) + opponent_X;
+      double y4 = center_to_corner * std::sin(7*M_PI/4 - theta_reversed) + opponent_Y;
+
+      if (((k*y1+b>x1)and(k*y2+b>x2)and(k*y3+b>x3)and(k*y4+b>x4))or((k*y1+b<x1)and(k*y2+b<x2)and(k*y3+b<x3)and(k*y4+b<x4))){
+          return total_distance;
+      }
+
       double distance_to_opponent = sqrt(pow((x - opponent_X), 2) + pow((y - opponent_Y), 2));
       if (distance_to_opponent < total_distance){
-          return ;
+          return distance_to_opponent;
       } else {
           return total_distance;
       }
