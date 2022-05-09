@@ -402,6 +402,7 @@ public:
             opponent_pose.x = state_red.x;
             opponent_pose.y = state_red.y;
             opponent_pose.theta = state_red.theta;
+            //ROS_INFO_STREAM(state_red.theta);
             // Compute the scan from the lidar
             std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose);
 

@@ -54,23 +54,25 @@ ScanSimulator2D::ScanSimulator2D(
     // calculate sin and cos of that theta value
     // the reason we precompute all sin and cos is that we can only compute sin and cos for each theta just one time
     // although we can calculate theta of beam easily and then calculate the sin and cos, imagine there are 1081 beams in one scan,
-    // and in every second there are hundreds scans happened, but a lot of theta actually be calculated over and over again.
+    // and in every second there are hundreds scans happened, but a lot of theta actually is calculated over and over again.
     // hence, better have a copy of all sin and cos, and when we need it, just directly get from vector.
     sines[i] = std::sin(theta);
     cosines[i] = std::cos(theta);
     // this is for calculating slope of beams, so that we will know whether a beam intersects with the opponent car
-    if (theta != M_PI/2 or theta != 3*M_PI/2){
-        arctanes[i] = std::atan(theta);
+    // due to theta actually starts from X axis which is y/x, so we need to calculate tan(theta) first and divided by 1, which will become x/y.
+    // and when theta = 0 or Pi or 2Pi, tan(theta) will be 0, so avoid those number, although no exception will occur if not do this
+    if (theta != 0 or theta != M_PI or theta != 2 * M_PI){
+        arctanes[i] = 1/std::tan(theta);
     }
   }
 }
 
-const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose, const Pose2D opponent_pose) {
+const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose) {
   scan(pose, opponent_pose, scan_output.data());
   return scan_output;
 }
 
-void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D opponent_pose, double * scan_data) {
+void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose, double * scan_data) {
   // Make theta discrete by mapping the range [-pi,pi] onto [0, theta_discretization)
   // field_of_view/2 = 3/4 PI
   // (pose.theta - field_of_view/2.)/(2 * M_PI) is to calculate the orientation of lidar scan starting beam
@@ -91,8 +93,8 @@ void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D opponent_pose, doub
     scan_data[i] = trace_ray(pose.x, pose.y, theta_index, opponent_pose.x, opponent_pose.y, opponent_pose.theta);
 
     // Add Gaussian noise to the ray trace
-    if (scan_std_dev > 0)
-        scan_data[i] += noise_dist(noise_generator);
+//    if (scan_std_dev > 0)
+//        scan_data[i] += noise_dist(noise_generator);
 
     // Increment the scan
     theta_index += theta_index_increment;
@@ -104,70 +106,139 @@ void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D opponent_pose, doub
 }
 
 double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta) const {
-  // Add 0.5 to make this operation round to ceil rather than floor
-  // why? Maybe don't want theta_index_ be 0?
-  int theta_index_ = theta_index + 0.5;
-  double s = sines[theta_index_];
-  double c = cosines[theta_index_];
-  // slope
-  double k = arctanes[theta_index_];
+    // Add 0.5 to make this operation round to ceil rather than floor
+    // why?
+    int theta_index_ = theta_index + 0.5;
+    double s = sines[theta_index_];
+    double c = cosines[theta_index_];
+    // slope
+    double k = arctanes[theta_index_];
 
-  // Initialize the distance to the nearest obstacle
-  double distance_to_nearest = distance_transform(x, y);
-  double total_distance = distance_to_nearest;
+    double original_x = x;
+    double original_y = y;
 
-  while (distance_to_nearest > ray_tracing_epsilon) {
-    // Move in the direction of the ray
-    // REMEMBER, pose.theta 0 is the positive direction of X axis not Y axis, and ALL theta related value starts from X axis not Y axis
-    // hence, the idea is we know that the distance to nearest obstacle of current car position,
-    // in order to get the distance to obstacle in a certain beam, we want to move distance to nearest obstacle to that beam direction,
-    // because we just move a distance to nearest obstacle, so we can make sure that this move will not overlap with an obstacle.
-    // then, repeat the step, keep moving in the direction of that beam until reach an obstacle.
-    // the result is sum of all the distance to nearest obstacle along the way.
-    // And the movement can be divided into x direction and y direction,
-    // due to theta value is angle between current beam and x direction, so x need to time cos, and y need to time sin.
-    x += distance_to_nearest * c;
-    y += distance_to_nearest * s;
-    
-    // Compute the nearest distance at that point
-    distance_to_nearest = distance_transform(x, y);
-    total_distance += distance_to_nearest;
-  }
+    // Initialize the distance to the nearest obstacle
+    double distance_to_nearest = distance_transform(x, y);
+    double total_distance = distance_to_nearest;
+    // ray_tracing_epsilon is for position tolerance, the position of the car keeps changing even when the car is static, although changes are very tiny.
+    // So, we cannot do a very accurate comparison for small numbers.
+    while (distance_to_nearest > ray_tracing_epsilon) {
+        // Move in the direction of the ray
+        // REMEMBER, pose.theta 0 is the positive direction of X axis not Y axis, and ALL theta related value starts from X axis not Y axis
+        // hence, the idea is we know that the distance to nearest obstacle of current car position,
+        // in order to get the distance to obstacle in a certain beam, we want to move distance to nearest obstacle to that beam direction,
+        // because we just move a distance to nearest obstacle, so we can make sure that this move will not overlap with an obstacle.
+        // then, repeat the step, keep moving in the direction of that beam until reach an obstacle.
+        // the result is sum of all the distance to nearest obstacle along the way.
+        // And the movement can be divided into x direction and y direction,
+        // due to theta value is angle between current beam and x direction, so x need to time cos, and y need to time sin.
+        x += distance_to_nearest * c;
+        y += distance_to_nearest * s;
 
-  if (total_distance > scan_max_range){
-      return scan_max_range;
-  }else{
-      // bias
-      double b = x - k * y;
-      // decided whether this beam (line) intersects with opponent car (square) or not
-      // calculate coordinate of four points of opponent car first
-      double theta_reversed = 2*M_PI-(2 * M_PI * theta_index)/((double) theta_discretization);
-      double center_to_corner = sqrt(2) * cube_width / 2;
+        // Compute the nearest distance at that point
+        distance_to_nearest = distance_transform(x, y);
+        total_distance += distance_to_nearest;
+    }
 
-      double x1 = center_to_corner * std::cos(M_PI/4 - theta_reversed) + opponent_X;
-      double y1 = center_to_corner * std::sin(M_PI/4 - theta_reversed) + opponent_Y;
 
-      double x2 = center_to_corner * std::cos(3*M_PI/4 - theta_reversed) + opponent_X;
-      double y2 = center_to_corner * std::sin(3*M_PI/4 - theta_reversed) + opponent_Y;
+    // bias of the beam
+    double b = x - k * y;
 
-      double x3 = center_to_corner * std::cos(5*M_PI/4 - theta_reversed) + opponent_X;
-      double y3 = center_to_corner * std::sin(5*M_PI/4 - theta_reversed) + opponent_Y;
+    // calculate coordinate of four points of opponent car first
+    double theta_reversed = opponent_theta;
+    double center_to_corner = sqrt(2) * cube_width / 2;
 
-      double x4 = center_to_corner * std::cos(7*M_PI/4 - theta_reversed) + opponent_X;
-      double y4 = center_to_corner * std::sin(7*M_PI/4 - theta_reversed) + opponent_Y;
+    double x1 = center_to_corner * std::cos(M_PI / 4 - theta_reversed) + opponent_X;
+    double y1 = center_to_corner * std::sin(M_PI / 4 - theta_reversed) + opponent_Y;
 
-      if (((k*y1+b>x1)and(k*y2+b>x2)and(k*y3+b>x3)and(k*y4+b>x4))or((k*y1+b<x1)and(k*y2+b<x2)and(k*y3+b<x3)and(k*y4+b<x4))){
-          return total_distance;
-      }
+    double x2 = center_to_corner * std::cos(3 * M_PI / 4 - theta_reversed) + opponent_X;
+    double y2 = center_to_corner * std::sin(3 * M_PI / 4 - theta_reversed) + opponent_Y;
 
-      double distance_to_opponent = sqrt(pow((x - opponent_X), 2) + pow((y - opponent_Y), 2));
-      if (distance_to_opponent < total_distance){
-          return distance_to_opponent;
-      } else {
-          return total_distance;
-      }
-  }
+    double x3 = center_to_corner * std::cos(5 * M_PI / 4 - theta_reversed) + opponent_X;
+    double y3 = center_to_corner * std::sin(5 * M_PI / 4 - theta_reversed) + opponent_Y;
 
+    double x4 = center_to_corner * std::cos(7 * M_PI / 4 - theta_reversed) + opponent_X;
+    double y4 = center_to_corner * std::sin(7 * M_PI / 4 - theta_reversed) + opponent_Y;
+
+    std::vector<std::vector<double>> points = {{y1,y2,x1,x2}, {y2,y3,x2,x3}, {y3,y4,x3,x4}, {y4,y1,x4,x1}};
+    //      ROS_INFO_STREAM("x1 "<<x1);
+    //      ROS_INFO_STREAM("y1 "<<y1);
+    //      ROS_INFO_STREAM("x2 "<<x2);
+    //      ROS_INFO_STREAM("y2 "<<y2);
+    //      ROS_INFO_STREAM("x3 "<<x3);
+    //      ROS_INFO_STREAM("y3 "<<y3);
+    //      ROS_INFO_STREAM("x4 "<<x4);
+    //      ROS_INFO_STREAM("y4 "<<y4);
+    //      ROS_INFO_STREAM("oppoX "<<opponent_X<<"  oppoY "<<opponent_Y);
+    //      ROS_INFO_STREAM("oppoT "<<opponent_theta);
+
+    // decided whether this beam (line) intersects with opponent car (square) or not
+    // if we put y coordinate of four corner points into the beam equation, and compare the result with actual x coordinate
+    // if all the results greater or smaller than the actual x coordinate, which means there is no intersection between the beam and the square
+    // if beam is a vertical line, which means slope is INF, we just compare y coordinate of each point to the scan y coordinate.
+    if (theta_index_ == 0 or theta_index_ == theta_discretization / 2 or theta_index_ == theta_discretization) {
+        if (((y1 > original_y) and (y2 > original_y) and (y3 > original_y) and (y4 > original_y)) or
+            ((y1 < original_y) and (y2 < original_y) and (y3 < original_y) and (y4 < original_y))) {
+            return std::min(total_distance, scan_max_range);
+        }
+    } else {
+        if (((k * y1 + b > x1) and (k * y2 + b > x2) and (k * y3 + b > x3) and (k * y4 + b > x4)) or
+            ((k * y1 + b < x1) and (k * y2 + b < x2) and (k * y3 + b < x3) and (k * y4 + b < x4))) {
+            return std::min(total_distance, scan_max_range);
+        }
+    }
+
+    // if the beam intersects with the opponent car
+    // calculate the distance between the LiDAR and opponent ca
+    double this_to_opponent = sqrt(pow((original_x - opponent_X), 2) + pow((original_y - opponent_Y), 2));
+    // for this car, the opponent car need to be closer than the obstacle
+    if (this_to_opponent < total_distance) {
+        // calculate distance between the obstacle to opponent car
+        double obstacle_to_opponent = sqrt(pow((x - opponent_X), 2) + pow((y - opponent_Y), 2));
+        // for the obstacle, the opponent car need to be closer than this car
+        if (obstacle_to_opponent < total_distance) {
+
+            if (theta_index_ == 0 or theta_index_ == theta_discretization / 2 or theta_index_ == theta_discretization) {
+                return std::min(this_to_opponent - cube_width / 2, scan_max_range);
+            }
+
+            double intersection_point1_y = (y2 * x1 - y2 * b + y1 * b - y1 * x2) / (k * y2 - k * y1 - x2 + x1);
+            double intersection_point1_x = k * intersection_point1_y + b;
+
+            double intersection_point2_y = (y3 * x2 - y3 * b + y2 * b - y2 * x3) / (k * y3 - k * y2 - x3 + x2);
+            double intersection_point2_x = k * intersection_point2_y + b;
+
+            double intersection_point3_y = (y4 * x3 - y4 * b + y3 * b - y3 * x4) / (k * y4 - k * y3 - x4 + x3);
+            double intersection_point3_x = k * intersection_point3_y + b;
+
+            double intersection_point4_y = (y1 * x4 - y1 * b + y4 * b - y4 * x1) / (k * y1 - k * y4 - x1 + x4);
+            double intersection_point4_x = k * intersection_point4_y + b;
+
+            std::vector<std::vector<double>> array = {{intersection_point1_y, intersection_point1_x},
+                                                      {intersection_point2_y, intersection_point2_x},
+                                                      {intersection_point3_y, intersection_point3_x},
+                                                      {intersection_point4_y, intersection_point4_x}};
+            double scan_to_square = scan_max_range;
+            for (int i = 0; i < 4; i++) {
+//                ROS_INFO_STREAM("y  "<<array[i][0]);
+//                ROS_INFO_STREAM("x  "<<array[i][1]);
+                if ((points[i][0] - ray_tracing_epsilon <= array[i][0] and
+                     array[i][0] <= points[i][1] + ray_tracing_epsilon) or
+                    (points[i][0] - ray_tracing_epsilon >= array[i][0] and
+                     array[i][0] >= points[i][1] + ray_tracing_epsilon)) {
+//                    ROS_INFO_STREAM(i);
+//                    ROS_INFO_STREAM(sqrt(pow((original_x - array[i][1]), 2) + pow((original_y - array[i][0]), 2)));
+                    scan_to_square = std::min(scan_to_square, sqrt(pow((original_x - array[i][1]), 2) +
+                                                                   pow((original_y - array[i][0]), 2)));
+                }
+            }
+            ROS_INFO_STREAM(k);
+            // return value could be more accurate depends on your preferences
+            return scan_to_square;
+        }
+    }
+
+    return std::min(total_distance, scan_max_range);
 }
 
 double ScanSimulator2D::distance_transform(double x, double y) const {
