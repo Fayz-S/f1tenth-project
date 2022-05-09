@@ -161,16 +161,6 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
     double y4 = center_to_corner * std::sin(7 * M_PI / 4 - theta_reversed) + opponent_Y;
 
     std::vector<std::vector<double>> points = {{y1,y2,x1,x2}, {y2,y3,x2,x3}, {y3,y4,x3,x4}, {y4,y1,x4,x1}};
-    //      ROS_INFO_STREAM("x1 "<<x1);
-    //      ROS_INFO_STREAM("y1 "<<y1);
-    //      ROS_INFO_STREAM("x2 "<<x2);
-    //      ROS_INFO_STREAM("y2 "<<y2);
-    //      ROS_INFO_STREAM("x3 "<<x3);
-    //      ROS_INFO_STREAM("y3 "<<y3);
-    //      ROS_INFO_STREAM("x4 "<<x4);
-    //      ROS_INFO_STREAM("y4 "<<y4);
-    //      ROS_INFO_STREAM("oppoX "<<opponent_X<<"  oppoY "<<opponent_Y);
-    //      ROS_INFO_STREAM("oppoT "<<opponent_theta);
 
     // decided whether this beam (line) intersects with opponent car (square) or not
     // if we put y coordinate of four corner points into the beam equation, and compare the result with actual x coordinate
@@ -220,24 +210,20 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
                                                       {intersection_point4_y, intersection_point4_x}};
             double scan_to_square = scan_max_range;
             for (int i = 0; i < 4; i++) {
-//                ROS_INFO_STREAM("y  "<<array[i][0]);
-//                ROS_INFO_STREAM("x  "<<array[i][1]);
+
                 if ((points[i][0] - ray_tracing_epsilon <= array[i][0] and
                      array[i][0] <= points[i][1] + ray_tracing_epsilon) or
                     (points[i][0] - ray_tracing_epsilon >= array[i][0] and
                      array[i][0] >= points[i][1] + ray_tracing_epsilon)) {
-//                    ROS_INFO_STREAM(i);
-//                    ROS_INFO_STREAM(sqrt(pow((original_x - array[i][1]), 2) + pow((original_y - array[i][0]), 2)));
+
                     scan_to_square = std::min(scan_to_square, sqrt(pow((original_x - array[i][1]), 2) +
                                                                    pow((original_y - array[i][0]), 2)));
                 }
             }
-            ROS_INFO_STREAM(k);
             // return value could be more accurate depends on your preferences
             return scan_to_square;
         }
     }
-
     return std::min(total_distance, scan_max_range);
 }
 
