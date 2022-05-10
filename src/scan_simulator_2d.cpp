@@ -145,11 +145,11 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
     double b = x - k * y;
 
     // calculate coordinate of four points of opponent car first
-    double theta_reversed = opponent_theta;
+    double theta_reversed = -opponent_theta;
     double center_to_corner = sqrt(2) * cube_width / 2;
 
-    double x1 = center_to_corner * std::cos(M_PI / 4 - theta_reversed) + opponent_X;
-    double y1 = center_to_corner * std::sin(M_PI / 4 - theta_reversed) + opponent_Y;
+    double x1 = center_to_corner * std::cos(    M_PI / 4 - theta_reversed) + opponent_X;
+    double y1 = center_to_corner * std::sin(    M_PI / 4 - theta_reversed) + opponent_Y;
 
     double x2 = center_to_corner * std::cos(3 * M_PI / 4 - theta_reversed) + opponent_X;
     double y2 = center_to_corner * std::sin(3 * M_PI / 4 - theta_reversed) + opponent_Y;
@@ -319,9 +319,4 @@ void ScanSimulator2D::set_map(
     // this is to calculate the distance from each pixel to the nearest occupied pixel in coordinate
     // so the elements in dt vector represent the distance and we can directly use them.
     DistanceTransform::distance_2d(dt, width, height, resolution);
-
-//    for(double i : dt)
-//    {
-//        ROS_INFO_STREAM(i);
-//    }
 }

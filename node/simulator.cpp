@@ -144,7 +144,7 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=100.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -364,14 +364,14 @@ public:
         ros::Time timestamp = ros::Time::now();
         double current_seconds = timestamp.toSec();
         state_blue = STKinematics::update(
-            state_blue,
-            accel_blue,
-            steer_angle_vel_blue,
-            params_blue,
-            current_seconds - previous_seconds);
+                state_blue,
+                accel_blue,
+                steer_angle_vel_blue,
+                params_blue,
+                current_seconds - previous_seconds);
         state_blue.velocity = std::min(std::max(state_blue.velocity, -max_speed), max_speed);
         state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -max_steering_angle), max_steering_angle);
-        
+
 
         previous_seconds = current_seconds;
 
@@ -402,7 +402,7 @@ public:
             opponent_pose.x = state_red.x;
             opponent_pose.y = state_red.y;
             opponent_pose.theta = state_red.theta;
-            //ROS_INFO_STREAM(state_red.theta);
+
             // Compute the scan from the lidar
             std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose);
 
@@ -410,6 +410,48 @@ public:
             std::vector<float> scan_(scan.size());
             for (size_t i = 0; i < scan.size(); i++)
                 scan_[i] = scan[i];
+
+            // In order to implement box collider for both cars, which treating each car as a box or a rectangle in this 2D world
+            // then, the problem becomes decide whether two rectangle is overlapping or not
+            // we can check whether each point of a rectangle is IN another rectangle or not
+            // to do this, first, we need the coordinate of all corner points of two rectangles (red and blue)
+            // second, use the vector cross product https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not
+            // third, loop four points
+            // all four points of blue car
+            double x1_blue = scan_pose.x - width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y1_blue = scan_pose.y + width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+            double x2_blue = scan_pose.x + width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y2_blue = scan_pose.y - width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+            double x3_blue = state_blue.x + width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y3_blue = state_blue.y - width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+            double x4_blue = state_blue.x - width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y4_blue = state_blue.y + width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+            // add them to a vector
+            std::vector<std::vector<double>> points_blue = {{x1_blue, y1_blue},
+                                                            {x2_blue, y2_blue},
+                                                            {x3_blue, y3_blue},
+                                                            {x4_blue, y4_blue}};
+
+            // all four points of red car
+            double x1_red = state_red.x + params_red.wheelbase * std::cos(state_red.theta) -
+                            width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y1_red = state_red.y + params_red.wheelbase * std::sin(state_red.theta) +
+                            width / 2 * std::sin(state_red.theta + M_PI / 2);
+
+            double x2_red = state_red.x + params_red.wheelbase * std::cos(state_red.theta) +
+                            width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y2_red = state_red.y + params_red.wheelbase * std::sin(state_red.theta) -
+                            width / 2 * std::sin(state_red.theta + M_PI / 2);
+
+            double x3_red = state_red.x + width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y3_red = state_red.y - width / 2 * std::sin(state_red.theta + M_PI / 2);
+
+            double x4_red = state_red.x - width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y4_red = state_red.y + width / 2 * std::sin(state_red.theta + M_PI / 2);
 
             // TTC Calculations are done here so the car can be halted in the simulator:
             // to reset TTC
@@ -422,7 +464,7 @@ public:
                     double proj_velocity = state_blue.velocity * cosines[i];
                     double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
                     // if it's small enough to count as a collision
-                    if ((ttc < ttc_threshold) && (ttc >= 0.0)) { 
+                    if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
                         if (!TTC) {
                             first_ttc_actions_blue();
                         }
@@ -430,7 +472,22 @@ public:
                         no_collision = false;
                         TTC = true;
 
-                        ROS_INFO("Collision detected");
+                        ROS_INFO("LiDAR collision detected: BLUE");
+                    }
+                }
+                // loop four points of blue car
+                for (int i = 0; i < 4; ++i) {
+                    if ((vector_cross(x1_red, y1_red, x2_red, y2_red, points_blue[i][0], points_blue[i][1]) *
+                         vector_cross(x3_red, y3_red, x4_red, y4_red, points_blue[i][0], points_blue[i][1]) >= 0) &&
+                        (vector_cross(x2_red, y2_red, x3_red, y3_red, points_blue[i][0], points_blue[i][1]) *
+                         vector_cross(x4_red, y4_red, x1_red, y1_red, points_blue[i][0], points_blue[i][1]) >= 0)) {
+                        if (!TTC) {
+                            first_ttc_actions_blue();
+                        }
+                        no_collision = false;
+                        TTC = true;
+
+                        ROS_INFO("Box collider detected: BLUE");
                     }
                 }
             }
@@ -443,8 +500,8 @@ public:
             sensor_msgs::LaserScan scan_msg;
             scan_msg.header.stamp = timestamp;
             scan_msg.header.frame_id = scan_frame_blue;
-            scan_msg.angle_min = -scan_simulator.get_field_of_view()/2.;
-            scan_msg.angle_max =  scan_simulator.get_field_of_view()/2.;
+            scan_msg.angle_min = -scan_simulator.get_field_of_view() / 2.;
+            scan_msg.angle_max = scan_simulator.get_field_of_view() / 2.;
             scan_msg.angle_increment = scan_simulator.get_angle_increment();
             scan_msg.range_max = 100;
             scan_msg.ranges = scan_;
@@ -522,14 +579,50 @@ public:
             for (size_t i = 0; i < scan.size(); i++)
                 scan_[i] = scan[i];
 
+            // same as above
+            double x1_red = scan_pose.x - width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y1_red = scan_pose.y + width / 2 * std::sin(state_red.theta + M_PI / 2);
+
+            double x2_red = scan_pose.x + width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y2_red = scan_pose.y - width / 2 * std::sin(state_red.theta + M_PI / 2);
+
+            double x3_red = state_red.x + width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y3_red = state_red.y - width / 2 * std::sin(state_red.theta + M_PI / 2);
+
+            double x4_red = state_red.x - width / 2 * std::cos(state_red.theta + M_PI / 2);
+            double y4_red = state_red.y + width / 2 * std::sin(state_red.theta + M_PI / 2);
+
+            std::vector<std::vector<double>> points_red = {{x1_red, y1_red},
+                                                           {x2_red, y2_red},
+                                                           {x3_red, y3_red},
+                                                           {x4_red, y4_red}};
+
+            double x1_blue = state_blue.x + params_blue.wheelbase * std::cos(state_blue.theta) -
+                             width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y1_blue = state_blue.y + params_blue.wheelbase * std::sin(state_blue.theta) +
+                             width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+            double x2_blue = state_blue.x + params_blue.wheelbase * std::cos(state_blue.theta) +
+                             width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y2_blue = state_blue.y + params_blue.wheelbase * std::sin(state_blue.theta) -
+                             width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+            double x3_blue = state_blue.x + width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y3_blue = state_blue.y - width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+            double x4_blue = state_blue.x - width / 2 * std::cos(state_blue.theta + M_PI / 2);
+            double y4_blue = state_blue.y + width / 2 * std::sin(state_blue.theta + M_PI / 2);
+
+
             // TTC Calculations are done here so the car can be halted in the simulator:
-            // to reset TTC
+            // detection based on the scan data
             bool no_collision = true;
             if (state_red.velocity != 0) {
                 for (size_t i = 0; i < scan_.size(); i++) {
                     // TTC calculations
-
                     // calculate projected velocity
+                    // the vector of velocity can be seen as always point to the middle beam, and cosines here is the cos of beams not cos of map frame,
+                    // hence, the middle beam direction has cos0 = 1, and so on.
                     double proj_velocity = state_red.velocity * cosines[i];
                     double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
                     // if it's small enough to count as a collision
@@ -541,7 +634,21 @@ public:
                         no_collision = false;
                         TTC = true;
 
-                        ROS_INFO("Collision detected");
+                        ROS_INFO("LiDAR collision detected: RED");
+                    }
+                }
+                for (int i = 0; i < 4; ++i) {
+                    if ((vector_cross(x1_blue, y1_blue, x2_blue, y2_blue, points_red[i][0], points_red[i][1]) *
+                         vector_cross(x3_blue, y3_blue, x4_blue, y4_blue, points_red[i][0], points_red[i][1]) >= 0) &&
+                        (vector_cross(x2_blue, y2_blue, x3_blue, y3_blue, points_red[i][0], points_red[i][1]) *
+                         vector_cross(x4_blue, y4_blue, x1_blue, y1_blue, points_red[i][0], points_red[i][1]) >= 0)) {
+                        if (!TTC) {
+                            first_ttc_actions_red();
+                        }
+                        no_collision = false;
+                        TTC = true;
+
+                        ROS_INFO("Box collider detected: RED");
                     }
                 }
             }
@@ -557,8 +664,8 @@ public:
             // red
             //
             scan_msg.header.frame_id = scan_frame_red;
-            scan_msg.angle_min = -scan_simulator.get_field_of_view()/2.;
-            scan_msg.angle_max =  scan_simulator.get_field_of_view()/2.;
+            scan_msg.angle_min = -scan_simulator.get_field_of_view() / 2.;
+            scan_msg.angle_max = scan_simulator.get_field_of_view() / 2.;
             scan_msg.angle_increment = scan_simulator.get_angle_increment();
             scan_msg.range_max = 100;
             scan_msg.ranges = scan_;
@@ -575,6 +682,9 @@ public:
     } // end of update_pose
 
         /// ---------------------- GENERAL HELPER FUNCTIONS ----------------------
+    double vector_cross(double x1, double y1, double x2, double y2, double x, double y) {
+        return (x2 - x1) * (y - y1) - (x - x1) * (y2 - y1);
+    }
 
     std::vector<int> ind_2_rc(int ind) {
         std::vector<int> rc;
