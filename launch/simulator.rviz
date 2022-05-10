@@ -317,7 +317,7 @@ Visualization Manager:
     Background Color: 48; 48; 48
     Default Light: true
     Fixed Frame: map
-    Frame Rate: 1200
+    Frame Rate: 120
   Name: root
   Tools:
     - Class: rviz/Interact

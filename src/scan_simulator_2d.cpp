@@ -93,8 +93,8 @@ void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose, do
     scan_data[i] = trace_ray(pose.x, pose.y, theta_index, opponent_pose.x, opponent_pose.y, opponent_pose.theta);
 
     // Add Gaussian noise to the ray trace
-//    if (scan_std_dev > 0)
-//        scan_data[i] += noise_dist(noise_generator);
+    if (scan_std_dev > 0)
+        scan_data[i] += noise_dist(noise_generator);
 
     // Increment the scan
     theta_index += theta_index_increment;
@@ -187,11 +187,12 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
         double obstacle_to_opponent = sqrt(pow((x - opponent_X), 2) + pow((y - opponent_Y), 2));
         // for the obstacle, the opponent car need to be closer than this car
         if (obstacle_to_opponent < total_distance) {
-
+            // if slope is INF, simply return distance between this car to opponent car and minus half square width
             if (theta_index_ == 0 or theta_index_ == theta_discretization / 2 or theta_index_ == theta_discretization) {
                 return std::min(this_to_opponent - cube_width / 2, scan_max_range);
             }
-
+            // calculating intersection points of the beam and four lines of the square, beam equation is x = ky + b,
+            // lines of square is (x - x1)/(x2 - x1) = (y - y1)/(y2 - y1). put beam equation into the lines and simplify it
             double intersection_point1_y = (y2 * x1 - y2 * b + y1 * b - y1 * x2) / (k * y2 - k * y1 - x2 + x1);
             double intersection_point1_x = k * intersection_point1_y + b;
 
@@ -210,17 +211,24 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
                                                       {intersection_point4_y, intersection_point4_x}};
             double scan_to_square = scan_max_range;
             for (int i = 0; i < 4; i++) {
-
-                if ((points[i][0] - ray_tracing_epsilon <= array[i][0] and
-                     array[i][0] <= points[i][1] + ray_tracing_epsilon) or
-                    (points[i][0] - ray_tracing_epsilon >= array[i][0] and
-                     array[i][0] >= points[i][1] + ray_tracing_epsilon)) {
-
-                    scan_to_square = std::min(scan_to_square, sqrt(pow((original_x - array[i][1]), 2) +
-                                                                   pow((original_y - array[i][0]), 2)));
+                // There will be four intersection point, but the real point we want is just one
+                // first of all, filter all points that not in square, which means both y and x is not between two points
+                // filter y
+                if ((points[i][0] - ray_tracing_epsilon >= array[i][0] and
+                     array[i][0] >= points[i][1] + ray_tracing_epsilon) or
+                    (points[i][0] - ray_tracing_epsilon <= array[i][0] and
+                     array[i][0] <= points[i][1] + ray_tracing_epsilon)) {
+                    // filter x
+                    if ((points[i][2] - ray_tracing_epsilon >= array[i][1] and
+                         array[i][1] >= points[i][3] + ray_tracing_epsilon) or
+                        (points[i][2] - ray_tracing_epsilon <= array[i][1] and
+                         array[i][1] <= points[i][3] + ray_tracing_epsilon)) {
+                        // only one or two points left, we just pick out the smallest one, which is the first intersect points
+                        scan_to_square = std::min(scan_to_square, sqrt(pow((original_x - array[i][1]), 2) +
+                                                                       pow((original_y - array[i][0]), 2)));
+                    }
                 }
             }
-            // return value could be more accurate depends on your preferences
             return scan_to_square;
         }
     }
