@@ -5,26 +5,35 @@ wheelbase: 0.3302 # meters
 width: 0.2032 # meters
 
 # steering delay
-buffer_length: 4
+buffer_length: 1
 # according to rules https://iros2021.f1tenth.org/rules.html#25-head-to-head-race, 2.5.2.c
 cube_width: 0.20
 # Limits on the speed and steering angle
-max_speed: 7. #  meters/second
-max_steering_angle: 0.4189 # radians
+max_speed: 6. #  meters/second
+max_steering_angle: 0.492 # radians
 max_accel: 7.51 # meters/second^2
 max_decel: 8.26 # meters/second^2
 max_steering_vel: 3.2 # radians/second
-friction_coeff: 0.523 # - (complete estimate)
+friction_coeff: 5.923 # - (complete estimate)
 height_cg: 0.074 # m (roughly measured to be 3.25 in)
-l_cg2rear: 0.17145 # m (decently measured to be 6.75 in)
-l_cg2front: 0.15875 # m (decently measured to be 6.25 in)
+l_cg2rear: 0.139 # m (decently measured to be 6.75 in)
+l_cg2front: 0.1912 # m (decently measured to be 6.25 in)
 C_S_front: 4.718 #.79 # 1/rad ? (estimated weight/4)
 C_S_rear: 5.4562 #.79 # 1/rad ? (estimated weight/4)
-mass: 3.47 # kg (measured on car 'lidart')
-moment_inertia: .04712 # kg m^2 (estimated as a rectangle with width and height of car and evenly distributed mass, then shifted to account for center of mass location)
+mass: 3.958 # kg
+moment_inertia: .15712 # kg m^2 (estimated as a rectangle with width and height of car and evenly distributed mass, then shifted to account for center of mass location)
+empirical_drivetrain_parameters_1: 4.097
+empirical_drivetrain_parameters_2: 0.237
+empirical_drivetrain_parameters_3: 0.392
+engine_revolutions_per_minute_reference: 0.25
+empirical_Pacejka_parameters_B_f: 0.711
+empirical_Pacejka_parameters_C_f: 1.414
+empirical_Pacejka_parameters_D_f: 0.892
+empirical_Pacejka_parameters_B_r: 2.482
+empirical_Pacejka_parameters_C_r: 1.343
+empirical_Pacejka_parameters_D_r: 0.892
 
 # The rate at which the pose and the lidar publish
-# change this will lead to two car have asynchronous position update
 update_pose_rate: 0.001
 
 # Lidar simulation parameters
@@ -86,7 +95,7 @@ nav_key_char: "n"
 new_key_char: "z"
 
 # Keyboard driving params
-keyboard_speed: 1.8  # meters/second
+keyboard_speed: 2  # meters/second
 keyboard_steer_ang: .3  # radians
 
 # obstacle parameters

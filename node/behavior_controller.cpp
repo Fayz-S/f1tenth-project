@@ -149,7 +149,7 @@ public:
         safety_on = false;
 
         // Initialize state
-        state = {.x=0.0, .y=0.0, .theta=0.0, .velocity=0.0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state = {.x=0.0, .y=0.0, .theta=0.0, .velocity_x=0.0, .velocity_y=0.0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
 
         // Get params for precomputation and collision detection
         int scan_beams;
@@ -205,12 +205,12 @@ public:
 
     void collision_checker(const sensor_msgs::LaserScan & msg) {
         // This function calculates TTC to see if there's a collision
-        if (state.velocity != 0) {
+        if (state.velocity_x != 0) {
             for (size_t i = 0; i < msg.ranges.size(); i++) {
                 double angle = msg.angle_min + i * msg.angle_increment;
 
                 // calculate projected velocity
-                double proj_velocity = state.velocity * cosines[i];
+                double proj_velocity = state.velocity_x * cosines[i];
                 double ttc = (msg.ranges[i] - car_distances[i]) / proj_velocity;
 
                 // if it's small, there's a collision
@@ -362,7 +362,7 @@ public:
 
     void odom_callback(const nav_msgs::Odometry & msg) {
         // Keep track of state to be used elsewhere
-        state.velocity = msg.twist.twist.linear.x;
+        state.velocity_x = msg.twist.twist.linear.x;
         state.angular_velocity = msg.twist.twist.angular.z;
         state.x = msg.pose.pose.position.x;
         state.y = msg.pose.pose.position.y;

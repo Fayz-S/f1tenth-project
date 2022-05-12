@@ -53,7 +53,8 @@ private:
     // The car state_blue and parameters
     CarState state_blue;
     CarState state_red;
-    double previous_seconds;
+    double previous_seconds_blue;
+    double previous_seconds_red;
     double scan_distance_to_base_link;
     double max_speed, max_steering_angle;
     double max_accel, max_steering_vel, max_decel;
@@ -144,15 +145,16 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=100.0, .st_dyn=false};
+        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=100.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
         
-        previous_seconds = ros::Time::now().toSec();
+        previous_seconds_blue = ros::Time::now().toSec();
+        previous_seconds_red = ros::Time::now().toSec();
 
-        state_red = {.x=0, .y=-0.3, .theta=0, .velocity=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=0, .y=-0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_red = 0.0;
         steer_angle_vel_red = 0.0;
         desired_speed_red = 0.0;
@@ -202,23 +204,42 @@ public:
         n.getParam("max_accel", max_accel);
         n.getParam("max_decel", max_decel);
         n.getParam("max_steering_vel", max_steering_vel);
+        n.getParam("width", width);
         n.getParam("friction_coeff", params_blue.friction_coeff);
         n.getParam("height_cg", params_blue.h_cg);
         n.getParam("l_cg2rear", params_blue.l_r);
         n.getParam("l_cg2front", params_blue.l_f);
         n.getParam("C_S_front", params_blue.cs_f);
         n.getParam("C_S_rear", params_blue.cs_r);
-        n.getParam("moment_inertia", params_blue.I_z);
+        n.getParam("moment_inertia", params_blue.Iz);
         n.getParam("mass", params_blue.mass);
-        n.getParam("width", width);
+        n.getParam("empirical_drivetrain_parameters_1", params_blue.Cm1);
+        n.getParam("empirical_drivetrain_parameters_2", params_blue.Cm2);
+        n.getParam("empirical_drivetrain_parameters_3", params_blue.Cm3);
+        n.getParam("empirical_Pacejka_parameters_B_f", params_blue.B_f);
+        n.getParam("empirical_Pacejka_parameters_C_f", params_blue.C_f);
+        n.getParam("empirical_Pacejka_parameters_D_f", params_blue.D_f);
+        n.getParam("empirical_Pacejka_parameters_B_r", params_blue.B_r);
+        n.getParam("empirical_Pacejka_parameters_C_r", params_blue.C_r);
+        n.getParam("empirical_Pacejka_parameters_D_r", params_blue.D_r);
+
         n.getParam("friction_coeff", params_red.friction_coeff);
         n.getParam("height_cg", params_red.h_cg);
         n.getParam("l_cg2rear", params_red.l_r);
         n.getParam("l_cg2front", params_red.l_f);
         n.getParam("C_S_front", params_red.cs_f);
         n.getParam("C_S_rear", params_red.cs_r);
-        n.getParam("moment_inertia", params_red.I_z);
+        n.getParam("moment_inertia", params_red.Iz);
         n.getParam("mass", params_red.mass);
+        n.getParam("empirical_drivetrain_parameters_1", params_red.Cm1);
+        n.getParam("empirical_drivetrain_parameters_2", params_red.Cm2);
+        n.getParam("empirical_drivetrain_parameters_3", params_red.Cm3);
+        n.getParam("empirical_Pacejka_parameters_B_f", params_red.B_f);
+        n.getParam("empirical_Pacejka_parameters_C_f", params_red.C_f);
+        n.getParam("empirical_Pacejka_parameters_D_f", params_red.D_f);
+        n.getParam("empirical_Pacejka_parameters_B_r", params_red.B_r);
+        n.getParam("empirical_Pacejka_parameters_C_r", params_red.C_r);
+        n.getParam("empirical_Pacejka_parameters_D_r", params_red.D_r);
 
         // clip velocity
         n.getParam("speed_clip_diff", speed_clip_diff);
@@ -363,17 +384,22 @@ public:
         // Update the pose
         ros::Time timestamp = ros::Time::now();
         double current_seconds = timestamp.toSec();
+
         state_blue = STKinematics::update(
                 state_blue,
                 accel_blue,
                 steer_angle_vel_blue,
                 params_blue,
-                current_seconds - previous_seconds);
-        state_blue.velocity = std::min(std::max(state_blue.velocity, -max_speed), max_speed);
+                current_seconds - previous_seconds_blue);
+
+        state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -max_speed), max_speed);
         state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -max_steering_angle), max_steering_angle);
+//        ROS_INFO_STREAM("VX "<<state_blue.velocity_x);
 
+        //ROS_INFO_STREAM("STEERING "<<state_blue.steer_angle);
+//        ROS_INFO_STREAM("angular_velocity "<<state_blue.angular_velocity);
 
-        previous_seconds = current_seconds;
+        previous_seconds_blue = current_seconds;
 
         /// Publish the pose as a transformation
         pub_pose_transform_blue(timestamp);
@@ -456,12 +482,12 @@ public:
             // TTC Calculations are done here so the car can be halted in the simulator:
             // to reset TTC
             bool no_collision = true;
-            if (state_blue.velocity != 0) {
+            if (state_blue.velocity_x != 0) {
                 for (size_t i = 0; i < scan_.size(); i++) {
                     // TTC calculations
 
                     // calculate projected velocity
-                    double proj_velocity = state_blue.velocity * cosines[i];
+                    double proj_velocity = state_blue.velocity_x * cosines[i];
                     double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
                     // if it's small enough to count as a collision
                     if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
@@ -539,11 +565,11 @@ public:
                 accel_red,
                 steer_angle_vel_red,
                 params_red,
-                current_seconds - previous_seconds);
-        state_red.velocity = std::min(std::max(state_red.velocity, -max_speed), max_speed);
+                current_seconds - previous_seconds_red);
+        state_red.velocity_x = std::min(std::max(state_red.velocity_x, -max_speed), max_speed);
         state_red.steer_angle = std::min(std::max(state_red.steer_angle, -max_steering_angle), max_steering_angle);
 
-        previous_seconds = current_seconds;
+        previous_seconds_red = current_seconds;
 
         /// Publish the pose as a transformation
         pub_pose_transform_red(timestamp);
@@ -617,13 +643,13 @@ public:
             // TTC Calculations are done here so the car can be halted in the simulator:
             // detection based on the scan data
             bool no_collision = true;
-            if (state_red.velocity != 0) {
+            if (state_red.velocity_x != 0) {
                 for (size_t i = 0; i < scan_.size(); i++) {
                     // TTC calculations
                     // calculate projected velocity
                     // the vector of velocity can be seen as always point to the middle beam, and cosines here is the cos of beams not cos of map frame,
                     // hence, the middle beam direction has cos0 = 1, and so on.
-                    double proj_velocity = state_red.velocity * cosines[i];
+                    double proj_velocity = state_red.velocity_x * cosines[i];
                     double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
                     // if it's small enough to count as a collision
                     if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
@@ -709,7 +735,8 @@ public:
 
     void first_ttc_actions_blue() {
         // completely stop vehicle
-        state_blue.velocity = 0.0;
+        state_blue.velocity_x = 0.0;
+        state_blue.velocity_y = 0.0;
         state_blue.angular_velocity = 0.0;
         state_blue.slip_angle = 0.0;
         state_blue.steer_angle = 0.0;
@@ -721,7 +748,8 @@ public:
 
     void first_ttc_actions_red() {
         // completely stop vehicle
-        state_red.velocity = 0.0;
+        state_red.velocity_x = 0.0;
+        state_red.velocity_y = 0.0;
         state_red.angular_velocity = 0.0;
         state_red.slip_angle = 0.0;
         state_red.steer_angle = 0.0;
@@ -806,18 +834,18 @@ public:
 
     void compute_accel_blue(double desired_velocity) {
         // get difference between current and desired
-        double dif = (desired_velocity - state_blue.velocity);
+        double dif = (desired_velocity - state_blue.velocity_x);
 
-        if (state_blue.velocity > 0) {
+        if (state_blue.velocity_x > 0) {
             if (dif > 0) {
                 // accelerate
                 double kp = 2.0 * max_accel / max_speed;
                 set_accel_blue(kp * dif);
             } else {
                 // brake
-                accel_blue = -max_decel; 
+                accel_blue = -max_decel;
             }    
-        } else if (state_blue.velocity < 0) {
+        } else if (state_blue.velocity_x < 0) {
             if (dif > 0) {
                 // brake
                 accel_blue = max_decel;
@@ -836,9 +864,9 @@ public:
 
     void compute_accel_red(double desired_velocity) {
         // get difference between current and desired
-        double dif = (desired_velocity - state_red.velocity);
+        double dif = (desired_velocity - state_red.velocity_x);
 
-        if (state_red.velocity > 0) {
+        if (state_red.velocity_x > 0) {
             if (dif > 0) {
                 // accelerate
                 double kp = 2.0 * max_accel / max_speed;
@@ -847,7 +875,7 @@ public:
                 // brake
                 accel_red = -max_decel;
             }
-        } else if (state_red.velocity < 0) {
+        } else if (state_red.velocity_x < 0) {
             if (dif > 0) {
                 // brake
                 accel_red = max_decel;
@@ -1119,7 +1147,7 @@ public:
             odom.pose.pose.orientation.y = quat.y();
             odom.pose.pose.orientation.z = quat.z();
             odom.pose.pose.orientation.w = quat.w();
-            odom.twist.twist.linear.x = state_blue.velocity;
+            odom.twist.twist.linear.x = state_blue.velocity_x;
             odom.twist.twist.angular.z = state_blue.angular_velocity;
             odom_pub.publish(odom);
         }
@@ -1138,7 +1166,7 @@ public:
             odom.pose.pose.orientation.y = quat.y();
             odom.pose.pose.orientation.z = quat.z();
             odom.pose.pose.orientation.w = quat.w();
-            odom.twist.twist.linear.x = state_red.velocity;
+            odom.twist.twist.linear.x = state_red.velocity_x;
             odom.twist.twist.angular.z = state_red.angular_velocity;
             odom_pub.publish(odom);
         }

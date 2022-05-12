@@ -14,7 +14,7 @@ CarState KSKinematics::update(
         double steer_angle_vel,
         CarParams p,
         double dt) {
-
+/*
     CarState end;
 
     // compute first derivatives of state
@@ -34,4 +34,5 @@ CarState KSKinematics::update(
     end.slip_angle = start.slip_angle;
 
     return end;
+    */
 }
