@@ -20,37 +20,40 @@ CarState STKinematics::update(CarState start, double accel, double steer_angle_v
     if (start.velocity_x < thresh) {
         return update_k(start, accel, steer_angle_vel, p, dt);
     }
-    ROS_INFO_STREAM("acc "<< accel);
+    ROS_INFO_STREAM("steeringA "<< start.velocity_x);
 
-    double d = std::max(0.0, accel / 7.51);
+    double d = accel / 7.51;
     double Fx_fr = p.Cm1 * d / p.Cm2 - start.velocity_x / p.Cm3;
 
-    double alpha_f =
-            -std::atan2((start.angular_velocity * p.l_f + start.velocity_y), start.velocity_x) + start.steer_angle;
-    double alpha_r = std::atan2((start.angular_velocity * p.l_r - start.velocity_y), start.velocity_x);
+    double alpha_f = -std::atan((start.angular_velocity * p.l_f + start.velocity_y) / start.velocity_x) + start.steer_angle;
+    double alpha_r = std::atan((start.angular_velocity * p.l_r - start.velocity_y) / start.velocity_x);
 
-    double Fy_f = p.D_f * std::sin(p.C_f * std::atan(p.B_f * alpha_f));
-    double Fy_r = p.D_r * std::sin(p.C_r * std::atan(p.B_r * alpha_r));
+    double Fy_f = p.D_f * std::sin(p.C_f * std::atan(p.B_f * alpha_f))*7;
+    double Fy_r = p.D_r * std::sin(p.C_r * std::atan(p.B_r * alpha_r))*7;
 
     double x_dot = start.velocity_x * std::cos(start.theta) - start.velocity_y * std::sin(start.theta);
     double y_dot = start.velocity_x * std::sin(start.theta) + start.velocity_y * std::sin(start.theta);
     double theta_dot = start.angular_velocity;
-    double velocity_x_dot = (Fx_fr + Fx_fr * std::cos(start.steer_angle) - Fy_f * std::sin(start.steer_angle) + p.mass * start.velocity_y * start.angular_velocity) / p.mass;
-//
+    double velocity_x_dot = (Fx_fr * std::cos(start.steer_angle) - Fy_f * std::sin(start.steer_angle) + p.mass * start.velocity_y * start.angular_velocity) / p.mass;
+//Fx_fr +
     double velocity_y_dot = (Fy_r + Fy_f * std::sin(start.steer_angle) + Fx_fr * std::sin(start.steer_angle) -p.mass * start.velocity_x * start.angular_velocity) / p.mass;
 //
-    double angular_velocity_dot =
-            (Fy_f * p.l_f * std::cos(start.steer_angle) + Fx_fr * p.l_f * std::sin(start.steer_angle) - Fy_r * p.l_r) / p.Iz;
-
+    double angular_velocity_dot = (Fy_f * p.l_f* std::cos(start.steer_angle)  - Fy_r * p.l_r) / p.Iz;
+//+ Fx_fr * p.l_f * std::sin(start.steer_angle)
     CarState end;
     end.x = start.x + dt * x_dot;
     end.y = start.y + dt * y_dot;
     end.theta = start.theta + dt * theta_dot;
     end.velocity_x = start.velocity_x + dt * velocity_x_dot;
     end.velocity_y = start.velocity_y + dt * velocity_y_dot;
-            //;
     end.steer_angle = start.steer_angle + dt * steer_angle_vel;
-    end.angular_velocity = start.angular_velocity + dt * angular_velocity_dot;
+
+    if (std::abs(start.steer_angle) < 0.005 and std::abs(start.angular_velocity + dt * angular_velocity_dot) < 1){
+        end.angular_velocity = 0;
+    }else {
+        end.angular_velocity = start.angular_velocity + dt * angular_velocity_dot;
+    }
+
     end.slip_angle = alpha_f;
     end.st_dyn = true;
     /*
