@@ -218,9 +218,10 @@ public:
         // make drive message from joystick if turned on
         if (mux_controller[joy_mux_idx]) {
             // Calculate desired velocity and steering angle
-            double desired_velocity_blue = max_speed * msg.axes[joy_speed_axis_blue];
+            // possibly this will be changed depends on different joystick
+            double desired_velocity_blue = -max_speed / 2 * (msg.axes[joy_speed_axis_blue] - 1);
             double desired_steer_blue = max_steering_angle * msg.axes[joy_angle_axis_blue];
-            double desired_velocity_red = max_speed * msg.axes[joy_speed_axis_red];
+            double desired_velocity_red = -max_speed / 2 * (msg.axes[joy_speed_axis_red] - 1);
             double desired_steer_red = max_steering_angle * msg.axes[joy_angle_axis_red];
 
             publish_to_drive_blue(desired_velocity_blue, desired_steer_blue);
