@@ -11,7 +11,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Int32MultiArray.h>
-
+#include <std_msgs/Bool.h>
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -28,8 +28,10 @@
 #include "f1tenth_simulator/precompute.hpp"
 
 #include <iostream>
+#include <fstream>
 #include <math.h>
-
+#include <ctime>
+#include <string>
 
 using namespace racecar_simulator;
 
@@ -89,6 +91,8 @@ private:
     ros::Subscriber pose_sub_red;
     ros::Subscriber pose_rviz_sub;
 
+    ros::Subscriber data_sub;
+
     // Publish a scan, odometry, and imu data
     bool broadcast_transform;
     bool pub_gt_pose;
@@ -137,6 +141,17 @@ private:
     std::vector<double> steering_buffer_blue;
     std::vector<double> steering_buffer_red;
 
+    // flag that indicate start or stop recording data
+    bool log_data_flag = 0;
+    // the path where save data
+    char* path = "/media/psf/Ubuntu VM";
+    // name of current map
+    std::string map_name;
+    // save vehicle state
+    std::vector<std::string> car_state_blue;
+    std::vector<std::string> car_state_red;
+    // save data for machine learning
+    std::vector<std::string> steering_gas_lidar_blue;
 
 public:
 
@@ -163,7 +178,7 @@ public:
 
         // Get the topic names
         std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red, gt_pose_topic,
-        pose_rviz_topic, odom_topic, imu_topic;
+        pose_rviz_topic, odom_topic, imu_topic, data_topic;
         n.getParam("drive_topic_blue", drive_topic_blue);
         n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
@@ -241,6 +256,8 @@ public:
         n.getParam("empirical_Pacejka_parameters_C_r", params_red.C_r);
         n.getParam("empirical_Pacejka_parameters_D_r", params_red.D_r);
 
+        n.getParam("data_topic", data_topic);
+
         // clip velocity
         n.getParam("speed_clip_diff", speed_clip_diff);
 
@@ -293,6 +310,8 @@ public:
         pose_sub_red = n.subscribe(pose_topic_red, 1, &RacecarSimulator::pose_callback_red, this);
         pose_rviz_sub = n.subscribe(pose_rviz_topic, 1, &RacecarSimulator::pose_rviz_callback, this);
 
+        data_sub = n.subscribe(data_topic, 1, &RacecarSimulator::data_callback, this);
+
         // obstacle subscriber
         obs_sub = n.subscribe("/clicked_point", 1, &RacecarSimulator::obs_callback, this);
 
@@ -323,7 +342,7 @@ public:
         current_map = map_msg;
         std::vector<int8_t> map_data_raw = map_msg.data;
         std::vector<int> map_data(map_data_raw.begin(), map_data_raw.end());
-
+        map_name = map_msg.header.frame_id.substr(0, map_msg.header.frame_id.find("."));
         map_width = map_msg.info.width;
         map_height = map_msg.info.height;
         origin_x = map_msg.info.origin.position.x;
@@ -359,10 +378,10 @@ public:
         clear_obs_control.always_visible = true;
         clear_obs_button.controls.push_back(clear_obs_control);
 
-        im_server.insert(clear_obs_button);
-        im_server.setCallback(clear_obs_button.name, boost::bind(&RacecarSimulator::clear_obstacles, this, _1));
+//        im_server.insert(clear_obs_button);
+//        im_server.setCallback(clear_obs_button.name, boost::bind(&RacecarSimulator::clear_obstacles, this, _1));
 
-        im_server.applyChanges();
+//        im_server.applyChanges();
 
         ROS_INFO("Simulator constructed.");
     }
@@ -434,8 +453,12 @@ public:
 
             // Convert to float
             std::vector<float> scan_(scan.size());
-            for (size_t i = 0; i < scan.size(); i++)
+            // concat scan to a single string
+            std::string scan_string;
+            for (size_t i = 0; i < scan.size(); i++){
                 scan_[i] = scan[i];
+                scan_string += std::to_string(scan_[i]) + ",";
+            }
 
             // In order to implement box collider for both cars, which treating each car as a box or a rectangle in this 2D world
             // then, the problem becomes decide whether two rectangle is overlapping or not
@@ -539,6 +562,7 @@ public:
             // Publish a transformation between base link and laser
             pub_laser_link_transform_blue(timestamp);
 
+            save_data_blue(scan_string);
         }
 
     } // end of update_pose
@@ -703,6 +727,7 @@ public:
             // Publish a transformation between base link and laser
             pub_laser_link_transform_red(timestamp);
 
+            save_data_red();
         }
 
     } // end of update_pose
@@ -712,6 +737,94 @@ public:
         return (x2 - x1) * (y - y1) - (x - x1) * (y2 - y1);
     }
 
+    void save_data_blue(std::string scan) {
+        if (log_data_flag) {
+            // if the flag is true, then record data to vector, but not write to file yet
+            // note that the frequency of recording is same as update_pose_rate, which depends on how fast your machine is as well as the storage
+            std::string ml_data = std::to_string(desired_speed_blue) + "," + std::to_string(desired_steer_ang_blue) + "," + scan;
+            steering_gas_lidar_blue.push_back(ml_data);
+            std::string current_car_state = toString(state_blue);
+            car_state_blue.push_back(current_car_state);
+        } else {
+            // if the flag is false, then write data to files
+            // we check whether the data vector is empty or not, because the flag probably will remain false, but we just want to write once
+            if (!steering_gas_lidar_blue.empty()) {
+                // use current time to distinct different files
+                time_t now = time(0);
+                std::string date(std::ctime(&now));
+                std::ofstream file_blue(path + std::string("/ML_dataset_blue") + date + std::string(".csv"));
+                // if the file can be created
+                if (file_blue.is_open()) {
+                    ROS_WARN("Starting writing ML data (blue)");
+                    // write heading first
+                    file_blue << "Speed,Steering_angle,LiDAR_scan\n";
+                    // save every rows
+                    for (std::string s: steering_gas_lidar_blue) {
+                        file_blue << s + "\n";
+                    }
+                    // close the file
+                    file_blue.close();
+                    // clear the vector
+                    steering_gas_lidar_blue.clear();
+                    ROS_WARN("Finishing writing data to %s/ML_dataset_blue%s.csv", path, std::ctime(&now));
+                } else {
+                    ROS_ERROR("Cannot create a file (blue)");
+                }
+            }
+            if (!car_state_blue.empty()) {
+                time_t now = time(0);
+                std::string date(std::ctime(&now));
+                std::ofstream file_blue(path + std::string("/car_state_blue_") + date + std::string(".csv"));
+                if (file_blue.is_open()) {
+                    ROS_WARN("Starting writing data (blue)");
+                    // heading
+                    file_blue << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
+                    for (std::string s: car_state_blue) {
+                        file_blue << s + "\n";
+                    }
+                    file_blue.close();
+                    car_state_blue.clear();
+                    ROS_WARN("Finishing writing data to %s/car_state_blue_%s.csv", path, std::ctime(&now));
+                } else {
+                    ROS_ERROR("Cannot create a file (blue)");
+                }
+            }
+        }
+    }
+
+    void save_data_red(){
+        if (log_data_flag){
+            std::string current_car_state = toString(state_red);
+            car_state_red.push_back(current_car_state);
+        }else{
+            if (!car_state_red.empty()){
+                time_t now = time(0);
+                std::string date(std::ctime(&now));
+                std::ofstream file_red (path + std::string("/car_state_red_") + date + std::string(".csv"));
+                if (file_red.is_open()){
+                    ROS_WARN("Starting writing data (red)");
+                    // heading
+                    file_red << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
+                    for(std::string s : car_state_red){
+                        file_red << s + "\n";
+                    }
+                    file_red.close();
+                    car_state_red.clear();
+                    ROS_WARN("Finishing writing data to %s/car_state_red_%s.csv", path, std::ctime(&now));
+                }else {
+                    ROS_ERROR("Cannot create a file (red)");
+                }
+            }
+        }
+    }
+
+    std::string toString(CarState &carState) {
+        return std::to_string(carState.x) + "," + std::to_string(carState.y) + "," + std::to_string(carState.theta) +
+               "," + std::to_string(carState.velocity_x) + ","
+               + std::to_string(carState.velocity_y) + "," + std::to_string(carState.steer_angle) + "," +
+               std::to_string(carState.angular_velocity) + ","
+               + std::to_string(carState.slip_angle);
+    }
     std::vector<int> ind_2_rc(int ind) {
         std::vector<int> rc;
         int row = floor(ind/map_width);
@@ -901,6 +1014,15 @@ public:
         int ind = rc_2_ind(rc[0], rc[1]);
         added_obs.push_back(ind);
         add_obs(ind);
+    }
+
+    void data_callback(const std_msgs::Bool &msg){
+        log_data_flag = msg.data;
+        if (log_data_flag){
+            ROS_INFO_STREAM("start logging driving data");
+        }else {
+            ROS_INFO_STREAM("stop logging driving data and save to file");
+        }
     }
 
     void pose_callback_blue(const geometry_msgs::PoseStamped & msg) {

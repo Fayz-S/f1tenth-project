@@ -34,7 +34,7 @@ empirical_Pacejka_parameters_C_r: 2.114
 empirical_Pacejka_parameters_D_r: 28.892
 
 # The rate at which the pose and the lidar publish
-update_pose_rate: 0.001
+update_pose_rate: 0.005
 
 # Lidar simulation parameters
 scan_beams: 1081
@@ -71,17 +71,18 @@ new_method_mux_idx: -1
 # Enables joystick if true
 joy: true
 # Joystick indices
-joy_speed_axis_blue: 2
-joy_angle_axis_blue: 0
-joy_speed_axis_red: 5
-joy_angle_axis_red: 3
+joy_speed_axis_blue: 5 # LT
+joy_angle_axis_blue: 0 # left joy
+joy_speed_axis_red: 2 # RT
+joy_angle_axis_red: 3 # right joy
 #joy_max_speed: 2. # meters/second
 # Joystick indices for toggling mux
 joy_button_idx: 0  # A button
 key_button_idx: 2 # X button
 brake_button_idx: 3 # Y button
 random_walk_button_idx: 1 # B button
-nav_button_idx: 6 # RB button
+nav_button_idx: 5 # RB button
+data_button_idx: 4 # LB button
 # **Add button for new planning method here**
 new_button_idx: -1
 
@@ -118,6 +119,7 @@ imu_topic: "/imu"
 pose_rviz_topic: "/initialpose"
 brake_bool_topic: "/brake_bool"
 mux_topic: "/mux"
+data_topic: "/data"
 
 # Topic names of various drive channels
 rand_drive_topic: "/rand_drive"

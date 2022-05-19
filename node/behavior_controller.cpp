@@ -31,6 +31,8 @@ private:
 
     // Publisher for mux controller
     ros::Publisher mux_pub;
+    // Publisher for starting logging data signal
+    ros::Publisher data_pub;
 
     // Mux indices
     int joy_mux_idx;
@@ -51,6 +53,7 @@ private:
     int random_walk_button_idx;
     int brake_button_idx;
     int nav_button_idx;
+    int data_button_idx;
     // ***Add button index for new planner here***
     // int new_button_idx;
 
@@ -84,14 +87,16 @@ private:
     double beginning_seconds;
     int collision_count=0;
 
-
+    // flag
+    bool log_data = false;
+    bool joy_button_previous = false;
 public:
     BehaviorController() {
         // Initialize the node handle
         n = ros::NodeHandle("~");
 
         // get topic names
-        std::string scan_topic, odom_topic, imu_topic, joy_topic, keyboard_topic, brake_bool_topic, mux_topic;
+        std::string scan_topic, odom_topic, imu_topic, joy_topic, keyboard_topic, brake_bool_topic, mux_topic, data_topic;
         n.getParam("scan_topic", scan_topic);
         n.getParam("odom_topic", odom_topic);
         n.getParam("imu_topic", imu_topic);
@@ -99,9 +104,12 @@ public:
         n.getParam("mux_topic", mux_topic);
         n.getParam("keyboard_topic", keyboard_topic);
         n.getParam("brake_bool_topic", brake_bool_topic);
+        n.getParam("data_topic", data_topic);
 
         // Make a publisher for mux messages
         mux_pub = n.advertise<std_msgs::Int32MultiArray>(mux_topic, 10);
+        // publisher for sending signal
+        data_pub = n.advertise<std_msgs::Bool>(data_topic, 1);
 
         // Start subscribers to listen to laser scan, joy, IMU, and odom messages
         laser_sub = n.subscribe(scan_topic, 1, &BehaviorController::laser_callback, this);
@@ -126,6 +134,7 @@ public:
         n.getParam("random_walk_button_idx", random_walk_button_idx);
         n.getParam("brake_button_idx", brake_button_idx);
         n.getParam("nav_button_idx", nav_button_idx);
+        n.getParam("data_button_idx", data_button_idx);
         // ***Add button index for new planner here***
         // n.getParam("new_button_idx", new_button_idx);
 
@@ -285,6 +294,24 @@ public:
     }
 
     void joy_callback(const sensor_msgs::Joy & msg) {
+        if (msg.buttons[data_button_idx]) {
+            // this is to prevent keep sending same flag
+            // when the button is down, with other axis have inputs, this will also publish message
+            // but this will lead to start and stop recording data over and over
+            // what I really want is, only change the flag when the button is down for the first time rather than holding it
+            if (!joy_button_previous) {
+                joy_button_previous = true;
+                // a switch
+                log_data = !log_data;
+
+                std_msgs::Bool msg;
+                msg.data = log_data;
+
+                data_pub.publish(msg);
+            }
+        }else {
+            joy_button_previous = false;
+        }
         // Changing mux_controller:
         if (msg.buttons[joy_button_idx]) { 
             // joystick
@@ -294,7 +321,7 @@ public:
             // keyboard
             toggle_mux(key_mux_idx, "Keyboard");
         }
-        else if (msg.buttons[brake_button_idx]) { 
+        if (msg.buttons[brake_button_idx]) {
             // emergency brake 
             if (safety_on) {
                 ROS_INFO("Emergency brake turned off");
@@ -304,8 +331,7 @@ public:
                 ROS_INFO("Emergency brake turned on");
                 safety_on = true;
             }
-        }
-        else if (msg.buttons[random_walk_button_idx]) { 
+        }else if (msg.buttons[random_walk_button_idx]) {
             // random walker
             toggle_mux(random_walker_mux_idx, "Random Walker");
         } else if (msg.buttons[nav_button_idx]) {
@@ -355,9 +381,7 @@ public:
 
     void laser_callback(const sensor_msgs::LaserScan & msg) {
         // check for a collision
-        collision_checker(msg);
-
-
+        //collision_checker(msg);
     }
 
     void odom_callback(const nav_msgs::Odometry & msg) {
