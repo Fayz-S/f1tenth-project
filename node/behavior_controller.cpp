@@ -40,6 +40,7 @@ private:
     int random_walker_mux_idx;
     int nav_mux_idx;
     int brake_mux_idx;
+    int mpc_mux_idx;
     // ***Add mux index for new planner here***
     // int new_mux_idx;
 
@@ -54,6 +55,7 @@ private:
     int brake_button_idx;
     int nav_button_idx;
     int data_button_idx;
+    int mpc_button_idx;
     // ***Add button index for new planner here***
     // int new_button_idx;
 
@@ -63,6 +65,7 @@ private:
     std::string brake_key_char;
     std::string random_walk_key_char;
     std::string nav_key_char;
+    std::string mpc_key_char;
     // ***Add key char for new planner here***
     // int new_key_char;
 
@@ -125,6 +128,7 @@ public:
         n.getParam("random_walker_mux_idx", random_walker_mux_idx);
         n.getParam("brake_mux_idx", brake_mux_idx);
         n.getParam("nav_mux_idx", nav_mux_idx);
+        n.getParam("MPC_mux_idx", mpc_mux_idx);
         // ***Add mux index for new planner here***
         // n.getParam("new_mux_idx", new_mux_idx);
 
@@ -135,6 +139,7 @@ public:
         n.getParam("brake_button_idx", brake_button_idx);
         n.getParam("nav_button_idx", nav_button_idx);
         n.getParam("data_button_idx", data_button_idx);
+        n.getParam("MPC_button_idx", mpc_button_idx);
         // ***Add button index for new planner here***
         // n.getParam("new_button_idx", new_button_idx);
 
@@ -144,6 +149,7 @@ public:
         n.getParam("random_walk_key_char", random_walk_key_char);
         n.getParam("brake_key_char", brake_key_char);
         n.getParam("nav_key_char", nav_key_char);
+        n.getParam("MPC_key_char", mpc_key_char);
         // ***Add key char for new planner here***
         // n.getParam("new_key_char", new_key_char);
 
@@ -202,10 +208,18 @@ public:
     void change_controller(int controller_idx) {
         // This changes the controller to the input index and publishes it
 
-        // turn everything off
-        for (int i = 0; i < mux_size; i++) {
-            mux_controller[i] = false;
+        if (controller_idx == joy_mux_idx or controller_idx == key_mux_idx){
+            mux_controller[key_mux_idx] = false;
+            mux_controller[joy_mux_idx] = false;
+        }else{
+            // turn everything off
+            for (int i = 0; i < mux_size; i++) {
+                if (controller_idx != joy_mux_idx or controller_idx != key_mux_idx) {
+                    mux_controller[i] = false;
+                }
+            }
         }
+
         // turn on desired controller
         mux_controller[controller_idx] = true;
 
@@ -316,8 +330,7 @@ public:
         if (msg.buttons[joy_button_idx]) { 
             // joystick
             toggle_mux(joy_mux_idx, "Joystick");
-        }
-        if (msg.buttons[key_button_idx]) { 
+        }else if (msg.buttons[key_button_idx]) {
             // keyboard
             toggle_mux(key_mux_idx, "Keyboard");
         }
@@ -331,12 +344,14 @@ public:
                 ROS_INFO("Emergency brake turned on");
                 safety_on = true;
             }
-        }else if (msg.buttons[random_walk_button_idx]) {
+        } else if (msg.buttons[random_walk_button_idx]) {
             // random walker
             toggle_mux(random_walker_mux_idx, "Random Walker");
         } else if (msg.buttons[nav_button_idx]) {
             // nav
             toggle_mux(nav_mux_idx, "Navigation");
+        } else if (msg.buttons[mpc_button_idx]) {
+            toggle_mux(mpc_button_idx, "Model Predictive Control");
         }
         // ***Add new else if statement here for new planning method***
         // if (msg.buttons[new_button_idx]) {
@@ -354,7 +369,8 @@ public:
         } else if (msg.data == keyboard_key_char) {
             // keyboard
             toggle_mux(key_mux_idx, "Keyboard");
-        } else if (msg.data == brake_key_char) {
+        }
+        if (msg.data == brake_key_char) {
             // emergency brake 
             if (safety_on) {
                 ROS_INFO("Emergency brake turned off");
@@ -370,6 +386,8 @@ public:
         } else if (msg.data == nav_key_char) {
             // nav
             toggle_mux(nav_mux_idx, "Navigation");
+        } else if (msg.data == mpc_key_char) {
+            toggle_mux(mpc_mux_idx, "Model Predictive Control");
         }
         // ***Add new else if statement here for new planning method***
         // if (msg.data == new_key_char) {

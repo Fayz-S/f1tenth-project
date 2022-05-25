@@ -80,7 +80,8 @@ if(DEFINED CATKIN_DEVEL_PREFIX)
   include_directories(include ${catkin_INCLUDE_DIRS})
 
 
-  
+  catkin_install_python(PROGRAMS node/MPC_red.py
+          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
   # Add the nodes
   file(GLOB NODE_SRC_FILES node/*.cpp)

@@ -47,6 +47,10 @@
     <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
+  <node pkg="f1tenth_simulator" name="MPC_red" type="MPC_red.py" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  </node>
+
   <!-- ***Put launch command for new planner here:-->
   <!-- Launch the New Planner Node -->
   <!--   <node pkg="f1tenth_simulator" name="new node's name" type="new file name" output="screen">

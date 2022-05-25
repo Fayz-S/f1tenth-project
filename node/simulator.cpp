@@ -149,7 +149,7 @@ private:
     // flag that indicate start or stop recording data
     bool log_data_flag = 0;
     // the path where save data
-    char* path = "/media/psf/Ubuntu VM";
+    char *path = "/media/psf/Ubuntu VM";
     // name of current map
     std::string map_name;
     // save vehicle state
@@ -160,17 +160,17 @@ private:
 
 public:
 
-    RacecarSimulator(): im_server("racecar_sim") {
+    RacecarSimulator() : im_server("racecar_sim") {
         // Initialize the node handle
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=100.0, .st_dyn=false};
+        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
-        
+
         previous_seconds_blue = ros::Time::now().toSec();
         previous_seconds_red = ros::Time::now().toSec();
 
@@ -179,11 +179,11 @@ public:
         steer_angle_vel_red = 0.0;
         desired_speed_red = 0.0;
         desired_steer_ang_red = 0.0;
-        
+
 
         // Get the topic names
         std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red, gt_pose_topic,
-        pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line;
+                pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line;
         n.getParam("drive_topic_blue", drive_topic_blue);
         n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
@@ -278,11 +278,11 @@ public:
 
         // Initialize a simulator of the laser scanner
         scan_simulator = ScanSimulator2D(
-            scan_beams,
-            scan_fov,
-            scan_std_dev,
-            scan_max_range,
-            cube_width);
+                scan_beams,
+                scan_fov,
+                scan_std_dev,
+                scan_max_range,
+                cube_width);
 
         // Make a publisher for laser scan messages
         scan_pub_blue = n.advertise<sensor_msgs::LaserScan>(scan_topic_blue, 1);
@@ -302,8 +302,10 @@ public:
 
         // Start a timer to output the pose
         //
-        update_pose_timer_red = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_red, this);
-        update_pose_timer_blue = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_blue, this);
+        update_pose_timer_red = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_red,
+                                              this);
+        update_pose_timer_blue = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_blue,
+                                               this);
 
 
         // Start a subscriber to listen to drive commands
@@ -332,9 +334,9 @@ public:
 
         scan_ang_incr = scan_simulator.get_angle_increment();
 
-        cosines = Precompute::get_cosines(scan_beams, -scan_fov/2.0, scan_ang_incr);
-        car_distances = Precompute::get_car_distances(scan_beams, params_blue.wheelbase, width, 
-                scan_distance_to_base_link, -scan_fov/2.0, scan_ang_incr);
+        cosines = Precompute::get_cosines(scan_beams, -scan_fov / 2.0, scan_ang_incr);
+        car_distances = Precompute::get_car_distances(scan_beams, params_blue.wheelbase, width,
+                                                      scan_distance_to_base_link, -scan_fov / 2.0, scan_ang_incr);
 
 
         // steering delay buffer
@@ -378,9 +380,9 @@ public:
         // make a box for the button
         visualization_msgs::Marker clear_obs_marker;
         clear_obs_marker.type = visualization_msgs::Marker::CUBE;
-        clear_obs_marker.scale.x = clear_obs_button.scale*0.45;
-        clear_obs_marker.scale.y = clear_obs_button.scale*0.65;
-        clear_obs_marker.scale.z = clear_obs_button.scale*0.45;
+        clear_obs_marker.scale.x = clear_obs_button.scale * 0.45;
+        clear_obs_marker.scale.y = clear_obs_button.scale * 0.65;
+        clear_obs_marker.scale.z = clear_obs_button.scale * 0.45;
         clear_obs_marker.color.r = 0.0;
         clear_obs_marker.color.g = 1.0;
         clear_obs_marker.color.b = 0.0;
@@ -398,7 +400,7 @@ public:
         ROS_INFO("Simulator constructed.");
     }
 
-    void update_pose_blue(const ros::TimerEvent&) {
+    void update_pose_blue(const ros::TimerEvent &) {
         // simulate P controller
         compute_accel_blue(desired_speed_blue);
         double actual_ang_blue = 0.0;
@@ -467,7 +469,7 @@ public:
             std::vector<float> scan_(scan.size());
             // concat scan to a single string
             std::string scan_string;
-            for (size_t i = 0; i < scan.size(); i++){
+            for (size_t i = 0; i < scan.size(); i++) {
                 scan_[i] = scan[i];
                 scan_string += std::to_string(scan_[i]) + ",";
             }
@@ -579,7 +581,7 @@ public:
         publish_reference_line();
     } // end of update_pose
 
-    void update_pose_red(const ros::TimerEvent&) {
+    void update_pose_red(const ros::TimerEvent &) {
         // simulate P controller
         compute_accel_red(desired_speed_red);
         double actual_ang_red = 0.0;
@@ -744,7 +746,7 @@ public:
 
     } // end of update_pose
 
-        /// ---------------------- GENERAL HELPER FUNCTIONS ----------------------
+    /// ---------------------- GENERAL HELPER FUNCTIONS ----------------------
     double vector_cross(double x1, double y1, double x2, double y2, double x, double y) {
         return (x2 - x1) * (y - y1) - (x - x1) * (y2 - y1);
     }
@@ -753,7 +755,8 @@ public:
         if (log_data_flag) {
             // if the flag is true, then record data to vector, but not write to file yet
             // note that the frequency of recording is same as update_pose_rate, which depends on how fast your machine is as well as the storage
-            std::string ml_data = std::to_string(desired_speed_blue) + "," + std::to_string(desired_steer_ang_blue) + "," + scan;
+            std::string ml_data =
+                    std::to_string(desired_speed_blue) + "," + std::to_string(desired_steer_ang_blue) + "," + scan;
             steering_gas_lidar_blue.push_back(ml_data);
             std::string current_car_state = toString(state_blue);
             car_state_blue.push_back(current_car_state);
@@ -790,7 +793,8 @@ public:
                 if (file_blue.is_open()) {
                     ROS_WARN("Starting writing data (blue)");
                     // heading
-                    file_blue << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
+                    file_blue
+                            << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
                     for (std::string s: car_state_blue) {
                         file_blue << s + "\n";
                     }
@@ -804,27 +808,28 @@ public:
         }
     }
 
-    void save_data_red(){
+    void save_data_red() {
         // same as above
-        if (log_data_flag){
+        if (log_data_flag) {
             std::string current_car_state = toString(state_red);
             car_state_red.push_back(current_car_state);
-        }else{
-            if (!car_state_red.empty()){
+        } else {
+            if (!car_state_red.empty()) {
                 time_t now = time(0);
                 std::string date(std::ctime(&now));
-                std::ofstream file_red (path + std::string("/car_state_red_") + date + std::string(".csv"));
-                if (file_red.is_open()){
+                std::ofstream file_red(path + std::string("/car_state_red_") + date + std::string(".csv"));
+                if (file_red.is_open()) {
                     ROS_WARN("Starting writing data (red)");
                     // heading
-                    file_red << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
-                    for(std::string s : car_state_red){
+                    file_red
+                            << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
+                    for (std::string s: car_state_red) {
                         file_red << s + "\n";
                     }
                     file_red.close();
                     car_state_red.clear();
                     ROS_WARN("Finishing writing data to %s/car_state_red_%s.csv", path, std::ctime(&now));
-                }else {
+                } else {
                     ROS_ERROR("Cannot create a file (red)");
                 }
             }
@@ -838,24 +843,25 @@ public:
                std::to_string(carState.angular_velocity) + ","
                + std::to_string(carState.slip_angle);
     }
+
     std::vector<int> ind_2_rc(int ind) {
         std::vector<int> rc;
-        int row = floor(ind/map_width);
-        int col = ind%map_width - 1;
+        int row = floor(ind / map_width);
+        int col = ind % map_width - 1;
         rc.push_back(row);
         rc.push_back(col);
         return rc;
     }
 
     int rc_2_ind(int r, int c) {
-        return r*map_width + c;
+        return r * map_width + c;
 
     }
 
     std::vector<int> coord_2_cell_rc(double x, double y) {
         std::vector<int> rc;
-        rc.push_back(static_cast<int>((y-origin_y)/map_resolution));
-        rc.push_back(static_cast<int>((x-origin_x)/map_resolution));
+        rc.push_back(static_cast<int>((y - origin_y) / map_resolution));
+        rc.push_back(static_cast<int>((x - origin_x) / map_resolution));
         return rc;
     }
 
@@ -892,7 +898,7 @@ public:
     void set_accel_red(double accel_) {
         accel_red = std::min(std::max(accel_, -max_accel), max_accel);
     }
-    
+
     void set_steer_angle_vel_blue(double steer_angle_vel_) {
         steer_angle_vel_blue = std::min(std::max(steer_angle_vel_, -max_steering_vel), max_steering_vel);
     }
@@ -903,10 +909,10 @@ public:
 
     void add_obs(int ind) {
         std::vector<int> rc = ind_2_rc(ind);
-        for (int i=-obstacle_size; i<obstacle_size; i++) {
-            for (int j=-obstacle_size; j<obstacle_size; j++) {
-                int current_r = rc[0]+i;
-                int current_c = rc[1]+j;
+        for (int i = -obstacle_size; i < obstacle_size; i++) {
+            for (int j = -obstacle_size; j < obstacle_size; j++) {
+                int current_r = rc[0] + i;
+                int current_c = rc[1] + j;
                 int current_ind = rc_2_ind(current_r, current_c);
                 current_map.data[current_ind] = 100;
             }
@@ -916,10 +922,10 @@ public:
 
     void clear_obs(int ind) {
         std::vector<int> rc = ind_2_rc(ind);
-        for (int i=-obstacle_size; i<obstacle_size; i++) {
-            for (int j=-obstacle_size; j<obstacle_size; j++) {
-                int current_r = rc[0]+i;
-                int current_c = rc[1]+j;
+        for (int i = -obstacle_size; i < obstacle_size; i++) {
+            for (int j = -obstacle_size; j < obstacle_size; j++) {
+                int current_r = rc[0] + i;
+                int current_c = rc[1] + j;
                 int current_ind = rc_2_ind(current_r, current_c);
                 current_map.data[current_ind] = 0;
 
@@ -970,7 +976,7 @@ public:
             } else {
                 // brake
                 accel_blue = -max_decel;
-            }    
+            }
         } else if (state_blue.velocity_x < 0) {
             if (dif > 0) {
                 // brake
@@ -980,12 +986,12 @@ public:
                 // accelerate
                 double kp = 2.0 * max_accel / max_speed;
                 set_accel_blue(kp * dif);
-            }   
+            }
         } else {
-	    // zero speed, accel_blue either way
-	    double kp = 2.0 * max_accel / max_speed;
-	    set_accel_blue(kp * dif);
-	    }
+            // zero speed, accel_blue either way
+            double kp = 2.0 * max_accel / max_speed;
+            set_accel_blue(kp * dif);
+        }
     }
 
     void compute_accel_red(double desired_velocity) {
@@ -1018,7 +1024,7 @@ public:
         }
     }
 
-        /// ---------------------- CALLBACK FUNCTIONS ----------------------
+    /// ---------------------- CALLBACK FUNCTIONS ----------------------
 
     void obs_callback(const geometry_msgs::PointStamped &msg) {
         double x = msg.point.x;
@@ -1029,24 +1035,24 @@ public:
         add_obs(ind);
     }
 
-    void data_callback(const std_msgs::Bool &msg){
+    void data_callback(const std_msgs::Bool &msg) {
         log_data_flag = msg.data;
-        if (log_data_flag){
+        if (log_data_flag) {
             ROS_INFO_STREAM("start logging driving data");
-        }else {
+        } else {
             ROS_INFO_STREAM("stop logging driving data and save to file");
         }
     }
 
-    void pose_callback_blue(const geometry_msgs::PoseStamped & msg) {
+    void pose_callback_blue(const geometry_msgs::PoseStamped &msg) {
         state_blue.x = msg.pose.position.x;
         state_blue.y = msg.pose.position.y;
         geometry_msgs::Quaternion q = msg.pose.orientation;
         tf2::Quaternion quat(q.x, q.y, q.z, q.w);
         state_blue.theta = tf2::impl::getYaw(quat);
     }
-    
-    void pose_callback_red(const geometry_msgs::PoseStamped & msg) {
+
+    void pose_callback_red(const geometry_msgs::PoseStamped &msg) {
         state_red.x = msg.pose.position.x;
         state_red.y = msg.pose.position.y;
         geometry_msgs::Quaternion q = msg.pose.orientation;
@@ -1054,7 +1060,7 @@ public:
         state_red.theta = tf2::impl::getYaw(quat);
     }
 
-    void pose_rviz_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & msg) {
+    void pose_rviz_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg) {
         geometry_msgs::PoseStamped temp_pose;
         temp_pose.header = msg->header;
         temp_pose.pose = msg->pose.pose;
@@ -1062,12 +1068,12 @@ public:
         pose_callback_red(temp_pose);
     }
 
-    void drive_callback_blue(const ackermann_msgs::AckermannDriveStamped & msg) {
+    void drive_callback_blue(const ackermann_msgs::AckermannDriveStamped &msg) {
         desired_speed_blue = msg.drive.speed;
         desired_steer_ang_blue = msg.drive.steering_angle;
     }
 
-    void drive_callback_red(const ackermann_msgs::AckermannDriveStamped & msg) {
+    void drive_callback_red(const ackermann_msgs::AckermannDriveStamped &msg) {
         desired_speed_red = msg.drive.speed;
         desired_steer_ang_red = msg.drive.steering_angle;
     }
@@ -1087,34 +1093,34 @@ public:
         }
     }
 
-        void map_callback(const nav_msgs::OccupancyGrid & msg) {
-            // Fetch the map parameters
-            size_t height = msg.info.height;
-            size_t width = msg.info.width;
-            map_resolution = msg.info.resolution;
-            // Convert the ROS origin to a pose
-            Pose2D origin;
-            // bottom right conner is the origin point
-            origin.x = msg.info.origin.position.x;
-            origin.y = msg.info.origin.position.y;
-            geometry_msgs::Quaternion q = msg.info.origin.orientation;
-            tf2::Quaternion quat(q.x, q.y, q.z, q.w);
-            ROS_INFO_STREAM(height);
-            origin.theta = tf2::impl::getYaw(quat);
-            ROS_INFO_STREAM(width);
+    void map_callback(const nav_msgs::OccupancyGrid &msg) {
+        // Fetch the map parameters
+        size_t height = msg.info.height;
+        size_t width = msg.info.width;
+        map_resolution = msg.info.resolution;
+        // Convert the ROS origin to a pose
+        Pose2D origin;
+        // bottom right conner is the origin point
+        origin.x = msg.info.origin.position.x;
+        origin.y = msg.info.origin.position.y;
+        geometry_msgs::Quaternion q = msg.info.origin.orientation;
+        tf2::Quaternion quat(q.x, q.y, q.z, q.w);
+        ROS_INFO_STREAM(height);
+        origin.theta = tf2::impl::getYaw(quat);
+        ROS_INFO_STREAM(width);
 
-            // Convert the map to probability values
-            std::vector<double> map(msg.data.size());
-            for (size_t i = 0; i < height * width; i++) {
-                if (msg.data[i] > 100 or msg.data[i] < 0) {
-                    map[i] = 0.5; // Unknown
-                } else {
-                    map[i] = msg.data[i]/100.;
-                }
+        // Convert the map to probability values
+        std::vector<double> map(msg.data.size());
+        for (size_t i = 0; i < height * width; i++) {
+            if (msg.data[i] > 100 or msg.data[i] < 0) {
+                map[i] = 0.5; // Unknown
+            } else {
+                map[i] = msg.data[i] / 100.;
             }
+        }
 
-            // Send the map to the scanner
-            scan_simulator.set_map(
+        // Send the map to the scanner
+        scan_simulator.set_map(
                 map,
                 height,
                 width,
@@ -1122,184 +1128,185 @@ public:
                 origin,
                 map_free_threshold);
 
-            map_exists = true;
-        }
+        map_exists = true;
+    }
 
-        /// ---------------------- PUBLISHING HELPER FUNCTIONS ----------------------
+    /// ---------------------- PUBLISHING HELPER FUNCTIONS ----------------------
 
-        void publish_reference_line(){
-            std::fstream readcsv(ros::package::getPath("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv");
+    void publish_reference_line() {
+        std::fstream readcsv(ros::package::getPath("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv");
+        // add target_link_libraries(simulator ${catkin_LIBRARIES}) in CMakeLists.txt
+        visualization_msgs::Marker msg;
+        msg.header.frame_id = "map";
+        msg.header.stamp = ros::Time();
+        msg.ns = "points";
+        msg.id = 0;
+        msg.type = visualization_msgs::Marker::SPHERE_LIST;
+        msg.action = visualization_msgs::Marker::ADD;
+        msg.pose.position.z = 0;
+        msg.pose.orientation.w = 1.0;
+        msg.scale.x = 0.1;
+        msg.scale.y = 0.1;
+        msg.scale.z = 0.1;
+        msg.color.a = 1.0;
+        msg.color.r = 0.96;
+        msg.color.g = 0.82;
+        msg.color.b = 0.4;
 
-            visualization_msgs::Marker msg;
-            msg.header.frame_id = "map";
-            msg.header.stamp = ros::Time();
-            msg.ns = "points";
-            msg.id = 0;
-            msg.type = visualization_msgs::Marker::SPHERE_LIST;
-            msg.action = visualization_msgs::Marker::ADD;
-            msg.pose.position.z = 0;
-            msg.pose.orientation.w= 1.0;
-            msg.scale.x = 0.1;
-            msg.scale.y = 0.1;
-            msg.scale.z = 0.1;
-            msg.color.a = 1.0;
-            msg.color.r = 0.96;
-            msg.color.g = 0.82;
-            msg.color.b = 0.4;
+        std::string line;
+        getline(readcsv, line);
 
-            std::string line;
-            getline(readcsv,line);
+        while (getline(readcsv, line)) {
+            std::vector<double> data_line;
+            std::string raw_data;
+            std::istringstream readstr(line);
 
-            while (getline(readcsv,line)){
-                std::vector<double> data_line;
-                std::string raw_data;
-                std::istringstream readstr(line);
-
-                for (int i = 0; i < 7; ++i) {
-                    getline(readstr, raw_data, ';');
-                    data_line.push_back(atof(raw_data.c_str()));
-                }
-
-                geometry_msgs::Point p;
-                p.x = data_line[1]*5*map_resolution-origin_x;
-                p.y = -data_line[2]*5*map_resolution+origin_y;
-
-                msg.points.push_back(p);
+            for (int i = 0; i < 7; ++i) {
+                getline(readstr, raw_data, ';');
+                data_line.push_back(atof(raw_data.c_str()));
             }
 
-            reference_line_pub.publish(msg);
-//            ROS_INFO_STREAM(msg);
-        }
-        void pub_pose_transform_blue(ros::Time timestamp) {
-            // Convert the pose into a transformation
-            geometry_msgs::Transform t;
-            t.translation.x = state_blue.x;
-            t.translation.y = state_blue.y;
-            tf2::Quaternion quat;
-            quat.setEuler(0., 0., state_blue.theta);
-            t.rotation.x = quat.x();
-            t.rotation.y = quat.y();
-            t.rotation.z = quat.z();
-            t.rotation.w = quat.w();
+            geometry_msgs::Point p;
+            p.x = data_line[1] * 5 * map_resolution - origin_x;
+            p.y = -data_line[2] * 5 * map_resolution + origin_y;
 
-            // publish ground truth pose
-            geometry_msgs::PoseStamped ps;
-            ps.header.frame_id = "/map";
-            ps.pose.position.x = state_blue.x;
-            ps.pose.position.y = state_blue.y;
-            ps.pose.orientation.x = quat.x();
-            ps.pose.orientation.y = quat.y();
-            ps.pose.orientation.z = quat.z();
-            ps.pose.orientation.w = quat.w();
+            msg.points.push_back(p);
+        }
+
+        reference_line_pub.publish(msg);
+//            ROS_INFO_STREAM(msg);
+    }
+
+    void pub_pose_transform_blue(ros::Time timestamp) {
+        // Convert the pose into a transformation
+        geometry_msgs::Transform t;
+        t.translation.x = state_blue.x;
+        t.translation.y = state_blue.y;
+        tf2::Quaternion quat;
+        quat.setEuler(0., 0., state_blue.theta);
+        t.rotation.x = quat.x();
+        t.rotation.y = quat.y();
+        t.rotation.z = quat.z();
+        t.rotation.w = quat.w();
+
+        // publish ground truth pose
+        geometry_msgs::PoseStamped ps;
+        ps.header.frame_id = "/map";
+        ps.pose.position.x = state_blue.x;
+        ps.pose.position.y = state_blue.y;
+        ps.pose.orientation.x = quat.x();
+        ps.pose.orientation.y = quat.y();
+        ps.pose.orientation.z = quat.z();
+        ps.pose.orientation.w = quat.w();
 
 //            ROS_INFO_STREAM(state_blue.x);
 //            ROS_INFO_STREAM(state_blue.y);
 
-            // Add a header to the transformation
-            geometry_msgs::TransformStamped ts;
-            ts.transform = t;
-            ts.header.stamp = timestamp;
-            ts.header.frame_id = "/map";
-            ts.child_frame_id = base_frame_blue;
+        // Add a header to the transformation
+        geometry_msgs::TransformStamped ts;
+        ts.transform = t;
+        ts.header.stamp = timestamp;
+        ts.header.frame_id = "/map";
+        ts.child_frame_id = base_frame_blue;
 
-            // Publish them
-            if (broadcast_transform) {
-                br.sendTransform(ts);
-            }
-            if (pub_gt_pose) {
-                pose_pub.publish(ps);
-            }
+        // Publish them
+        if (broadcast_transform) {
+            br.sendTransform(ts);
         }
+        if (pub_gt_pose) {
+            pose_pub.publish(ps);
+        }
+    }
 
-        void pub_pose_transform_red(ros::Time timestamp) {
-            // Convert the pose into a transformation
-            geometry_msgs::Transform t;
-            t.translation.x = state_red.x;
-            t.translation.y = state_red.y;
-            tf2::Quaternion quat;
-            quat.setEuler(0., 0., state_red.theta);
-            t.rotation.x = quat.x();
-            t.rotation.y = quat.y();
-            t.rotation.z = quat.z();
-            t.rotation.w = quat.w();
-    
-            // publish ground truth pose
-            geometry_msgs::PoseStamped ps;
-            ps.header.frame_id = "/map";
-            ps.pose.position.x = state_red.x;
-            ps.pose.position.y = state_red.y;
-            ps.pose.orientation.x = quat.x();
-            ps.pose.orientation.y = quat.y();
-            ps.pose.orientation.z = quat.z();
-            ps.pose.orientation.w = quat.w();
-    
-    //            ROS_INFO_STREAM(state_red.x);
-    //            ROS_INFO_STREAM(state_red.y);
-    
-            // Add a header to the transformation
-            geometry_msgs::TransformStamped ts;
-            ts.transform = t;
-            ts.header.stamp = timestamp;
-            ts.header.frame_id = "/map";
-            ts.child_frame_id = base_frame_red;
-    
-            // Publish them
-            if (broadcast_transform) {
-                br.sendTransform(ts);
-            }
-            if (pub_gt_pose) {
-                pose_pub.publish(ps);
-            }
-        }
-        
-        void pub_steer_ang_transform_blue(ros::Time timestamp) {
-            // Set the steering angle to make the wheels move
-            // Publish the steering angle
-            tf2::Quaternion quat_wheel;
-            quat_wheel.setEuler(0., 0., state_blue.steer_angle);
-            geometry_msgs::TransformStamped ts_wheel;
-            ts_wheel.transform.rotation.x = quat_wheel.x();
-            ts_wheel.transform.rotation.y = quat_wheel.y();
-            ts_wheel.transform.rotation.z = quat_wheel.z();
-            ts_wheel.transform.rotation.w = quat_wheel.w();
-            ts_wheel.header.stamp = timestamp;
-            ts_wheel.header.frame_id = "blue/front_left_hinge";
-            ts_wheel.child_frame_id = "blue/front_left_wheel";
-            br.sendTransform(ts_wheel);
-            ts_wheel.header.frame_id = "blue/front_right_hinge";
-            ts_wheel.child_frame_id = "blue/front_right_wheel";
-            br.sendTransform(ts_wheel);
-        }
-    
-        void pub_steer_ang_transform_red(ros::Time timestamp) {
-            // Set the steering angle to make the wheels move
-            // Publish the steering angle
-            tf2::Quaternion quat_wheel;
-            quat_wheel.setEuler(0., 0., state_red.steer_angle);
-            geometry_msgs::TransformStamped ts_wheel;
-            ts_wheel.transform.rotation.x = quat_wheel.x();
-            ts_wheel.transform.rotation.y = quat_wheel.y();
-            ts_wheel.transform.rotation.z = quat_wheel.z();
-            ts_wheel.transform.rotation.w = quat_wheel.w();
-            ts_wheel.header.stamp = timestamp;
-            ts_wheel.header.frame_id = "red/front_left_hinge";
-            ts_wheel.child_frame_id = "red/front_left_wheel";
-            br.sendTransform(ts_wheel);
-            ts_wheel.header.frame_id = "red/front_right_hinge";
-            ts_wheel.child_frame_id = "red/front_right_wheel";
-            br.sendTransform(ts_wheel);
-        }
+    void pub_pose_transform_red(ros::Time timestamp) {
+        // Convert the pose into a transformation
+        geometry_msgs::Transform t;
+        t.translation.x = state_red.x;
+        t.translation.y = state_red.y;
+        tf2::Quaternion quat;
+        quat.setEuler(0., 0., state_red.theta);
+        t.rotation.x = quat.x();
+        t.rotation.y = quat.y();
+        t.rotation.z = quat.z();
+        t.rotation.w = quat.w();
 
-        void pub_laser_link_transform_blue(ros::Time timestamp) {
-            // Publish a transformation between base link and laser
-            geometry_msgs::TransformStamped scan_ts;
-            scan_ts.transform.translation.x = scan_distance_to_base_link;
-            scan_ts.transform.rotation.w = 1;
-            scan_ts.header.stamp = timestamp;
-            scan_ts.header.frame_id = base_frame_blue;
-            scan_ts.child_frame_id = scan_frame_blue;
-            br.sendTransform(scan_ts);
+        // publish ground truth pose
+        geometry_msgs::PoseStamped ps;
+        ps.header.frame_id = "/map";
+        ps.pose.position.x = state_red.x;
+        ps.pose.position.y = state_red.y;
+        ps.pose.orientation.x = quat.x();
+        ps.pose.orientation.y = quat.y();
+        ps.pose.orientation.z = quat.z();
+        ps.pose.orientation.w = quat.w();
+
+        //            ROS_INFO_STREAM(state_red.x);
+        //            ROS_INFO_STREAM(state_red.y);
+
+        // Add a header to the transformation
+        geometry_msgs::TransformStamped ts;
+        ts.transform = t;
+        ts.header.stamp = timestamp;
+        ts.header.frame_id = "/map";
+        ts.child_frame_id = base_frame_red;
+
+        // Publish them
+        if (broadcast_transform) {
+            br.sendTransform(ts);
         }
+        if (pub_gt_pose) {
+            pose_pub.publish(ps);
+        }
+    }
+
+    void pub_steer_ang_transform_blue(ros::Time timestamp) {
+        // Set the steering angle to make the wheels move
+        // Publish the steering angle
+        tf2::Quaternion quat_wheel;
+        quat_wheel.setEuler(0., 0., state_blue.steer_angle);
+        geometry_msgs::TransformStamped ts_wheel;
+        ts_wheel.transform.rotation.x = quat_wheel.x();
+        ts_wheel.transform.rotation.y = quat_wheel.y();
+        ts_wheel.transform.rotation.z = quat_wheel.z();
+        ts_wheel.transform.rotation.w = quat_wheel.w();
+        ts_wheel.header.stamp = timestamp;
+        ts_wheel.header.frame_id = "blue/front_left_hinge";
+        ts_wheel.child_frame_id = "blue/front_left_wheel";
+        br.sendTransform(ts_wheel);
+        ts_wheel.header.frame_id = "blue/front_right_hinge";
+        ts_wheel.child_frame_id = "blue/front_right_wheel";
+        br.sendTransform(ts_wheel);
+    }
+
+    void pub_steer_ang_transform_red(ros::Time timestamp) {
+        // Set the steering angle to make the wheels move
+        // Publish the steering angle
+        tf2::Quaternion quat_wheel;
+        quat_wheel.setEuler(0., 0., state_red.steer_angle);
+        geometry_msgs::TransformStamped ts_wheel;
+        ts_wheel.transform.rotation.x = quat_wheel.x();
+        ts_wheel.transform.rotation.y = quat_wheel.y();
+        ts_wheel.transform.rotation.z = quat_wheel.z();
+        ts_wheel.transform.rotation.w = quat_wheel.w();
+        ts_wheel.header.stamp = timestamp;
+        ts_wheel.header.frame_id = "red/front_left_hinge";
+        ts_wheel.child_frame_id = "red/front_left_wheel";
+        br.sendTransform(ts_wheel);
+        ts_wheel.header.frame_id = "red/front_right_hinge";
+        ts_wheel.child_frame_id = "red/front_right_wheel";
+        br.sendTransform(ts_wheel);
+    }
+
+    void pub_laser_link_transform_blue(ros::Time timestamp) {
+        // Publish a transformation between base link and laser
+        geometry_msgs::TransformStamped scan_ts;
+        scan_ts.transform.translation.x = scan_distance_to_base_link;
+        scan_ts.transform.rotation.w = 1;
+        scan_ts.header.stamp = timestamp;
+        scan_ts.header.frame_id = base_frame_blue;
+        scan_ts.child_frame_id = scan_frame_blue;
+        br.sendTransform(scan_ts);
+    }
 
     void pub_laser_link_transform_red(ros::Time timestamp) {
         // Publish a transformation between base link and laser
@@ -1312,54 +1319,54 @@ public:
         br.sendTransform(scan_ts);
     }
 
-        void pub_odom_blue(ros::Time timestamp) {
-            // Make an odom message and publish it
-            nav_msgs::Odometry odom;
-            odom.header.stamp = timestamp;
-            odom.header.frame_id = map_frame;
-            odom.child_frame_id = base_frame_blue;
-            odom.pose.pose.position.x = state_blue.x;
-            odom.pose.pose.position.y = state_blue.y;
-            tf2::Quaternion quat;
-            quat.setEuler(0., 0., state_blue.theta);
-            odom.pose.pose.orientation.x = quat.x();
-            odom.pose.pose.orientation.y = quat.y();
-            odom.pose.pose.orientation.z = quat.z();
-            odom.pose.pose.orientation.w = quat.w();
-            odom.twist.twist.linear.x = state_blue.velocity_x;
-            odom.twist.twist.angular.z = state_blue.angular_velocity;
-            odom_pub.publish(odom);
-        }
+    void pub_odom_blue(ros::Time timestamp) {
+        // Make an odom message and publish it
+        nav_msgs::Odometry odom;
+        odom.header.stamp = timestamp;
+        odom.header.frame_id = map_frame;
+        odom.child_frame_id = base_frame_blue;
+        odom.pose.pose.position.x = state_blue.x;
+        odom.pose.pose.position.y = state_blue.y;
+        tf2::Quaternion quat;
+        quat.setEuler(0., 0., state_blue.theta);
+        odom.pose.pose.orientation.x = quat.x();
+        odom.pose.pose.orientation.y = quat.y();
+        odom.pose.pose.orientation.z = quat.z();
+        odom.pose.pose.orientation.w = quat.w();
+        odom.twist.twist.linear.x = state_blue.velocity_x;
+        odom.twist.twist.angular.z = state_blue.angular_velocity;
+        odom_pub.publish(odom);
+    }
 
-        void pub_odom_red(ros::Time timestamp) {
-            // Make an odom message and publish it
-            nav_msgs::Odometry odom;
-            odom.header.stamp = timestamp;
-            odom.header.frame_id = map_frame;
-            odom.child_frame_id = base_frame_red;
-            odom.pose.pose.position.x = state_red.x;
-            odom.pose.pose.position.y = state_red.y;
-            tf2::Quaternion quat;
-            quat.setEuler(0., 0., state_red.theta);
-            odom.pose.pose.orientation.x = quat.x();
-            odom.pose.pose.orientation.y = quat.y();
-            odom.pose.pose.orientation.z = quat.z();
-            odom.pose.pose.orientation.w = quat.w();
-            odom.twist.twist.linear.x = state_red.velocity_x;
-            odom.twist.twist.angular.z = state_red.angular_velocity;
-            odom_pub.publish(odom);
-        }
-    
-        void pub_imu(ros::Time timestamp) {
-            // Make an IMU message and publish it
-            // TODO: make imu message
-            sensor_msgs::Imu imu;
-            imu.header.stamp = timestamp;
-            imu.header.frame_id = map_frame;
+    void pub_odom_red(ros::Time timestamp) {
+        // Make an odom message and publish it
+        nav_msgs::Odometry odom;
+        odom.header.stamp = timestamp;
+        odom.header.frame_id = map_frame;
+        odom.child_frame_id = base_frame_red;
+        odom.pose.pose.position.x = state_red.x;
+        odom.pose.pose.position.y = state_red.y;
+        tf2::Quaternion quat;
+        quat.setEuler(0., 0., state_red.theta);
+        odom.pose.pose.orientation.x = quat.x();
+        odom.pose.pose.orientation.y = quat.y();
+        odom.pose.pose.orientation.z = quat.z();
+        odom.pose.pose.orientation.w = quat.w();
+        odom.twist.twist.linear.x = state_red.velocity_x;
+        odom.twist.twist.angular.z = state_red.angular_velocity;
+        odom_pub.publish(odom);
+    }
+
+    void pub_imu(ros::Time timestamp) {
+        // Make an IMU message and publish it
+        // TODO: make imu message
+        sensor_msgs::Imu imu;
+        imu.header.stamp = timestamp;
+        imu.header.frame_id = map_frame;
 
 
-            imu_pub.publish(imu);
-        }
+        imu_pub.publish(imu);
+    }
 
 };
 

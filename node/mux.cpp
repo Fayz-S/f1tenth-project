@@ -129,6 +129,12 @@ public:
         n.getParam("nav_mux_idx", nav_mux_idx);
         add_channel(nav_drive_topic, drive_topic_blue, nav_mux_idx);
 
+        int mpc_mux_idx;
+        std::string mpc_drive_topic;
+        n.getParam("MPC_drive_topic", mpc_drive_topic);
+        n.getParam("MPC_mux_idx", mpc_mux_idx);
+        add_channel(mpc_drive_topic, drive_topic_red, mpc_mux_idx);
+
         // ***Add a channel for a new planner here**
         // int new_mux_idx;
         // std::string new_drive_topic;
