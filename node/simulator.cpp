@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-
+#include <ros/package.h>
 // interactive marker
 #include <interactive_markers/interactive_marker_server.h>
 
@@ -9,6 +9,7 @@
 #include <ackermann_msgs/AckermannDriveStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Bool.h>
@@ -16,6 +17,8 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PointStamped.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include "f1tenth_simulator/pose_2d.hpp"
 #include "f1tenth_simulator/ackermann_kinematics.hpp"
@@ -107,6 +110,8 @@ private:
     // publisher for map with obstacles
     ros::Publisher map_pub;
 
+    ros::Publisher reference_line_pub;
+
     // keep an original map for obstacles
     nav_msgs::OccupancyGrid original_map;
     nav_msgs::OccupancyGrid current_map;
@@ -178,7 +183,7 @@ public:
 
         // Get the topic names
         std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red, gt_pose_topic,
-        pose_rviz_topic, odom_topic, imu_topic, data_topic;
+        pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line;
         n.getParam("drive_topic_blue", drive_topic_blue);
         n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
@@ -258,6 +263,9 @@ public:
 
         n.getParam("data_topic", data_topic);
 
+        n.getParam("reference_line", reference_line);
+
+        n.getParam("map_name", map_name);
         // clip velocity
         n.getParam("speed_clip_diff", speed_clip_diff);
 
@@ -312,6 +320,9 @@ public:
 
         data_sub = n.subscribe(data_topic, 1, &RacecarSimulator::data_callback, this);
 
+        reference_line_pub = n.advertise<visualization_msgs::Marker>(reference_line, 0);
+
+
         // obstacle subscriber
         obs_sub = n.subscribe("/clicked_point", 1, &RacecarSimulator::obs_callback, this);
 
@@ -342,12 +353,13 @@ public:
         current_map = map_msg;
         std::vector<int8_t> map_data_raw = map_msg.data;
         std::vector<int> map_data(map_data_raw.begin(), map_data_raw.end());
-        map_name = map_msg.header.frame_id.substr(0, map_msg.header.frame_id.find("."));
+
         map_width = map_msg.info.width;
         map_height = map_msg.info.height;
         origin_x = map_msg.info.origin.position.x;
         origin_y = map_msg.info.origin.position.y;
         map_resolution = map_msg.info.resolution;
+
 
         // create button for clearing obstacles
         visualization_msgs::InteractiveMarker clear_obs_button;
@@ -378,10 +390,10 @@ public:
         clear_obs_control.always_visible = true;
         clear_obs_button.controls.push_back(clear_obs_control);
 
-//        im_server.insert(clear_obs_button);
-//        im_server.setCallback(clear_obs_button.name, boost::bind(&RacecarSimulator::clear_obstacles, this, _1));
+        im_server.insert(clear_obs_button);
+        im_server.setCallback(clear_obs_button.name, boost::bind(&RacecarSimulator::clear_obstacles, this, _1));
 
-//        im_server.applyChanges();
+        im_server.applyChanges();
 
         ROS_INFO("Simulator constructed.");
     }
@@ -564,7 +576,7 @@ public:
 
             save_data_blue(scan_string);
         }
-
+        publish_reference_line();
     } // end of update_pose
 
     void update_pose_red(const ros::TimerEvent&) {
@@ -793,6 +805,7 @@ public:
     }
 
     void save_data_red(){
+        // same as above
         if (log_data_flag){
             std::string current_car_state = toString(state_red);
             car_state_red.push_back(current_car_state);
@@ -1078,7 +1091,7 @@ public:
             // Fetch the map parameters
             size_t height = msg.info.height;
             size_t width = msg.info.width;
-            double resolution = msg.info.resolution;
+            map_resolution = msg.info.resolution;
             // Convert the ROS origin to a pose
             Pose2D origin;
             // bottom right conner is the origin point
@@ -1105,14 +1118,58 @@ public:
                 map,
                 height,
                 width,
-                resolution,
+                map_resolution,
                 origin,
                 map_free_threshold);
+
             map_exists = true;
         }
 
         /// ---------------------- PUBLISHING HELPER FUNCTIONS ----------------------
 
+        void publish_reference_line(){
+            std::fstream readcsv(ros::package::getPath("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv");
+
+            visualization_msgs::Marker msg;
+            msg.header.frame_id = "map";
+            msg.header.stamp = ros::Time();
+            msg.ns = "points";
+            msg.id = 0;
+            msg.type = visualization_msgs::Marker::SPHERE_LIST;
+            msg.action = visualization_msgs::Marker::ADD;
+            msg.pose.position.z = 0;
+            msg.pose.orientation.w= 1.0;
+            msg.scale.x = 0.1;
+            msg.scale.y = 0.1;
+            msg.scale.z = 0.1;
+            msg.color.a = 1.0;
+            msg.color.r = 0.96;
+            msg.color.g = 0.82;
+            msg.color.b = 0.4;
+
+            std::string line;
+            getline(readcsv,line);
+
+            while (getline(readcsv,line)){
+                std::vector<double> data_line;
+                std::string raw_data;
+                std::istringstream readstr(line);
+
+                for (int i = 0; i < 7; ++i) {
+                    getline(readstr, raw_data, ';');
+                    data_line.push_back(atof(raw_data.c_str()));
+                }
+
+                geometry_msgs::Point p;
+                p.x = data_line[1]*5*map_resolution-origin_x;
+                p.y = -data_line[2]*5*map_resolution+origin_y;
+
+                msg.points.push_back(p);
+            }
+
+            reference_line_pub.publish(msg);
+//            ROS_INFO_STREAM(msg);
+        }
         void pub_pose_transform_blue(ros::Time timestamp) {
             // Convert the pose into a transformation
             geometry_msgs::Transform t;

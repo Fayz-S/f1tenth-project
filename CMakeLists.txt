@@ -91,6 +91,8 @@ if(DEFINED CATKIN_DEVEL_PREFIX)
       add_dependencies(${_node_name} f1tenth_simulator_generate_messages_cpp)
   endforeach()
 
+  target_link_libraries(simulator ${catkin_LIBRARIES})
+
   # Install the library
   install(TARGETS ${PROJECT_NAME}
       ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

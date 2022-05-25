@@ -104,7 +104,7 @@ void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose, do
       theta_index -= theta_discretization;
   }
 }
-
+// Ray marching algorithm
 double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta) const {
     // Add 0.5 to make this operation round to ceil rather than floor
     // why?
@@ -249,7 +249,7 @@ int ScanSimulator2D::xy_to_cell(double x, double y) const {
 }
 
 void ScanSimulator2D::xy_to_row_col(double x, double y, int * row, int * col) const {
-    // distance between x or y and the bottom right conner of the map
+    // distance between x or y and the bottom left conner of the original map image
     double x_trans = x - origin.x;
     double y_trans = y - origin.y;
 
@@ -269,6 +269,9 @@ void ScanSimulator2D::xy_to_row_col(double x, double y, int * row, int * col) co
         *row = -1;
     } else {
         // transform coordinate of the car about the map into width and height
+        // in Rviz, x positive is up, y positive is left
+        // x direction is width, y direction is height
+        // col is width, row is height
         *col = std::floor(x_rot/resolution);
         *row = std::floor(y_rot/resolution);
     }

@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /LaserScan1
-        - /RobotModel1
-        - /LaserScan2
+        - /Marker8
       Splitter Ratio: 0.42446044087409973
     Tree Height: 1925
   - Class: rviz/Selection
@@ -162,30 +160,6 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Billboards
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Queue Size: 10
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic: /smoothed_path
-      Unreliable: false
-      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /tree_lines
@@ -312,6 +286,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: false
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /minimum_time
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -340,7 +322,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 29.686214447021484
+      Distance: 26.1059513092041
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -356,9 +338,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4090890884399414
+      Pitch: 0.6202030181884766
       Target Frame: <Fixed Frame>
-      Yaw: 3.1454966068267822
+      Yaw: 3.1604936122894287
     Saved: ~
 Window Geometry:
   Displays:
