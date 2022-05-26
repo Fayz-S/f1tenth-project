@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Marker8
       Splitter Ratio: 0.42446044087409973
     Tree Height: 1925
   - Class: rviz/Selection
@@ -27,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: LiDAR_red
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -40,20 +39,20 @@ Visualization Manager:
       Color Scheme: map
       Draw Behind: false
       Enabled: true
-      Name: Map
+      Name: Racetrack
       Topic: /map
       Unreliable: false
       Use Timestamp: false
       Value: true
     - Class: rviz/InteractiveMarkers
       Enable Transparency: true
-      Enabled: true
+      Enabled: false
       Name: InteractiveMarkers
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
       Update Topic: /racecar_sim/update
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -70,14 +69,14 @@ Visualization Manager:
       Invert Rainbow: false
       Max Color: 200; 200; 255
       Min Color: 0; 0; 225
-      Name: LaserScan
+      Name: LiDAR_blue
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.05000000074505806
       Style: Flat Squares
-      Topic: /f1tenth_simulator/blue/scan
+      Topic: /blue/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: false
@@ -130,68 +129,68 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-      Name: RobotModel_blue
+      Name: Car_blue
       Robot Description: racecar_blue/robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true
       Visual Enabled: true
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /dynamic_viz
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /env_viz
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /static_viz
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /tree_lines
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /tree_nodes
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /waypoint_vis
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /path_lines
       Name: Marker
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: false
       Image Topic: /converted_scan
@@ -252,7 +251,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-      Name: RobotModel
+      Name: Car_red
       Robot Description: racecar_red/robot_description
       TF Prefix: ""
       Update Interval: 0
@@ -274,14 +273,14 @@ Visualization Manager:
       Invert Rainbow: false
       Max Color: 255; 200; 200
       Min Color: 255; 0; 0
-      Name: LaserScan
+      Name: LiDAR_red
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.05000000074505806
       Style: Flat Squares
-      Topic: /f1tenth_simulator/red/scan
+      Topic: /red/scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: false
@@ -289,9 +288,9 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /minimum_time
-      Name: Marker
+      Name: Reference line
       Namespaces:
-        {}
+        points: true
       Queue Size: 100
       Value: true
   Enabled: true

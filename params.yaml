@@ -106,16 +106,17 @@ keyboard_steer_ang: .3  # radians
 obstacle_size: 2
 
 # The names of topics to listen and publish to
+# topic must start with "/"
 joy_topic: "/joy"
 keyboard_topic: "/key"
 drive_topic_blue: "/drive_blue"
 drive_topic_red: "/drive_red"
 map_topic: "/map"
 distance_transform_topic: "/dt"
-scan_topic_red: "red/scan"
-scan_topic_blue: "blue/scan"
-pose_topic_blue: "blue/pose"
-pose_topic_red: "red/pose"
+scan_topic_red: "/red/scan"
+scan_topic_blue: "/blue/scan"
+pose_topic_blue: "/blue/pose"
+pose_topic_red: "/red/pose"
 ground_truth_pose_topic: "/gt_pose"
 odom_topic: "/odom"
 imu_topic: "/imu"
@@ -123,7 +124,7 @@ pose_rviz_topic: "/initialpose"
 brake_bool_topic: "/brake_bool"
 mux_topic: "/mux"
 data_topic: "/data"
-
+carState_topic_red: "/carState_topic_red"
 # Topic names of various drive channels
 rand_drive_topic: "/rand_drive"
 brake_drive_topic: "/brake"
@@ -136,6 +137,7 @@ new_drive_topic: "/new_drive"
 collision_file: "collision_file"
 
 # The names of the transformation frames published to
+# frame must not start with "/"
 map_frame: "map"
 base_frame_blue: "blue/base_link"
 scan_frame_blue: "blue/laser"

@@ -13,6 +13,7 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/String.h>
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -102,6 +103,7 @@ private:
     ros::Publisher scan_pub_blue;
     ros::Publisher scan_pub_red;
     ros::Publisher pose_pub;
+    ros::Publisher carState_pub_red;
 
 
     ros::Publisher odom_pub;
@@ -183,7 +185,7 @@ public:
 
         // Get the topic names
         std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red, gt_pose_topic,
-                pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line;
+                pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line, carState_topic_red;
         n.getParam("drive_topic_blue", drive_topic_blue);
         n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
@@ -262,7 +264,7 @@ public:
         n.getParam("empirical_Pacejka_parameters_D_r", params_red.D_r);
 
         n.getParam("data_topic", data_topic);
-
+        n.getParam("carState_topic_red", carState_topic_red);
         n.getParam("reference_line", reference_line);
 
         n.getParam("map_name", map_name);
@@ -299,6 +301,8 @@ public:
 
         // Make a publisher for ground truth pose
         pose_pub = n.advertise<geometry_msgs::PoseStamped>(gt_pose_topic, 10);
+
+        carState_pub_red = n.advertise<std_msgs::String>(carState_topic_red, 10);
 
         // Start a timer to output the pose
         //
@@ -347,7 +351,7 @@ public:
         // wait for one map message to get the map data array
         boost::shared_ptr<nav_msgs::OccupancyGrid const> map_ptr;
         nav_msgs::OccupancyGrid map_msg;
-        map_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>("/map");
+        map_ptr = ros::topic::waitForMessage<nav_msgs::OccupancyGrid>(map_topic);
         if (map_ptr != NULL) {
             map_msg = *map_ptr;
         }
@@ -429,7 +433,7 @@ public:
         state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -max_steering_angle), max_steering_angle);
 //        ROS_INFO_STREAM("VX "<<state_blue.velocity_x);
 
-        //ROS_INFO_STREAM("STEERING "<<state_blue.steer_angle);
+        //ROS_INFO_STREAM("STEERING "<<state_blue.theta);
 //        ROS_INFO_STREAM("angular_velocity "<<state_blue.angular_velocity);
 
         previous_seconds_blue = current_seconds;
@@ -572,7 +576,6 @@ public:
 
             scan_pub_blue.publish(scan_msg);
 
-
             // Publish a transformation between base link and laser
             pub_laser_link_transform_blue(timestamp);
 
@@ -620,6 +623,8 @@ public:
 
         // TODO: make and publish IMU message
         pub_imu(timestamp);
+
+        pub_carState_red(toString(state_red));
 
 
         /// KEEP in sim
@@ -1137,7 +1142,7 @@ public:
         std::fstream readcsv(ros::package::getPath("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv");
         // add target_link_libraries(simulator ${catkin_LIBRARIES}) in CMakeLists.txt
         visualization_msgs::Marker msg;
-        msg.header.frame_id = "map";
+        msg.header.frame_id = map_frame;
         msg.header.stamp = ros::Time();
         msg.ns = "points";
         msg.id = 0;
@@ -1168,7 +1173,7 @@ public:
 
             geometry_msgs::Point p;
             p.x = data_line[1] * 5 * map_resolution - origin_x;
-            p.y = -data_line[2] * 5 * map_resolution + origin_y;
+            p.y = -(data_line[2] * 5 * map_resolution - origin_y);
 
             msg.points.push_back(p);
         }
@@ -1191,7 +1196,7 @@ public:
 
         // publish ground truth pose
         geometry_msgs::PoseStamped ps;
-        ps.header.frame_id = "/map";
+        ps.header.frame_id = map_frame;
         ps.pose.position.x = state_blue.x;
         ps.pose.position.y = state_blue.y;
         ps.pose.orientation.x = quat.x();
@@ -1206,7 +1211,7 @@ public:
         geometry_msgs::TransformStamped ts;
         ts.transform = t;
         ts.header.stamp = timestamp;
-        ts.header.frame_id = "/map";
+        ts.header.frame_id = map_frame;
         ts.child_frame_id = base_frame_blue;
 
         // Publish them
@@ -1232,7 +1237,7 @@ public:
 
         // publish ground truth pose
         geometry_msgs::PoseStamped ps;
-        ps.header.frame_id = "/map";
+        ps.header.frame_id = map_frame;
         ps.pose.position.x = state_red.x;
         ps.pose.position.y = state_red.y;
         ps.pose.orientation.x = quat.x();
@@ -1247,7 +1252,7 @@ public:
         geometry_msgs::TransformStamped ts;
         ts.transform = t;
         ts.header.stamp = timestamp;
-        ts.header.frame_id = "/map";
+        ts.header.frame_id = map_frame;
         ts.child_frame_id = base_frame_red;
 
         // Publish them
@@ -1368,6 +1373,14 @@ public:
         imu_pub.publish(imu);
     }
 
+    void pub_carState_red(std::string string){
+        std_msgs::String msg;
+        std::stringstream ss;
+        ss << string;
+
+        msg.data = ss.str();
+        carState_pub_red.publish(msg);
+    }
 };
 
 
