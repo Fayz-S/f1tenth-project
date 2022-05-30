@@ -167,7 +167,7 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=0.3, .y=0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=0, .y=-0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -176,7 +176,7 @@ public:
         previous_seconds_blue = ros::Time::now().toSec();
         previous_seconds_red = ros::Time::now().toSec();
 
-        state_red = {.x=0, .y=-0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=40, .y=48.5, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_red = 0.0;
         steer_angle_vel_red = 0.0;
         desired_speed_red = 0.0;
@@ -686,41 +686,41 @@ public:
             // TTC Calculations are done here so the car can be halted in the simulator:
             // detection based on the scan data
             bool no_collision = true;
-            if (state_red.velocity_x != 0) {
-                for (size_t i = 0; i < scan_.size(); i++) {
-                    // TTC calculations
-                    // calculate projected velocity
-                    // the vector of velocity can be seen as always point to the middle beam, and cosines here is the cos of beams not cos of map frame,
-                    // hence, the middle beam direction has cos0 = 1, and so on.
-                    double proj_velocity = state_red.velocity_x * cosines[i];
-                    double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
-                    // if it's small enough to count as a collision
-                    if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
-                        if (!TTC) {
-                            first_ttc_actions_red();
-                        }
-
-                        no_collision = false;
-                        TTC = true;
-
-                        ROS_INFO("LiDAR collision detected: RED");
-                    }
-                }
-                for (int i = 0; i < 4; ++i) {
-                    if ((vector_cross(x1_blue, y1_blue, x2_blue, y2_blue, points_red[i][0], points_red[i][1]) *
-                         vector_cross(x3_blue, y3_blue, x4_blue, y4_blue, points_red[i][0], points_red[i][1]) >= 0) &&
-                        (vector_cross(x2_blue, y2_blue, x3_blue, y3_blue, points_red[i][0], points_red[i][1]) *
-                         vector_cross(x4_blue, y4_blue, x1_blue, y1_blue, points_red[i][0], points_red[i][1]) >= 0)) {
-                        if (!TTC) {
-                            first_ttc_actions_red();
-                        }
-                        no_collision = false;
-                        TTC = true;
-
-                        ROS_INFO("Box collider detected: RED");
-                    }
-                }
-            }
+//            if (state_red.velocity_x != 0) {
+//                for (size_t i = 0; i < scan_.size(); i++) {
+//                    // TTC calculations
+//                    // calculate projected velocity
+//                    // the vector of velocity can be seen as always point to the middle beam, and cosines here is the cos of beams not cos of map frame,
+//                    // hence, the middle beam direction has cos0 = 1, and so on.
+//                    double proj_velocity = state_red.velocity_x * cosines[i];
+//                    double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
+//                    // if it's small enough to count as a collision
+//                    if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
+//                        if (!TTC) {
+//                            first_ttc_actions_red();
+//                        }
+//
+//                        no_collision = false;
+//                        TTC = true;
+//
+//                        ROS_INFO("LiDAR collision detected: RED");
+//                    }
+//                }
+//                for (int i = 0; i < 4; ++i) {
+//                    if ((vector_cross(x1_blue, y1_blue, x2_blue, y2_blue, points_red[i][0], points_red[i][1]) *
+//                         vector_cross(x3_blue, y3_blue, x4_blue, y4_blue, points_red[i][0], points_red[i][1]) >= 0) &&
+//                        (vector_cross(x2_blue, y2_blue, x3_blue, y3_blue, points_red[i][0], points_red[i][1]) *
+//                         vector_cross(x4_blue, y4_blue, x1_blue, y1_blue, points_red[i][0], points_red[i][1]) >= 0)) {
+//                        if (!TTC) {
+//                            first_ttc_actions_red();
+//                        }
+//                        no_collision = false;
+//                        TTC = true;
+//
+//                        ROS_INFO("Box collider detected: RED");
+//                    }
+//                }
+//            }
 
             // reset TTC
             if (no_collision)
@@ -1172,8 +1172,8 @@ public:
             }
 
             geometry_msgs::Point p;
-            p.x = data_line[1] * 5 * map_resolution - origin_x;
-            p.y = -(data_line[2] * 5 * map_resolution - origin_y);
+            p.x = data_line[1] * 5 * map_resolution + origin_x - 120;
+            p.y = -(data_line[2] * 5 * map_resolution - origin_y );
 
             msg.points.push_back(p);
         }

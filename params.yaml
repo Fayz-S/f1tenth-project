@@ -148,3 +148,4 @@ broadcast_transform: true
 publish_ground_truth_pose: true
 reference_line: "/minimum_time"
 map_name: "Australia"
+mpc_goal_path: "/goal_and_path"
