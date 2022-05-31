@@ -157,10 +157,6 @@ class kinematic_bicycle_model():
         vy_next = start_state[4] + dt * ((Fyr + Fyf * np.sin(steering_angle) + Fx_fr * sin(steering_angle) - self.mass * start_state[3] * start_state[5]) / self.mass)
         yaw_next = start_state[5] + dt * ((Fyf * self.l_f * np.cos(steering_angle) - Fyr * self.l_r) / self.Iz)
 
-        # yaw_next = if_else(
-        #     logic_and(fabs(start_state[5]) < 0.005, fabs(yaw_next) < 1), 0,
-        #     fmin(fmax(-2.0, yaw_next), 2.0))
-
         end_state = [x_next, y_next, theta_next, vx_next, vy_next, yaw_next]
         return end_state
 
@@ -224,7 +220,7 @@ class NFTOCPNLP(object):
             # rospy.loginfo("Cost:")
             # rospy.loginfo(self.qcost)
 
-            # rospy.loginfo("NLP Solver Time: %s%s", delta, " seconds.")
+            rospy.loginfo("NLP Solver Time: %s%s", delta, " seconds.")
         else:
             self.xPred = np.zeros((self.N + 1, self.n))
             self.uPred = np.zeros((self.N, self.d))
@@ -369,15 +365,15 @@ if __name__ == '__main__':
     goal_path_pub = rospy.Publisher(goal_path, Marker, queue_size=10)
 
     ## Parameters initialization
-    N = 5  # 20
+    N = 19  # 20
     # number of states of the model
     n_dy = 6
     # number of controlling command
     d = 2
 
-    dt = 0.005
+    dt = 0.01
     # sys_dy = systemdy(x0_dy, dt)
-    maxTime = 1
+    maxTime = 2
     size = reference_line_raw.shape[0]
     start = 0
     # first line is same as last line
@@ -405,7 +401,7 @@ if __name__ == '__main__':
         # end+=60
         if start == size-2:
             start = 0
-        goal_index = (start + 5) % size
+        goal_index = (start + 15) % size
         goal_x = reference_line_x_y_theta.iloc[goal_index, 0]
         goal_y = reference_line_x_y_theta.iloc[goal_index, 1]
         goal_theta = reference_line_x_y_theta.iloc[goal_index, 2]
@@ -437,13 +433,14 @@ if __name__ == '__main__':
         goal_msg.color.b = 0.7
         goal_path_pub.publish(goal_msg)
         # goals
-        xRef_dy = [goal_x, goal_y, goal_theta, 10, 0, 0]
+        xRef_dy = [goal_x, goal_y, goal_theta, 50, 0, 0]
 
         # for loss function
-        R = 0 * np.eye(d)
+        # when overshooting, change R
+        R = 6 * np.eye(d)
         Q_dy = 0 * np.eye(n_dy)
         # Qf_dy = 1000*np.eye(n_dy)
-        Qf_dy = np.diag([20000.0, 20000.0, 2000.0, 100.0, 0.0, 0.0])
+        Qf_dy = np.diag([40000.0, 40000.0, 500.0, 250.0, 0.0, 0.0])
 
         # current_LiDAR = ()
         # while len(current_LiDAR) == 0:
@@ -463,10 +460,10 @@ if __name__ == '__main__':
         # rospy.loginfo(distance_to_nearest_y)
 
         # car state constrains
-        upx_dy = np.array([10000, 10000, 50, 20, 10, 10])
-        lowx_dy = np.array([-10000, -10000, -50, 0, -10, -10])
+        upx_dy = np.array([10000, 10000, 10, 50, 5, 50])
+        lowx_dy = np.array([-10000, -10000, -10, 0, -5, -50])
         # input constrains
-        bu = np.array([max_speed, max_steering_angle+2])
+        bu = np.array([max_speed, max_steering_angle+1])
 
         thresh = 0.5
         ## Solving the problem
@@ -509,7 +506,7 @@ if __name__ == '__main__':
             # uPredNLP_dy.append(nlp_kinematic.uPred)
             # CostSolved_dy.append(nlp_kinematic.qcost)
 
-            # rospy.loginfo(ut_dy)
+            rospy.loginfo(ut_dy[0])
             ack_msg = AckermannDriveStamped()
             ack_msg.header.stamp = rospy.Time.now()
             ack_msg.drive.steering_angle = ut_dy[1]

@@ -84,7 +84,7 @@ brake_button_idx: 3 # Y button
 random_walk_button_idx: 1 # B button
 nav_button_idx: 5 # RB button
 data_button_idx: 4 # LB button
-MPC_button_idx: 7
+MPC_axis_idx: 7
 # **Add button for new planning method here**
 new_button_idx: -1
 

@@ -55,7 +55,7 @@ private:
     int brake_button_idx;
     int nav_button_idx;
     int data_button_idx;
-    int mpc_button_idx;
+    int mpc_axis_idx;
     // ***Add button index for new planner here***
     // int new_button_idx;
 
@@ -139,7 +139,7 @@ public:
         n.getParam("brake_button_idx", brake_button_idx);
         n.getParam("nav_button_idx", nav_button_idx);
         n.getParam("data_button_idx", data_button_idx);
-        n.getParam("MPC_button_idx", mpc_button_idx);
+        n.getParam("MPC_axis_idx", mpc_axis_idx);
         // ***Add button index for new planner here***
         // n.getParam("new_button_idx", new_button_idx);
 
@@ -350,8 +350,8 @@ public:
         } else if (msg.buttons[nav_button_idx]) {
             // nav
             toggle_mux(nav_mux_idx, "Navigation");
-        } else if (msg.buttons[mpc_button_idx]) {
-            toggle_mux(mpc_button_idx, "Model Predictive Control");
+        } else if (msg.axes[mpc_axis_idx]) {
+            toggle_mux(mpc_mux_idx, "Model Predictive Control");
         }
         // ***Add new else if statement here for new planning method***
         // if (msg.buttons[new_button_idx]) {
