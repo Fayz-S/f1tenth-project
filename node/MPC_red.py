@@ -16,96 +16,7 @@ import pandas as pd
 accelerate = 0
 steering_angle_velocity = 0
 
-
-class dynamic_bicycle_model():
-
-    def __init__(self, wheelbase, friction_coeff, h_cg, l_f, l_r, cs_f, cs_r, mass, Iz, Cm1, Cm2, Cm3, B_f, C_f, D_f,
-                 B_r, C_r, D_r, max_accel, max_decel, max_speed, max_steering_vel, max_steering_angle):
-        self.wheelbase = wheelbase
-        self.friction_coeff = friction_coeff
-        self.h_cg = h_cg
-        self.l_f = l_f
-        self.l_r = l_r
-        self.cs_f = cs_f
-        self.cs_r = cs_r
-        self.mass = mass
-        self.Iz = Iz
-        self.Cm1 = Cm1
-        self.Cm2 = Cm2
-        self.Cm3 = Cm3
-        self.B_f = B_f
-        self.C_f = C_f
-        self.D_f = D_f
-        self.B_r = B_r
-        self.C_r = C_r
-        self.D_r = D_r
-        self.max_accel = max_accel
-        self.max_decel = max_decel
-        self.max_speed = max_speed
-        self.max_steering_vel = max_steering_vel
-        self.max_steering_angle = max_steering_angle
-
-
-    def update_model(self, start_state, velocity, steering_angle, dt):
-        global accelerate
-        global steering_angle_velocity
-        self.compute_accel(velocity, start_state[3])
-        self.compute_steer_vel(steering_angle, start_state[5])
-
-        d = accelerate / 7.51
-        Fx_fr = self.Cm1 * d / self.Cm2 - start_state[3] / self.Cm3
-
-        alpha_f = -atan2((start_state[6] * self.l_f + start_state[4]) , start_state[3]) + start_state[5]
-        alpha_r = atan2((start_state[6] * self.l_r - start_state[4]) , start_state[3])
-
-        Fy_f = self.D_f * sin(self.C_f * atan(self.B_f * alpha_f)) * 25
-        Fy_r = self.D_r * sin(self.C_r * atan(self.B_r * alpha_r)) * 25
-
-        x_dot = start_state[3] * cos(start_state[2]) - start_state[4] * sin(start_state[2])
-        y_dot = start_state[3] * sin(start_state[2]) + start_state[4] * sin(start_state[2])
-        theta_dot = start_state[6]
-        velocity_x_dot = (Fx_fr * cos(start_state[5]) - Fy_f * sin(start_state[5]) + self.mass * start_state[4] * start_state[6]) / self.mass
-        velocity_y_dot = (Fy_r + Fy_f * sin(start_state[5]) + Fx_fr * sin(start_state[5]) - self.mass *
-                          start_state[3] * start_state[6]) / self.mass
-        angular_velocity_dot = (Fy_f * self.l_f * cos(start_state[5]) - Fy_r * self.l_r) / self.Iz
-
-        # [0: x, 1: y, 2: theta, 3: velocity x, 4: velocity y, 5: steering_angle, 6: angular_velocity, 7: slip_angle]
-
-        x_next = start_state[0] + x_dot * dt
-        y_next = start_state[1] + y_dot * dt
-        theta_next = start_state[2] + theta_dot * dt
-        vx_next = start_state[3] + velocity_x_dot * dt
-        vy_next = start_state[4] + velocity_y_dot * dt
-        steering_angle_next = start_state[5] + steering_angle_velocity * dt
-        yaw_next = if_else(
-            logic_and(fabs(start_state[5]) < 0.005, fabs(start_state[6] + angular_velocity_dot * dt) < 1), 0,
-            fmin(fmax(-2.0, start_state[6] + dt * angular_velocity_dot), 2.0))
-
-        slip_angle_next = start_state[7] * 0
-        # end_state.append(1)
-        end_state = [x_next, y_next, theta_next, vx_next, vy_next, steering_angle_next, yaw_next, slip_angle_next]
-        return end_state
-
-    def compute_accel(self, desired_velocity, current_velocity):
-        dif = desired_velocity - current_velocity
-
-        global accelerate
-        kp = 2.0 * self.max_accel / self.max_speed
-        accelerate = if_else(current_velocity > 0,
-                             if_else(dif > 0, fmin(fmax(kp * dif, -self.max_accel), self.max_accel), -self.max_decel),
-                             if_else(current_velocity < 0, if_else(dif > 0, self.max_decel,
-                                                                   fmin(fmax(kp * dif, -self.max_accel),
-                                                                        self.max_accel)),
-                                     fmin(fmax(kp * dif, -self.max_accel), self.max_accel)))
-
-    def compute_steer_vel(self, desired_angle, current_steering_angle):
-        global steering_angle_velocity
-
-        dif = (desired_angle - current_steering_angle)
-
-        steering_angle_velocity = if_else(fabs(dif) > 0.0001, dif / fabs(dif) * self.max_steering_vel, 0)
-
-class kinematic_bicycle_model():
+class bicycle_model():
 
     def __init__(self, wheelbase, friction_coeff, h_cg, l_f, l_r, cs_f, cs_r, mass, Iz, Cm1, Cm2, Cm3, B_f, C_f, D_f,
                  B_r, C_r, D_r, max_accel, max_decel, max_speed, max_steering_vel, max_steering_angle):
@@ -220,7 +131,7 @@ class NFTOCPNLP(object):
             # rospy.loginfo("Cost:")
             # rospy.loginfo(self.qcost)
 
-            rospy.loginfo("NLP Solver Time: %s%s", delta, " seconds.")
+            # rospy.loginfo("NLP Solver Time: %s%s", delta, " seconds.")
         else:
             self.xPred = np.zeros((self.N + 1, self.n))
             self.uPred = np.zeros((self.N, self.d))
@@ -328,11 +239,8 @@ if __name__ == '__main__':
     scan_beams = rospy.get_param("~scan_beams")
     goal_path = rospy.get_param("~mpc_goal_path")
 
-    dynamic_model = dynamic_bicycle_model(wheelbase, friction_coeff, h_cg, l_f, l_r, cs_f, cs_r, mass, Iz, Cm1, Cm2, Cm3, B_f,
-                                  C_f, D_f,
-                                  B_r, C_r, D_r, max_accel, max_decel, max_speed, max_steering_vel, max_steering_angle)
 
-    kinematic_model = kinematic_bicycle_model(wheelbase, friction_coeff, h_cg, l_f, l_r, cs_f, cs_r, mass, Iz, Cm1, Cm2, Cm3, B_f,
+    dynamic_model = bicycle_model(wheelbase, friction_coeff, h_cg, l_f, l_r, cs_f, cs_r, mass, Iz, Cm1, Cm2, Cm3, B_f,
                               C_f, D_f,
                               B_r, C_r, D_r, max_accel, max_decel, max_speed, max_steering_vel, max_steering_angle)
     # https://wiki.ros.org/Packages#Client_Library_Support
@@ -365,7 +273,7 @@ if __name__ == '__main__':
     goal_path_pub = rospy.Publisher(goal_path, Marker, queue_size=10)
 
     ## Parameters initialization
-    N = 19  # 20
+    N = 15  # 20
     # number of states of the model
     n_dy = 6
     # number of controlling command
@@ -384,9 +292,7 @@ if __name__ == '__main__':
         current_x = x0_dy[0]
         current_y = x0_dy[1]
         current_theta = x0_dy[2]
-
-
-
+        # binary search, can only work in reference line direction i.e. from small index to large index
         end = size - 2
         while start < end:
             mid = int((start + end) / 2)
@@ -398,7 +304,7 @@ if __name__ == '__main__':
                 end = mid
             else:
                 start = mid + 1
-        # end+=60
+
         if start == size-2:
             start = 0
         goal_index = (start + 15) % size
@@ -433,14 +339,15 @@ if __name__ == '__main__':
         goal_msg.color.b = 0.7
         goal_path_pub.publish(goal_msg)
         # goals
-        xRef_dy = [goal_x, goal_y, goal_theta, 50, 0, 0]
+        xRef_dy = [goal_x, goal_y, goal_theta, 100, 0, 0]
 
         # for loss function
         # when overshooting, change R
         R = 6 * np.eye(d)
         Q_dy = 0 * np.eye(n_dy)
         # Qf_dy = 1000*np.eye(n_dy)
-        Qf_dy = np.diag([40000.0, 40000.0, 500.0, 250.0, 0.0, 0.0])
+        # increase cost to solve deviation
+        Qf_dy = np.diag([50000.0, 50000.0, 500.0, 170.0, 0.0, 0.0])
 
         # current_LiDAR = ()
         # while len(current_LiDAR) == 0:
@@ -460,17 +367,15 @@ if __name__ == '__main__':
         # rospy.loginfo(distance_to_nearest_y)
 
         # car state constrains
-        upx_dy = np.array([10000, 10000, 10, 50, 5, 50])
+        upx_dy = np.array([10000, 10000, 10, 100, 5, 50])
         lowx_dy = np.array([-10000, -10000, -10, 0, -5, -50])
         # input constrains
         bu = np.array([max_speed, max_steering_angle+1])
 
         thresh = 0.5
         ## Solving the problem
-        #nlp_dynamic = NFTOCPNLP(N, Q_dy, R, Qf_dy, xRef_dy, upx_dy, lowx_dy, bu, dynamic_model)
-        nlp_kinematic = NFTOCPNLP(N, Q_dy, R, Qf_dy, xRef_dy, upx_dy, lowx_dy, bu, kinematic_model)
+        nlp_kinematic = NFTOCPNLP(N, Q_dy, R, Qf_dy, xRef_dy, upx_dy, lowx_dy, bu, dynamic_model)
 
-        # ut_dy = nlp_kinematic.solve(x0_dy)
 
         marker_msg = Marker()
         marker_msg.header.frame_id = map_frame
@@ -500,13 +405,12 @@ if __name__ == '__main__':
             xt_dy = x_cl_nlp_dy[0:6]
             xt_dy[5] = x_cl_nlp_dy[6]
             # if xt_dy[3] < thresh:
-            # rospy.loginfo("kinematic")
             ut_dy = nlp_kinematic.solve(xt_dy)
             # xPredNLP_dy.append()
             # uPredNLP_dy.append(nlp_kinematic.uPred)
             # CostSolved_dy.append(nlp_kinematic.qcost)
 
-            rospy.loginfo(ut_dy[0])
+            # rospy.loginfo(ut_dy[0])
             ack_msg = AckermannDriveStamped()
             ack_msg.header.stamp = rospy.Time.now()
             ack_msg.drive.steering_angle = ut_dy[1]

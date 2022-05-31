@@ -299,14 +299,14 @@ Visualization Manager:
       Marker Topic: /goal_and_path
       Name: MPC_path_goal
       Namespaces:
-        path: true
+        goal: true
       Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: red/base_link
+    Fixed Frame: blue/base_link
     Frame Rate: 120
   Name: root
   Tools:
@@ -330,7 +330,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 26.1059513092041
+      Distance: 29.17579460144043
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -346,9 +346,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6202030181884766
+      Pitch: 0.9302027225494385
       Target Frame: <Fixed Frame>
-      Yaw: 3.1604936122894287
+      Yaw: 3.140493631362915
     Saved: ~
 Window Geometry:
   Displays:

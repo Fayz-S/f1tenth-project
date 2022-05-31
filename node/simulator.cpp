@@ -167,7 +167,7 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=0, .y=-0.3, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=40, .y=48, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -429,9 +429,9 @@ public:
                 params_blue,
                 current_seconds - previous_seconds_blue);
 
-        state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -max_speed), max_speed);
+        state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -max_speed), 6.9);
         state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -max_steering_angle), max_steering_angle);
-//        ROS_INFO_STREAM("VX "<<state_blue.velocity_x);
+        ROS_INFO_STREAM("V blue "<<state_blue.velocity_x);
 
         //ROS_INFO_STREAM("STEERING "<<state_blue.theta);
 //        ROS_INFO_STREAM("angular_velocity "<<state_blue.angular_velocity);
@@ -609,7 +609,7 @@ public:
                 current_seconds - previous_seconds_red);
         state_red.velocity_x = std::min(std::max(state_red.velocity_x, -max_speed), max_speed);
         state_red.steer_angle = std::min(std::max(state_red.steer_angle, -max_steering_angle), max_steering_angle);
-
+        ROS_INFO_STREAM("V red "<<state_red.velocity_x);
         previous_seconds_red = current_seconds;
 
         /// Publish the pose as a transformation

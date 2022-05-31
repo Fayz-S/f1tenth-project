@@ -214,7 +214,7 @@ public:
         }else{
             // turn everything off
             for (int i = 0; i < mux_size; i++) {
-                if (i != joy_mux_idx or i != key_mux_idx) {
+                if (i != joy_mux_idx and i != key_mux_idx) {
                     mux_controller[i] = false;
                 }
             }
