@@ -128,25 +128,25 @@ void DistanceTransform::distance_2d(
 
   distance_squared_2d(input, width, height, boundary_value);
 
-//    char* path = "/media/psf/Ubuntu VM";
-//    std::ofstream image(path + std::string("/image") + std::string(".csv"));
-//    if (image.is_open()) {
-//        std::string heading = "";
-//        for (int i = 0; i < width; ++i) {
-//            heading += "heading,";
-//        }
-//        image << heading + "\n";
-//
-//        for (int i = 0; i < height; ++i) {
-//            std::string temp = "";
-//            for (int j = width - 1; j >= 0; --j) {
-//                temp += std::to_string(sqrt(input[i*width + j])) + ",";
-//            }
-//            temp += "\n";
-//            image << temp;
-//        }
-//        image.close();
-//    }
+    char* path = "/media/psf/Ubuntu VM";
+    std::ofstream image(path + std::string("/image") + std::string(".csv"));
+    if (image.is_open()) {
+        std::string heading = "";
+        for (int i = 0; i < width; ++i) {
+            heading += "heading,";
+        }
+        image << heading + "\n";
+
+        for (int i = 0; i < height; ++i) {
+            std::string temp = "";
+            for (int j = width - 1; j >= 0; --j) {
+                temp += std::to_string(sqrt(input[i*width + j])) + ",";
+            }
+            temp += "\n";
+            image << temp;
+        }
+        image.close();
+    }
 
   for (size_t i = 0; i < input.size(); i++) {
     input[i] = resolution * sqrt(input[i]);

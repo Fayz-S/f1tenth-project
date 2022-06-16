@@ -39,6 +39,10 @@ class ScanSimulator2D {
     int theta_discretization;
     double theta_index_increment;
 
+    bool flag_can_see_opponent;
+    double threshold;
+    bool can_see_opponent;
+
   public:
     std::vector<double> sines;
     std::vector<double> cosines;
@@ -65,16 +69,17 @@ class ScanSimulator2D {
     void set_map(const std::vector<double> &map, double free_threshold);
 
     void scan(const Pose2D & pose, const Pose2D & opponent_pose, double * scan_data);
-    const std::vector<double> scan(const Pose2D & pose, const Pose2D & opponent_pose);
+    const std::vector<double> scan(const Pose2D & pose, const Pose2D & opponent_pose, bool flag);
 
     double distance_transform(double x, double y) const;
 
-    double trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta) const;
+    double trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta);
 
     void xy_to_row_col(double x, double y, int * row, int * col) const;
     int row_col_to_cell(int row, int col) const;
     int xy_to_cell(double x, double y) const;
 
+    bool see_opponent();
     double get_field_of_view() const {return field_of_view;}
     double get_angle_increment() const {return angle_increment;}
     int get_theta_discret() const {return theta_discretization;}

@@ -58,13 +58,14 @@ map_free_threshold: 0.8
 ttc_threshold: 0.01
 
 # Indices for mux controller
-mux_size: 6
+mux_size: 7
 joy_mux_idx: 0
 key_mux_idx: 1
 random_walker_mux_idx: 2
 brake_mux_idx: 3
 nav_mux_idx: 4
 MPC_mux_idx: 5
+LSTM_mux_idx: 6
 # **Add index for new planning method here**
 # **(increase mux_size accordingly)**
 new_method_mux_idx: -1
@@ -84,7 +85,8 @@ brake_button_idx: 3 # Y button
 random_walk_button_idx: 1 # B button
 nav_button_idx: 5 # RB button
 data_button_idx: 4 # LB button
-MPC_axis_idx: 7
+MPC_axis_idx: 7 # up button
+LSTM_axis_idx: 6 # left button
 # **Add button for new planning method here**
 new_button_idx: -1
 
@@ -95,6 +97,7 @@ brake_key_char: "b"
 random_walk_key_char: "r"
 nav_key_char: "n"
 MPC_key_char: "g"
+LSTM_key_char: "u"
 # **Add button for new planning method here**
 new_key_char: "z"
 
@@ -130,6 +133,7 @@ rand_drive_topic: "/rand_drive"
 brake_drive_topic: "/brake"
 nav_drive_topic: "/nav"
 MPC_drive_topic: "/mpc"
+LSTM_drive_topic: "/lstm"
 # **Add name for new planning method here**
 new_drive_topic: "/new_drive"
 
@@ -149,3 +153,4 @@ publish_ground_truth_pose: true
 reference_line: "/minimum_time"
 map_name: "Australia"
 mpc_goal_path: "/goal_and_path"
+switch_topic_red: "/MPC_ML"

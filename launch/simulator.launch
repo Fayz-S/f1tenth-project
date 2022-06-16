@@ -10,7 +10,7 @@
          and referred by jsX. after known which index you want to use, replace below index, value="/dev/input/jsX", with that. -->
     <param name="dev" type="string" value="/dev/input/js1" />
     <!-- due to the joy usually cannot reset to 0, we need a threshold for that which is in percentage-->
-    <param name="deadzone" value="0.09" />
+    <param name="deadzone" value="0.20" />
   </node>
 
   <arg name="parameters_file" default="params.yaml"/>
@@ -48,6 +48,10 @@
   </node>
 
   <node pkg="f1tenth_simulator" name="MPC_red" type="MPC_red.py" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  </node>
+
+  <node pkg="f1tenth_simulator" name="LSTM_overtake_red" type="LSTM_overtake_red.py" output="screen">
     <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 

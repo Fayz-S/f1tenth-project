@@ -343,11 +343,11 @@ if __name__ == '__main__':
 
         # for loss function
         # when overshooting, change R
-        R = 6 * np.eye(d)
+        R = 5 * np.eye(d)
         Q_dy = 0 * np.eye(n_dy)
         # Qf_dy = 1000*np.eye(n_dy)
         # increase cost to solve deviation
-        Qf_dy = np.diag([50000.0, 50000.0, 500.0, 170.0, 0.0, 0.0])
+        Qf_dy = np.diag([50000.0, 50000.0, 500.0, 130.0, 0.0, 0.0])
 
         # current_LiDAR = ()
         # while len(current_LiDAR) == 0:
@@ -372,30 +372,30 @@ if __name__ == '__main__':
         # input constrains
         bu = np.array([max_speed, max_steering_angle+1])
 
-        thresh = 0.5
+
         ## Solving the problem
         nlp_kinematic = NFTOCPNLP(N, Q_dy, R, Qf_dy, xRef_dy, upx_dy, lowx_dy, bu, dynamic_model)
 
 
-        marker_msg = Marker()
-        marker_msg.header.frame_id = map_frame
-        marker_msg.header.stamp = rospy.Time.now()
-        marker_msg.ns = "path"
-        marker_msg.id = 1
-        marker_msg.type = visualization_msgs.msg.Marker.CUBE_LIST
-
-        marker_msg.action = visualization_msgs.msg.Marker.MODIFY
-        # marker_msg.pose.position.x = current_x
-        # marker_msg.pose.position.y = current_y
-        marker_msg.pose.position.z = 0
-        marker_msg.pose.orientation.w = current_theta
-        marker_msg.scale.x = 0.05
-        marker_msg.scale.y = 0.05
-        marker_msg.scale.z = 0.05
-        marker_msg.color.a = 1.0
-        marker_msg.color.r = 0.3
-        marker_msg.color.g = 0.7
-        marker_msg.color.b = 0.1
+        # marker_msg = Marker()
+        # marker_msg.header.frame_id = map_frame
+        # marker_msg.header.stamp = rospy.Time.now()
+        # marker_msg.ns = "path"
+        # marker_msg.id = 1
+        # marker_msg.type = visualization_msgs.msg.Marker.CUBE_LIST
+        #
+        # marker_msg.action = visualization_msgs.msg.Marker.MODIFY
+        # # marker_msg.pose.position.x = current_x
+        # # marker_msg.pose.position.y = current_y
+        # marker_msg.pose.position.z = 0
+        # marker_msg.pose.orientation.w = current_theta
+        # marker_msg.scale.x = 0.05
+        # marker_msg.scale.y = 0.05
+        # marker_msg.scale.z = 0.05
+        # marker_msg.color.a = 1.0
+        # marker_msg.color.r = 0.3
+        # marker_msg.color.g = 0.7
+        # marker_msg.color.b = 0.1
         # sys_dy.reset_IC()
         xPredNLP_dy = []
         uPredNLP_dy = []

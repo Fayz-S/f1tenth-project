@@ -82,6 +82,8 @@ if(DEFINED CATKIN_DEVEL_PREFIX)
 
   catkin_install_python(PROGRAMS node/MPC_red.py
           DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+  catkin_install_python(PROGRAMS node/LSTM_overtake_red.py
+          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
   # Add the nodes
   file(GLOB NODE_SRC_FILES node/*.cpp)

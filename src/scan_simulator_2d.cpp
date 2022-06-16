@@ -22,54 +22,60 @@ ScanSimulator2D::ScanSimulator2D(
     scan_max_range(scan_max_range_),
     cube_width(cube_width_),
     ray_tracing_epsilon(ray_tracing_epsilon_),
-    theta_discretization(theta_discretization)
-{
-  // Initialize laser settings
-  angle_increment = field_of_view/(num_beams - 1);
+    theta_discretization(theta_discretization) {
+    // Initialize laser settings
+    angle_increment = field_of_view / (num_beams - 1);
 
-  // Initialize the output
-  scan_output = std::vector<double>(num_beams);
+    // Initialize the output
+    scan_output = std::vector<double>(num_beams);
 
-  // Initialize the noise
-  noise_generator = std::mt19937(std::random_device{}());
-  noise_dist = std::normal_distribution<double>(0., scan_std_dev);
+    // Initialize the noise
+    noise_generator = std::mt19937(std::random_device{}());
+    noise_dist = std::normal_distribution<double>(0., scan_std_dev);
 
-  // Precompute sines and cosines
-  // angle_increment/(2 * M_PI) means how many beams there are if we scan 360 degree with current angular_increment
-  // we know that with current angular_increment, there are 1080+1 beams for 270 degree
-  // in our case, there will be 1440+1 beams for 360 degree
-  // theta_discretization/theta_index_increment = 1440
-  // hence, theta_index_increment = theta_discretization/1440
-  // due to we are going to slice 360 degree into theta_discretization(2000+1) parts, we need to know how many beams for 360 degree
-  // so that we could know how many increments on theta_discretization if one beam incremented, in our case, that is 1.3888889
-  theta_index_increment = theta_discretization * angle_increment/(2 * M_PI);
+    // Precompute sines and cosines
+    // angle_increment/(2 * M_PI) means how many beams there are if we scan 360 degree with current angular_increment
+    // we know that with current angular_increment, there are 1080+1 beams for 270 degree
+    // in our case, there will be 1440+1 beams for 360 degree
+    // theta_discretization/theta_index_increment = 1440
+    // hence, theta_index_increment = theta_discretization/1440
+    // due to we are going to slice 360 degree into theta_discretization(2000+1) parts, we need to know how many beams for 360 degree
+    // so that we could know how many increments on theta_discretization if one beam incremented, in our case, that is 1.3888889
+    theta_index_increment = theta_discretization * angle_increment / (2 * M_PI);
 
-  sines = std::vector<double>(theta_discretization + 1);
-  cosines = std::vector<double>(theta_discretization + 1);
-  arctanes = std::vector<double>(theta_discretization + 1);
-  // slice 2PI into theta_discretization(2000+1) parts, and calculate sin and cos
-  for (int i = 0; i <= theta_discretization; i++) {
-      // calculate theta on the discretization from 0 to 2Pi
-    double theta = (2 * M_PI * i)/((double) theta_discretization);
-    // calculate sin and cos of that theta value
-    // the reason we precompute all sin and cos is that we can only compute sin and cos for each theta just one time
-    // although we can calculate theta of beam easily and then calculate the sin and cos, imagine there are 1081 beams in one scan,
-    // and in every second there are hundreds scans happened, but a lot of theta actually is calculated over and over again.
-    // hence, better have a copy of all sin and cos, and when we need it, just directly get from vector.
-    sines[i] = std::sin(theta);
-    cosines[i] = std::cos(theta);
-    // this is for calculating slope of beams, so that we will know whether a beam intersects with the opponent car
-    // due to theta actually starts from X axis which is y/x, so we need to calculate tan(theta) first and divided by 1, which will become x/y.
-    // and when theta = 0 or Pi or 2Pi, tan(theta) will be 0, so avoid those number, although no exception will occur if not do this
-    if (theta != 0 or theta != M_PI or theta != 2 * M_PI){
-        arctanes[i] = 1/std::tan(theta);
+    sines = std::vector<double>(theta_discretization + 1);
+    cosines = std::vector<double>(theta_discretization + 1);
+    arctanes = std::vector<double>(theta_discretization + 1);
+    // slice 2PI into theta_discretization(2000+1) parts, and calculate sin and cos
+    for (int i = 0; i <= theta_discretization; i++) {
+        // calculate theta on the discretization from 0 to 2Pi
+        double theta = (2 * M_PI * i) / ((double) theta_discretization);
+        // calculate sin and cos of that theta value
+        // the reason we precompute all sin and cos is that we can only compute sin and cos for each theta just one time
+        // although we can calculate theta of beam easily and then calculate the sin and cos, imagine there are 1081 beams in one scan,
+        // and in every second there are hundreds scans happened, but a lot of theta actually is calculated over and over again.
+        // hence, better have a copy of all sin and cos, and when we need it, just directly get from vector.
+        sines[i] = std::sin(theta);
+        cosines[i] = std::cos(theta);
+        // this is for calculating slope of beams, so that we will know whether a beam intersects with the opponent car
+        // due to theta actually starts from X axis which is y/x, so we need to calculate tan(theta) first and divided by 1, which will become x/y.
+        // and when theta = 0 or Pi or 2Pi, tan(theta) will be 0, so avoid those number, although no exception will occur if not do this
+        if (theta != 0 or theta != M_PI or theta != 2 * M_PI) {
+            arctanes[i] = 1 / std::tan(theta);
+        }
     }
-  }
+
+    threshold = 5;
+
 }
 
-const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose) {
-  scan(pose, opponent_pose, scan_output.data());
-  return scan_output;
+const std::vector<double> ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose, bool flag) {
+
+    flag_can_see_opponent = flag;
+    can_see_opponent = false;
+
+    scan(pose, opponent_pose, scan_output.data());
+    return scan_output;
 }
 
 void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose, double * scan_data) {
@@ -105,7 +111,7 @@ void ScanSimulator2D::scan(const Pose2D & pose, const Pose2D & opponent_pose, do
   }
 }
 // Ray marching algorithm
-double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta) const {
+double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double opponent_X, double opponent_Y, double opponent_theta){
     // Add 0.5 to make this operation round to ceil rather than floor
     // why?
     int theta_index_ = theta_index + 0.5;
@@ -179,7 +185,7 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
     }
 
     // if the beam intersects with the opponent car
-    // calculate the distance between the LiDAR and opponent ca
+    // calculate the distance between the LiDAR and opponent car
     double this_to_opponent = sqrt(pow((original_x - opponent_X), 2) + pow((original_y - opponent_Y), 2));
     // for this car, the opponent car need to be closer than the obstacle
     if (this_to_opponent < total_distance) {
@@ -187,6 +193,10 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
         double obstacle_to_opponent = sqrt(pow((x - opponent_X), 2) + pow((y - opponent_Y), 2));
         // for the obstacle, the opponent car need to be closer than this car
         if (obstacle_to_opponent < total_distance) {
+            if (flag_can_see_opponent and this_to_opponent < threshold) {
+                can_see_opponent = true;
+                flag_can_see_opponent = false;
+            }
             // if slope is INF, simply return distance between this car to opponent car and minus half square width
             if (theta_index_ == 0 or theta_index_ == theta_discretization / 2 or theta_index_ == theta_discretization) {
                 return std::min(this_to_opponent - cube_width / 2, scan_max_range);
@@ -282,6 +292,9 @@ int ScanSimulator2D::row_col_to_cell(int row, int col) const {
     return row * width + col;
 }
 
+bool ScanSimulator2D::see_opponent(){
+    return can_see_opponent;
+}
 // overload for changing map on the fly
 void ScanSimulator2D::set_map(const std::vector<double> & map, double free_threshold) {
   for (size_t i = 0; i < map.size(); i++) {

@@ -28,6 +28,7 @@ private:
     ros::Subscriber odom_sub;
     ros::Subscriber imu_sub;
     ros::Subscriber brake_bool_sub;
+    ros::Subscriber switch_sub_red;
 
     // Publisher for mux controller
     ros::Publisher mux_pub;
@@ -41,6 +42,7 @@ private:
     int nav_mux_idx;
     int brake_mux_idx;
     int mpc_mux_idx;
+    int lstm_mux_idx;
     // ***Add mux index for new planner here***
     // int new_mux_idx;
 
@@ -56,6 +58,7 @@ private:
     int nav_button_idx;
     int data_button_idx;
     int mpc_axis_idx;
+    int lstm_axis_idx;
     // ***Add button index for new planner here***
     // int new_button_idx;
 
@@ -66,6 +69,7 @@ private:
     std::string random_walk_key_char;
     std::string nav_key_char;
     std::string mpc_key_char;
+    std::string lstm_key_char;
     // ***Add key char for new planner here***
     // int new_key_char;
 
@@ -92,14 +96,14 @@ private:
 
     // flag
     bool log_data = false;
-    bool joy_button_previous = false;
+    std::vector<bool> joy_button_previous {false, false, false, false, false, false, false, false, false, false, false};
 public:
     BehaviorController() {
         // Initialize the node handle
         n = ros::NodeHandle("~");
 
         // get topic names
-        std::string scan_topic, odom_topic, imu_topic, joy_topic, keyboard_topic, brake_bool_topic, mux_topic, data_topic;
+        std::string scan_topic, odom_topic, imu_topic, joy_topic, keyboard_topic, brake_bool_topic, mux_topic, data_topic, switch_topic_red;
         n.getParam("scan_topic", scan_topic);
         n.getParam("odom_topic", odom_topic);
         n.getParam("imu_topic", imu_topic);
@@ -108,6 +112,7 @@ public:
         n.getParam("keyboard_topic", keyboard_topic);
         n.getParam("brake_bool_topic", brake_bool_topic);
         n.getParam("data_topic", data_topic);
+        n.getParam("switch_topic_red", switch_topic_red);
 
         // Make a publisher for mux messages
         mux_pub = n.advertise<std_msgs::Int32MultiArray>(mux_topic, 10);
@@ -121,6 +126,7 @@ public:
         odom_sub = n.subscribe(odom_topic, 1, &BehaviorController::odom_callback, this);
         key_sub = n.subscribe(keyboard_topic, 1, &BehaviorController::key_callback, this);
         brake_bool_sub = n.subscribe(brake_bool_topic, 1, &BehaviorController::brake_callback, this);
+        switch_sub_red = n.subscribe(switch_topic_red, 1, &BehaviorController::switch_callback, this);
 
         // Get mux indices
         n.getParam("joy_mux_idx", joy_mux_idx);
@@ -129,6 +135,7 @@ public:
         n.getParam("brake_mux_idx", brake_mux_idx);
         n.getParam("nav_mux_idx", nav_mux_idx);
         n.getParam("MPC_mux_idx", mpc_mux_idx);
+        n.getParam("LSTM_mux_idx", lstm_mux_idx);
         // ***Add mux index for new planner here***
         // n.getParam("new_mux_idx", new_mux_idx);
 
@@ -140,6 +147,7 @@ public:
         n.getParam("nav_button_idx", nav_button_idx);
         n.getParam("data_button_idx", data_button_idx);
         n.getParam("MPC_axis_idx", mpc_axis_idx);
+        n.getParam("LSTM_axis_idx", lstm_axis_idx);
         // ***Add button index for new planner here***
         // n.getParam("new_button_idx", new_button_idx);
 
@@ -150,6 +158,7 @@ public:
         n.getParam("brake_key_char", brake_key_char);
         n.getParam("nav_key_char", nav_key_char);
         n.getParam("MPC_key_char", mpc_key_char);
+        n.getParam("LSTM_key_char", lstm_key_char);
         // ***Add key char for new planner here***
         // n.getParam("new_key_char", new_key_char);
 
@@ -280,7 +289,8 @@ public:
         }
         else {
             ROS_INFO_STREAM(driver_name << " turned on");
-            change_controller(mux_idx);
+            mux_controller[mux_idx] = true;
+            publish_mux();
         }
     }
 
@@ -313,8 +323,8 @@ public:
             // when the button is down, with other axis have inputs, this will also publish message
             // but this will lead to start and stop recording data over and over
             // what I really want is, only change the flag when the button is down for the first time rather than holding it
-            if (!joy_button_previous) {
-                joy_button_previous = true;
+            if (!joy_button_previous[data_button_idx]) {
+                joy_button_previous[data_button_idx] = true;
                 // a switch
                 log_data = !log_data;
 
@@ -323,36 +333,78 @@ public:
 
                 data_pub.publish(msg);
             }
-        }else {
-            joy_button_previous = false;
+        } else {
+            joy_button_previous[data_button_idx] = false;
         }
         // Changing mux_controller:
-        if (msg.buttons[joy_button_idx]) { 
-            // joystick
-            toggle_mux(joy_mux_idx, "Joystick");
-        }else if (msg.buttons[key_button_idx]) {
-            // keyboard
-            toggle_mux(key_mux_idx, "Keyboard");
+        if (msg.buttons[joy_button_idx]) {
+            if (!joy_button_previous[joy_button_idx]) {
+                joy_button_previous[joy_button_idx] = true;
+                // joystick
+                toggle_mux(joy_mux_idx, "Joystick");
+            }
+        } else {
+            joy_button_previous[joy_button_idx] = false;
+        }
+        if (msg.buttons[key_button_idx]) {
+            if (!joy_button_previous[key_button_idx]) {
+                joy_button_previous[key_button_idx] = true;
+                // keyboard
+                toggle_mux(key_mux_idx, "Keyboard");
+            }
+        } else {
+            joy_button_previous[key_button_idx] = false;
         }
         if (msg.buttons[brake_button_idx]) {
-            // emergency brake 
-            if (safety_on) {
-                ROS_INFO("Emergency brake turned off");
-                safety_on = false;
+            if (!joy_button_previous[brake_button_idx]) {
+                joy_button_previous[brake_button_idx] = true;
+                // emergency brake
+                if (safety_on) {
+                    ROS_INFO("Emergency brake turned off");
+                    safety_on = false;
+                } else {
+                    ROS_INFO("Emergency brake turned on");
+                    safety_on = true;
+                }
             }
-            else {
-                ROS_INFO("Emergency brake turned on");
-                safety_on = true;
-            }
-        } else if (msg.buttons[random_walk_button_idx]) {
-            // random walker
-            toggle_mux(random_walker_mux_idx, "Random Walker");
-        } else if (msg.buttons[nav_button_idx]) {
-            // nav
-            toggle_mux(nav_mux_idx, "Navigation");
-        } else if (msg.axes[mpc_axis_idx]) {
-            toggle_mux(mpc_mux_idx, "Model Predictive Control");
+        } else {
+            joy_button_previous[brake_button_idx] = false;
         }
+        if (msg.buttons[random_walk_button_idx]) {
+            if (!joy_button_previous[random_walk_button_idx]) {
+                joy_button_previous[random_walk_button_idx] = true;
+                // random walker
+                toggle_mux(random_walker_mux_idx, "Random Walker");
+            }
+        } else {
+            joy_button_previous[random_walk_button_idx] = false;
+        }
+        if (msg.buttons[nav_button_idx]) {
+            if (!joy_button_previous[nav_button_idx]) {
+                joy_button_previous[nav_button_idx] = true;
+                // nav
+                toggle_mux(nav_mux_idx, "Navigation");
+            }
+        } else {
+            joy_button_previous[nav_button_idx] = false;
+        }
+        if (msg.axes[mpc_axis_idx] == 1) {
+            if (!joy_button_previous[mpc_axis_idx]) {
+                joy_button_previous[mpc_axis_idx] = true;
+                toggle_mux(mpc_mux_idx, "Model Predictive Control");
+            }
+        } else {
+            joy_button_previous[mpc_axis_idx] = false;
+        }
+        if (msg.axes[lstm_axis_idx] == 1) {
+            if (!joy_button_previous[lstm_axis_idx]) {
+                joy_button_previous[lstm_axis_idx] = true;
+                toggle_mux(lstm_mux_idx, "LSTM overtaking");
+            }
+        } else {
+            joy_button_previous[lstm_axis_idx] = false;
+        }
+
         // ***Add new else if statement here for new planning method***
         // if (msg.buttons[new_button_idx]) {
         //  // new planner
@@ -388,6 +440,8 @@ public:
             toggle_mux(nav_mux_idx, "Navigation");
         } else if (msg.data == mpc_key_char) {
             toggle_mux(mpc_mux_idx, "Model Predictive Control");
+        } else if (msg.data == lstm_key_char) {
+            toggle_mux(lstm_mux_idx, "LSTM overtaking");
         }
         // ***Add new else if statement here for new planning method***
         // if (msg.data == new_key_char) {
@@ -412,6 +466,16 @@ public:
 
     void imu_callback(const sensor_msgs::Imu & msg) {
 
+    }
+
+    void switch_callback(const std_msgs::String & msg) {
+        if (msg.data == "1" and mux_controller[mpc_mux_idx]) {
+            toggle_mux(mpc_mux_idx, "Model Predictive Control");
+            toggle_mux(lstm_mux_idx, "LSTM overtaking");
+        } else if (msg.data == "0" and mux_controller[lstm_mux_idx]) {
+            toggle_mux(lstm_mux_idx, "LSTM overtaking");
+            toggle_mux(mpc_mux_idx, "Model Predictive Control");
+        }
     }
 
 

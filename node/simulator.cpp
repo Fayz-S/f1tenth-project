@@ -104,7 +104,7 @@ private:
     ros::Publisher scan_pub_red;
     ros::Publisher pose_pub;
     ros::Publisher carState_pub_red;
-
+    ros::Publisher switch_pub_red;
 
     ros::Publisher odom_pub;
     ros::Publisher imu_pub;
@@ -167,7 +167,7 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=40, .y=48, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=50, .y=48, .theta=0, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -185,7 +185,7 @@ public:
 
         // Get the topic names
         std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red, gt_pose_topic,
-                pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line, carState_topic_red;
+                pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line, carState_topic_red, switch_topic_red;
         n.getParam("drive_topic_blue", drive_topic_blue);
         n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
@@ -278,6 +278,7 @@ public:
         // Get obstacle size parameter
         n.getParam("obstacle_size", obstacle_size);
 
+        n.getParam("switch_topic_red", switch_topic_red);
         // Initialize a simulator of the laser scanner
         scan_simulator = ScanSimulator2D(
                 scan_beams,
@@ -302,7 +303,9 @@ public:
         // Make a publisher for ground truth pose
         pose_pub = n.advertise<geometry_msgs::PoseStamped>(gt_pose_topic, 10);
 
-        carState_pub_red = n.advertise<std_msgs::String>(carState_topic_red, 10);
+        carState_pub_red = n.advertise<std_msgs::String>(carState_topic_red, 1);
+
+        switch_pub_red = n.advertise<std_msgs::String>(switch_topic_red, 1);
 
         // Start a timer to output the pose
         //
@@ -429,9 +432,9 @@ public:
                 params_blue,
                 current_seconds - previous_seconds_blue);
 
-        state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -max_speed), 6.9);
+        state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -max_speed), max_speed);
         state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -max_steering_angle), max_steering_angle);
-        ROS_INFO_STREAM("V blue "<<state_blue.velocity_x);
+//        ROS_INFO_STREAM("V blue "<<state_blue.velocity_x);
 
         //ROS_INFO_STREAM("STEERING "<<state_blue.theta);
 //        ROS_INFO_STREAM("angular_velocity "<<state_blue.angular_velocity);
@@ -467,7 +470,7 @@ public:
             opponent_pose.theta = state_red.theta;
 
             // Compute the scan from the lidar
-            std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose);
+            std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose, false);
 
             // Convert to float
             std::vector<float> scan_(scan.size());
@@ -609,7 +612,7 @@ public:
                 current_seconds - previous_seconds_red);
         state_red.velocity_x = std::min(std::max(state_red.velocity_x, -max_speed), max_speed);
         state_red.steer_angle = std::min(std::max(state_red.steer_angle, -max_steering_angle), max_steering_angle);
-        ROS_INFO_STREAM("V red "<<state_red.velocity_x);
+//        ROS_INFO_STREAM("V red "<<state_red.velocity_x);
         previous_seconds_red = current_seconds;
 
         /// Publish the pose as a transformation
@@ -641,7 +644,7 @@ public:
             opponent_pose.y = state_blue.y;
             opponent_pose.theta = state_blue.theta;
             // Compute the scan from the lidar
-            std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose);
+            std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose, true);
 
             // Convert to float
             std::vector<float> scan_(scan.size());
@@ -725,6 +728,12 @@ public:
             // reset TTC
             if (no_collision)
                 TTC = false;
+
+            std_msgs::String msg;
+            std::stringstream ss;
+            ss << scan_simulator.see_opponent();
+            msg.data = ss.str();
+            switch_pub_red.publish(msg);
 
             // Publish the laser message
             sensor_msgs::LaserScan scan_msg;

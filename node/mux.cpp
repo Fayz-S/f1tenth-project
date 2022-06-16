@@ -135,6 +135,13 @@ public:
         n.getParam("MPC_mux_idx", mpc_mux_idx);
         add_channel(mpc_drive_topic, drive_topic_red, mpc_mux_idx);
 
+
+        int LSTM_mux_idx;
+        std::string LSTM_drive_topic;
+        n.getParam("LSTM_drive_topic", LSTM_drive_topic);
+        n.getParam("LSTM_mux_idx", LSTM_mux_idx);
+        add_channel(LSTM_drive_topic, drive_topic_red, LSTM_mux_idx);
+
         // ***Add a channel for a new planner here**
         // int new_mux_idx;
         // std::string new_drive_topic;
@@ -204,14 +211,14 @@ public:
             changed = changed || (mux_controller[i] != prev_mux[i]);
             anything_on = anything_on || mux_controller[i];
         }
-        if (changed) {
-            std::cout << "MUX: " << std::endl;
-            for (int i = 0; i < mux_size; i++) {
-                std::cout << mux_controller[i] << std::endl;
-                prev_mux[i] = mux_controller[i];
-            }
-            std::cout << std::endl;
-        }
+//        if (changed) {
+//            std::cout << "MUX: " << std::endl;
+//            for (int i = 0; i < mux_size; i++) {
+//                std::cout << mux_controller[i] << std::endl;
+//                prev_mux[i] = mux_controller[i];
+//            }
+//            std::cout << std::endl;
+//        }
         if (!anything_on) {
             // if no mux channel is active, halt the car
             publish_to_drive_blue(0.0, 0.0);
@@ -225,7 +232,7 @@ public:
         if (mux_controller[joy_mux_idx]) {
             // Calculate desired velocity and steering angle
             // possibly this will be changed depends on different joystick
-            double desired_velocity_blue = -17 / 2 * (msg.axes[joy_speed_axis_blue] - 1);
+            double desired_velocity_blue = -16.0 / 2 * (msg.axes[joy_speed_axis_blue] - 1);
             double desired_steer_blue = max_steering_angle * msg.axes[joy_angle_axis_blue];
             double desired_velocity_red = -max_speed / 2 * (msg.axes[joy_speed_axis_red] - 1);
             double desired_steer_red = max_steering_angle * msg.axes[joy_angle_axis_red];
