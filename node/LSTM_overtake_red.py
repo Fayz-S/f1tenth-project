@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from keras.models import load_model
+from tensorflow.python.keras.models import load_model
 import rospy
 import numpy as np
 from sensor_msgs.msg import LaserScan
@@ -30,8 +30,9 @@ def carState_callback(data):
 
 if __name__ == '__main__':
     rospy.init_node("LSTM_overtake_red", anonymous=True)
-
-    LSTM_model = load_model('/home/jz76/catkin_ws/src/f1tenth_simulator/model_RNN_10')
+    # Australia 5 7 8 9 10 11 12 13 14
+    # Shanghai 9 10 12 14
+    LSTM_model = load_model('/home/jz76/catkin_ws/src/f1tenth_simulator/model_RNN_5_1')
     LSTM_model.summary()
     LSTM_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
 
@@ -53,8 +54,9 @@ if __name__ == '__main__':
         lengthA = len(inputA)
         lengthB = len(inputB)
         length_min = min(lengthA, lengthB)
-        if length_min is not 0:
+        if length_min != 0:
             command = LSTM_model.predict([inputA[:length_min], inputB[:length_min]], verbose=0)
+
             # rospy.loginfo(command)
             ack_msg = AckermannDriveStamped()
             ack_msg.header.stamp = rospy.Time.now()

@@ -14,7 +14,6 @@ import rospkg
 import pandas as pd
 
 accelerate = 0
-steering_angle_velocity = 0
 
 class bicycle_model():
 
@@ -46,7 +45,7 @@ class bicycle_model():
 
     def update_model(self, start_state, velocity, steering_angle, dt):
         global accelerate
-        global steering_angle_velocity
+
         self.compute_accel(velocity, start_state[3])
 
         start_state[3] = start_state[3] + 0.00001
@@ -137,7 +136,7 @@ class NFTOCPNLP(object):
             self.uPred = np.zeros((self.N, self.d))
             self.mpcInput = []
             self.feasible = 0
-            rospy.logwarn("Unfeasible")
+            rospy.logwarn("MPC solution Unfeasible")
 
         return self.uPred[1]
 
@@ -259,32 +258,42 @@ if __name__ == '__main__':
     map_origin_y = map_msg.info.origin.position.y
     map_resolution = map_msg.info.resolution
 
+    weight_x = 5
+    weight_y = 5
+    bias_x = 0
+    bias_y = -65.1
+    # Australia math.pi / 2
+    bias_rotation = math.pi / 2
     reference_line_raw = pd.read_csv(rospack.get_path("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv",
                                      sep=";")
 
     reference_line_x_y_theta = pd.DataFrame()
-    reference_line_x_y_theta['x'] = reference_line_raw.iloc[:, 1] * 5 * map_resolution + map_origin_x -120
-    reference_line_x_y_theta['y'] = - (reference_line_raw.iloc[:, 2] * 5 * map_resolution - map_origin_y)
-    reference_line_x_y_theta['theta'] = -(reference_line_raw.iloc[:, 3] + math.pi / 2)
+    reference_line_x_y_theta['x'] = reference_line_raw.iloc[:, 1] * weight_x * map_resolution + map_origin_x + bias_x
+    reference_line_x_y_theta['y'] = - (reference_line_raw.iloc[:, 2] * weight_y * map_resolution - map_origin_y + bias_y)
+    reference_line_x_y_theta['theta'] = -(reference_line_raw.iloc[:, 3] + bias_rotation)
 
     rospy.Subscriber(carState_topic, String, carState_callback)
     rospy.Subscriber(scan_topic_red, LaserScan, LiDAR_callback)
     drive_pub_red = rospy.Publisher(MPC_drive_topic, AckermannDriveStamped, queue_size=10)
     goal_path_pub = rospy.Publisher(goal_path, Marker, queue_size=10)
 
-    ## Parameters initialization
-    N = 15  # 20
-    # number of states of the model
+    # Australia: 15
+    N = 11
+
     n_dy = 6
-    # number of controlling command
+
+    # Australia: 2
     d = 2
 
     dt = 0.01
     # sys_dy = systemdy(x0_dy, dt)
+
+    # Australia 2
     maxTime = 2
     size = reference_line_raw.shape[0]
     start = 0
-    # first line is same as last line
+    # Australia: 15
+    bias_index = 2
 
     # initial state
     while not rospy.is_shutdown():
@@ -307,10 +316,11 @@ if __name__ == '__main__':
 
         if start == size-2:
             start = 0
-        goal_index = (start + 15) % size
+        goal_index = (start + bias_index) % size
         goal_x = reference_line_x_y_theta.iloc[goal_index, 0]
         goal_y = reference_line_x_y_theta.iloc[goal_index, 1]
         goal_theta = reference_line_x_y_theta.iloc[goal_index, 2]
+
         # rospy.loginfo("goalx"+str(goal_x))
         # rospy.loginfo("goaly"+str(goal_y))
         # rospy.loginfo("goalt"+str(goal_theta))
@@ -347,7 +357,8 @@ if __name__ == '__main__':
         Q_dy = 0 * np.eye(n_dy)
         # Qf_dy = 1000*np.eye(n_dy)
         # increase cost to solve deviation
-        Qf_dy = np.diag([50000.0, 50000.0, 500.0, 130.0, 0.0, 0.0])
+        # Australia [50000.0, 50000.0, 500.0, 130.0, 0.0, 0.0]
+        Qf_dy = np.diag([80000.0, 80000.0, 80000.0, 120.0, 0.0, 0.0])
 
         # current_LiDAR = ()
         # while len(current_LiDAR) == 0:
@@ -370,7 +381,8 @@ if __name__ == '__main__':
         upx_dy = np.array([10000, 10000, 10, 100, 5, 50])
         lowx_dy = np.array([-10000, -10000, -10, 0, -5, -50])
         # input constrains
-        bu = np.array([max_speed, max_steering_angle+1])
+        # Australia 1
+        bu = np.array([max_speed, max_steering_angle+1.3])
 
 
         ## Solving the problem

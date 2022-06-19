@@ -27,7 +27,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LiDAR_red
+    SyncSource: LiDAR_blue
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -68,8 +68,8 @@ Visualization Manager:
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
-      Max Color: 200; 200; 255
-      Min Color: 0; 0; 225
+      Max Color: 250; 250; 255
+      Min Color: 0; 80; 225
       Name: LiDAR_blue
       Position Transformer: XYZ
       Queue Size: 10
@@ -213,7 +213,7 @@ Visualization Manager:
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        Link Tree Style: ""
+        Link Tree Style: Links in Alphabetic Order
         red/back_left_wheel:
           Alpha: 1
           Show Axes: false
@@ -330,7 +330,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.933135986328125
+      Distance: 33.79158020019531
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -346,9 +346,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.5497963428497314
       Target Frame: <Fixed Frame>
-      Yaw: 3.1673195362091064
+      Yaw: 3.18731951713562
     Saved: ~
 Window Geometry:
   Displays:
