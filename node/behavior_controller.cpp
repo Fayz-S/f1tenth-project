@@ -469,13 +469,13 @@ public:
     }
 
     void switch_callback(const std_msgs::String & msg) {
-        if (msg.data == "1" and mux_controller[mpc_mux_idx]) {
-            toggle_mux(mpc_mux_idx, "Model Predictive Control");
-            toggle_mux(lstm_mux_idx, "LSTM overtaking");
-        } else if (msg.data == "0" and mux_controller[lstm_mux_idx]) {
-            toggle_mux(lstm_mux_idx, "LSTM overtaking");
-            toggle_mux(mpc_mux_idx, "Model Predictive Control");
-        }
+//        if (msg.data == "1" and mux_controller[mpc_mux_idx]) {
+//            toggle_mux(mpc_mux_idx, "Model Predictive Control");
+//            toggle_mux(lstm_mux_idx, "LSTM overtaking");
+//        } else if (msg.data == "0" and mux_controller[lstm_mux_idx]) {
+//            toggle_mux(lstm_mux_idx, "LSTM overtaking");
+//            toggle_mux(mpc_mux_idx, "Model Predictive Control");
+//        }
     }
 
 

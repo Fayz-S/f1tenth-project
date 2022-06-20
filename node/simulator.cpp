@@ -167,7 +167,7 @@ public:
         n = ros::NodeHandle("~");
 
         // Initialize car state_blue and driving commands
-        state_blue = {.x=40, .y=40, .theta=1.2, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=20, .y=2, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -176,7 +176,7 @@ public:
         previous_seconds_blue = ros::Time::now().toSec();
         previous_seconds_red = ros::Time::now().toSec();
 
-        state_red = {.x=37, .y=32, .theta=1.2, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=23, .y=0.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_red = 0.0;
         steer_angle_vel_red = 0.0;
         desired_speed_red = 0.0;
@@ -1173,10 +1173,15 @@ public:
 //        int bias_x = -120;
 //        int bias_y = 0;
         // Shanghai
-        int weight_x = 5;
-        int weight_y = 5;
+//        int weight_x = 5;
+//        int weight_y = 5;
+//        int bias_x = 0;
+//        int bias_y = -65.1;
+        // Gulf-Air-Bahrain
+        int weight_x = 6;
+        int weight_y = 6;
         int bias_x = 0;
-        int bias_y = -65.1;
+        int bias_y = -65.4;
 
         std::string line;
         getline(readcsv, line);

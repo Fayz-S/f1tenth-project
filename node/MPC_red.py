@@ -63,6 +63,7 @@ class bicycle_model():
         y_next = start_state[1] + dt * (start_state[3] * np.sin(start_state[2]) + start_state[4] * np.cos(start_state[2]))
         theta_next = start_state[2] + dt * start_state[5]
 
+
         vx_next = start_state[3] + dt * ((Fx_fr * np.cos(steering_angle) - Fyf * np.sin(steering_angle) + self.mass * start_state[4] * start_state[5]) / self.mass)
         vy_next = start_state[4] + dt * ((Fyr + Fyf * np.sin(steering_angle) + Fx_fr * sin(steering_angle) - self.mass * start_state[3] * start_state[5]) / self.mass)
         yaw_next = start_state[5] + dt * ((Fyf * self.l_f * np.cos(steering_angle) - Fyr * self.l_r) / self.Iz)
@@ -185,12 +186,11 @@ scan_topic_red = ""
 MPC_drive_topic = ""
 
 
-# rate = rospy.Rate(10)
-
 def carState_callback(data):
     global x_cl_nlp_dy
     x_cl_nlp_dy = np.asarray(data.data.split(","), dtype=float)
-    x_cl_nlp_dy[2] = math.fmod(x_cl_nlp_dy[2] , 2*math.pi)
+    # x_cl_nlp_dy[2] = round_to_minusPI_PI(x_cl_nlp_dy[2])
+
 
 
 def LiDAR_callback(data):
@@ -198,6 +198,14 @@ def LiDAR_callback(data):
     LiDAR_raw = data.ranges
     # rospy.loginfo(LiDAR_raw)
 
+
+def round_to_minusPI_PI(x):
+    x = math.fmod(x, 2*math.pi)
+    if x>math.pi:
+        x -= 2*math.pi
+    if x<-math.pi:
+        x += 2*math.pi
+    return x
 
 if __name__ == '__main__':
     # anonymous=True flag means that rospy will choose a unique name for our 'listener' node so that multiple
@@ -258,43 +266,91 @@ if __name__ == '__main__':
     map_origin_y = map_msg.info.origin.position.y
     map_resolution = map_msg.info.resolution
 
-    weight_x = 5
-    weight_y = 5
+    weight_x = 6
+    weight_y = 6
     bias_x = 0
-    bias_y = -65.1
-    # Australia math.pi / 2
-    bias_rotation = math.pi / 2
-    reference_line_raw = pd.read_csv(rospack.get_path("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv",
-                                     sep=";")
+    bias_y = -65.4
 
+
+    reference_line_raw = pd.read_csv(rospack.get_path("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv", sep=";")
+    size = reference_line_raw.shape[0]
     reference_line_x_y_theta = pd.DataFrame()
     reference_line_x_y_theta['x'] = reference_line_raw.iloc[:, 1] * weight_x * map_resolution + map_origin_x + bias_x
     reference_line_x_y_theta['y'] = - (reference_line_raw.iloc[:, 2] * weight_y * map_resolution - map_origin_y + bias_y)
-    reference_line_x_y_theta['theta'] = -(reference_line_raw.iloc[:, 3] + bias_rotation)
+    # Australia -(reference_line_raw.iloc[:, 3] + math.pi / 2)
+    # Shanghai -(reference_line_raw.iloc[:, 3] + math.pi / 2)
+    reference_line_x_y_theta['theta'] = -(reference_line_raw.iloc[:, 3] + math.pi/2)
+    reference_line_x_y_theta['theta'] = reference_line_x_y_theta['theta'].map(round_to_minusPI_PI)
+
+    delta_theta = []
+    original = reference_line_x_y_theta.iloc[0, 2]
+    flag_turned = False
+    for index in range(size):
+        if index!=0:
+            diff = reference_line_x_y_theta.iloc[index, 2] - original
+
+            if original*reference_line_x_y_theta.iloc[index, 2]<=-1:
+                flag_turned = True
+
+            original = reference_line_x_y_theta.iloc[index, 2]
+            if not flag_turned:
+                delta_theta.append(diff)
+
+            if flag_turned and reference_line_x_y_theta.iloc[index, 2]<-3 and reference_line_x_y_theta.iloc[index-1, 2]>0:
+                delta_theta.append(-(math.fabs(reference_line_x_y_theta.iloc[index, 2])+ \
+                                     math.fabs(reference_line_x_y_theta.iloc[index-1, 2])- \
+                                     2*math.pi))
+
+                flag_turned = False
+            elif flag_turned and reference_line_x_y_theta.iloc[index, 2]>3 and reference_line_x_y_theta.iloc[index-1, 2]<0:
+                delta_theta.append(math.fabs(reference_line_x_y_theta.iloc[index, 2])+ \
+                                   math.fabs(reference_line_x_y_theta.iloc[index-1, 2])- \
+                                   2*math.pi)
+
+                flag_turned = False
+
+    delta_theta.append(0)
+    reference_line_x_y_theta['delta_theta'] = delta_theta
 
     rospy.Subscriber(carState_topic, String, carState_callback)
     rospy.Subscriber(scan_topic_red, LaserScan, LiDAR_callback)
     drive_pub_red = rospy.Publisher(MPC_drive_topic, AckermannDriveStamped, queue_size=10)
     goal_path_pub = rospy.Publisher(goal_path, Marker, queue_size=10)
-
+    rospy.wait_for_message(scan_topic_red, LaserScan)
     # Australia: 15
+    # Shanghai 11
     N = 11
 
     n_dy = 6
-
-    # Australia: 2
     d = 2
 
     dt = 0.01
     # sys_dy = systemdy(x0_dy, dt)
 
-    # Australia 2
+
     maxTime = 2
-    size = reference_line_raw.shape[0]
+
+
     start = 0
     # Australia: 15
-    bias_index = 2
+    # Shanghai 2
+    bias_index = 3
 
+
+    x0_dy = x_cl_nlp_dy
+    current_x = x0_dy[0]
+    current_y = x0_dy[1]
+    min_temp = 0x3F3F3F3F
+    rospy.loginfo(current_x)
+    rospy.loginfo(current_y)
+    for index in range(size):
+        distance_to_current = pow(reference_line_x_y_theta.iloc[index, 0] - current_x, 2) + pow(reference_line_x_y_theta.iloc[index, 1] - current_y, 2)
+        if distance_to_current < min_temp:
+            min_temp = distance_to_current
+            start = index
+
+    last_goal_index = start + bias_index
+    goal_theta = reference_line_x_y_theta.iloc[last_goal_index, 2] + 2*math.pi
     # initial state
     while not rospy.is_shutdown():
         x0_dy = x_cl_nlp_dy
@@ -302,6 +358,7 @@ if __name__ == '__main__':
         current_y = x0_dy[1]
         current_theta = x0_dy[2]
         # binary search, can only work in reference line direction i.e. from small index to large index
+        # -2 because first and last row in minTime is same
         end = size - 2
         while start < end:
             mid = int((start + end) / 2)
@@ -319,15 +376,19 @@ if __name__ == '__main__':
         goal_index = (start + bias_index) % size
         goal_x = reference_line_x_y_theta.iloc[goal_index, 0]
         goal_y = reference_line_x_y_theta.iloc[goal_index, 1]
-        goal_theta = reference_line_x_y_theta.iloc[goal_index, 2]
+        for index in range(last_goal_index, start+bias_index):
+            index = index % size
+            goal_theta += reference_line_x_y_theta.iloc[index, 3]
+
+        last_goal_index = goal_index
 
         # rospy.loginfo("goalx"+str(goal_x))
         # rospy.loginfo("goaly"+str(goal_y))
-        # rospy.loginfo("goalt"+str(goal_theta))
+        rospy.loginfo("goalt  "+str(goal_theta))
         # rospy.loginfo("goali"+str(goal_index))
         # rospy.loginfo("cx"+str(current_x))
         # rospy.loginfo("cy"+str(current_y))
-        # rospy.loginfo("ct"+str(current_theta))
+        rospy.loginfo("ct"+str(current_theta))
 
         goal_msg = Marker()
         goal_msg.header.frame_id = map_frame

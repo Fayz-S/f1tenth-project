@@ -20,7 +20,6 @@ def LiDAR_callback(data):
 def carState_callback(data):
     global car_state_array
     car_state = np.asarray(data.data.split(","), dtype=float)
-    car_state[2] = math.fmod(car_state[2] , 2*math.pi)
     speed_steering = []
     speed_steering.append(car_state[3])
     speed_steering.append(car_state[5])
@@ -32,7 +31,7 @@ if __name__ == '__main__':
     rospy.init_node("LSTM_overtake_red", anonymous=True)
     # Australia 5 7 8 9 10 11 12 13 14
     # Shanghai 9 10 12 14
-    LSTM_model = load_model('/home/jz76/catkin_ws/src/f1tenth_simulator/model_RNN_5_1')
+    LSTM_model = load_model('/home/jz76/catkin_ws/src/f1tenth_simulator/model_RNN_10_1')
     LSTM_model.summary()
     LSTM_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
 
