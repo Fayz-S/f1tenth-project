@@ -266,6 +266,10 @@ if __name__ == '__main__':
     map_origin_y = map_msg.info.origin.position.y
     map_resolution = map_msg.info.resolution
 
+    # weight_x = 6
+    # weight_y = 6
+    # bias_x = 0
+    # bias_y = -65.4
     weight_x = 6
     weight_y = 6
     bias_x = 0
@@ -277,8 +281,7 @@ if __name__ == '__main__':
     reference_line_x_y_theta = pd.DataFrame()
     reference_line_x_y_theta['x'] = reference_line_raw.iloc[:, 1] * weight_x * map_resolution + map_origin_x + bias_x
     reference_line_x_y_theta['y'] = - (reference_line_raw.iloc[:, 2] * weight_y * map_resolution - map_origin_y + bias_y)
-    # Australia -(reference_line_raw.iloc[:, 3] + math.pi / 2)
-    # Shanghai -(reference_line_raw.iloc[:, 3] + math.pi / 2)
+
     reference_line_x_y_theta['theta'] = -(reference_line_raw.iloc[:, 3] + math.pi/2)
     reference_line_x_y_theta['theta'] = reference_line_x_y_theta['theta'].map(round_to_minusPI_PI)
 
@@ -351,6 +354,7 @@ if __name__ == '__main__':
 
     last_goal_index = start + bias_index
     goal_theta = reference_line_x_y_theta.iloc[last_goal_index, 2] + 2*math.pi
+    pointer = last_goal_index
     # initial state
     while not rospy.is_shutdown():
         x0_dy = x_cl_nlp_dy
@@ -372,20 +376,27 @@ if __name__ == '__main__':
                 start = mid + 1
 
         if start == size-2:
-            start = 0
+            start = -1
         goal_index = (start + bias_index) % size
         goal_x = reference_line_x_y_theta.iloc[goal_index, 0]
         goal_y = reference_line_x_y_theta.iloc[goal_index, 1]
-        for index in range(last_goal_index, start+bias_index):
-            index = index % size
-            goal_theta += reference_line_x_y_theta.iloc[index, 3]
+
+        if last_goal_index != goal_index:
+            # rospy.loginfo("last goal"+str(last_goal_index))
+            # rospy.loginfo("current goal" + str(end+bias_index))
+            while pointer != goal_index:
+                rospy.loginfo("pointer " + str(pointer))
+                goal_theta += reference_line_x_y_theta.iloc[pointer, 3]
+                pointer += 1
+                pointer = pointer % (size)
+
 
         last_goal_index = goal_index
 
         # rospy.loginfo("goalx"+str(goal_x))
         # rospy.loginfo("goaly"+str(goal_y))
         rospy.loginfo("goalt  "+str(goal_theta))
-        # rospy.loginfo("goali"+str(goal_index))
+        rospy.loginfo("goali"+str(goal_index))
         # rospy.loginfo("cx"+str(current_x))
         # rospy.loginfo("cy"+str(current_y))
         rospy.loginfo("ct"+str(current_theta))
@@ -400,7 +411,7 @@ if __name__ == '__main__':
         goal_msg.pose.position.x = goal_x
         goal_msg.pose.position.y = goal_y
         goal_msg.pose.position.z = 0
-        goal_msg.pose.orientation.w = goal_theta
+
         goal_msg.scale.x = 0.1
         goal_msg.scale.y = 0.1
         goal_msg.scale.z = 0.1
@@ -419,7 +430,7 @@ if __name__ == '__main__':
         # Qf_dy = 1000*np.eye(n_dy)
         # increase cost to solve deviation
         # Australia [50000.0, 50000.0, 500.0, 130.0, 0.0, 0.0]
-        Qf_dy = np.diag([80000.0, 80000.0, 80000.0, 120.0, 0.0, 0.0])
+        Qf_dy = np.diag([80000.0, 80000.0, 50000.0, 130.0, 0.0, 0.0])
 
         # current_LiDAR = ()
         # while len(current_LiDAR) == 0:
