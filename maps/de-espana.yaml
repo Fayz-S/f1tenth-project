@@ -1,6 +1,6 @@
 image: de-espana.png
 resolution: 0.10000
-origin: [23, 31, 3.141592653589793]
+origin: [0, 0, 0]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196

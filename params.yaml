@@ -151,6 +151,6 @@ scan_frame_red: "red/laser"
 broadcast_transform: true
 publish_ground_truth_pose: true
 reference_line: "/minimum_time"
-map_name: "Gulf-Air-Bahrain"
+map_name: "Malaysian"
 mpc_goal_path: "/goal_and_path"
 switch_topic_red: "/MPC_ML"

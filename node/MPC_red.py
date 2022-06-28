@@ -180,7 +180,6 @@ class NFTOCPNLP(object):
 
 # [0: x, 1: y, 2: theta, 3: velocity x, 4: velocity y, 5: steering_angle, 6: angular_velocity, 7: slip_angle]
 x_cl_nlp_dy = np.zeros(8)
-LiDAR_raw = ()
 carState_topic = ""
 scan_topic_red = ""
 MPC_drive_topic = ""
@@ -190,13 +189,6 @@ def carState_callback(data):
     global x_cl_nlp_dy
     x_cl_nlp_dy = np.asarray(data.data.split(","), dtype=float)
     # x_cl_nlp_dy[2] = round_to_minusPI_PI(x_cl_nlp_dy[2])
-
-
-
-def LiDAR_callback(data):
-    global LiDAR_raw
-    LiDAR_raw = data.ranges
-    # rospy.loginfo(LiDAR_raw)
 
 
 def round_to_minusPI_PI(x):
@@ -270,10 +262,10 @@ if __name__ == '__main__':
     # weight_y = 6
     # bias_x = 0
     # bias_y = -65.4
-    weight_x = 6
-    weight_y = 6
+    weight_x = 3
+    weight_y = 3
     bias_x = 0
-    bias_y = -65.4
+    bias_y = -60
 
 
     reference_line_raw = pd.read_csv(rospack.get_path("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv", sep=";")
@@ -300,8 +292,8 @@ if __name__ == '__main__':
                 delta_theta.append(diff)
 
             if flag_turned and reference_line_x_y_theta.iloc[index, 2]<-3 and reference_line_x_y_theta.iloc[index-1, 2]>0:
-                delta_theta.append(-(math.fabs(reference_line_x_y_theta.iloc[index, 2])+ \
-                                     math.fabs(reference_line_x_y_theta.iloc[index-1, 2])- \
+                delta_theta.append(-(math.fabs(reference_line_x_y_theta.iloc[index, 2])+
+                                     math.fabs(reference_line_x_y_theta.iloc[index-1, 2])-
                                      2*math.pi))
 
                 flag_turned = False
@@ -315,14 +307,15 @@ if __name__ == '__main__':
     delta_theta.append(0)
     reference_line_x_y_theta['delta_theta'] = delta_theta
 
+
     rospy.Subscriber(carState_topic, String, carState_callback)
-    rospy.Subscriber(scan_topic_red, LaserScan, LiDAR_callback)
     drive_pub_red = rospy.Publisher(MPC_drive_topic, AckermannDriveStamped, queue_size=10)
     goal_path_pub = rospy.Publisher(goal_path, Marker, queue_size=10)
     rospy.wait_for_message(scan_topic_red, LaserScan)
     # Australia: 15
     # Shanghai 11
-    N = 11
+    # Gulf 11
+    N = 10
 
     n_dy = 6
     d = 2
@@ -337,7 +330,8 @@ if __name__ == '__main__':
     start = 0
     # Australia: 15
     # Shanghai 2
-    bias_index = 3
+    # Gulf 3
+    bias_index = 2
 
 
     x0_dy = x_cl_nlp_dy
@@ -352,9 +346,9 @@ if __name__ == '__main__':
             min_temp = distance_to_current
             start = index
 
-    last_goal_index = start + bias_index
-    goal_theta = reference_line_x_y_theta.iloc[last_goal_index, 2] + 2*math.pi
-    pointer = last_goal_index
+    pointer = start + bias_index
+    goal_theta = reference_line_x_y_theta.iloc[pointer, 2] + 2*math.pi
+
     # initial state
     while not rospy.is_shutdown():
         x0_dy = x_cl_nlp_dy
@@ -362,6 +356,18 @@ if __name__ == '__main__':
         current_y = x0_dy[1]
         current_theta = x0_dy[2]
         # binary search, can only work in reference line direction i.e. from small index to large index
+
+        # this is to fix a corner case that the position of the car is between |size-2|-car-|size-1 aka 0|--|1|, but closer to |size-1 aka 0| and when the start is -1
+        # Before go into binary search, the start is -1, the end is size-2, then distance_to_start < distance_to_end, the end will be the mid
+        # Until the start is -1, the end is 0. Binary search should stop here, since size-1 is 0
+        # But in this time, distance_to_start == distance_to_end, hence, start will be 1, because mid=int(-1 / 2)=0, start = mid+1=1
+        # But our car is at index size-1 (0), not index 1
+        # this will lead to the start become size-2 in next binary search, because car is closer to size-2 not 1,
+        # which makes the pointer iterating from 1 (previous goal index) to size-2 (current goal index), and has wrong theta value
+        # And the start will become -1 again, and go over the whole wrong search again
+        # if we set the start=0 when start==-1 before the searching, then the searching will stop when the end is 0
+        if start == -1:
+            start = 0
         # -2 because first and last row in minTime is same
         end = size - 2
         while start < end:
@@ -381,25 +387,27 @@ if __name__ == '__main__':
         goal_x = reference_line_x_y_theta.iloc[goal_index, 0]
         goal_y = reference_line_x_y_theta.iloc[goal_index, 1]
 
-        if last_goal_index != goal_index:
-            # rospy.loginfo("last goal"+str(last_goal_index))
-            # rospy.loginfo("current goal" + str(end+bias_index))
-            while pointer != goal_index:
-                rospy.loginfo("pointer " + str(pointer))
-                goal_theta += reference_line_x_y_theta.iloc[pointer, 3]
-                pointer += 1
-                pointer = pointer % (size)
+
+        # prefix doesn't work here, because when the pointer on the left hand side of 0 and the goal_index on the right hand side of 0,
+        # the result is pointless.
+        # prefix only works in one run i.e. 0 -> size, not x -> size -> x
+        # Besides, there is no large performance difference between prefix and sum all delta in a while loop,
+        # because every time updating the goal_index, the goal_index will increase few points
+        while pointer != goal_index:
+            rospy.loginfo("pointer " + str(pointer))
+            goal_theta += reference_line_x_y_theta.iloc[pointer, 3]
+            pointer += 1
+            pointer = pointer % size
 
 
-        last_goal_index = goal_index
-
-        # rospy.loginfo("goalx"+str(goal_x))
-        # rospy.loginfo("goaly"+str(goal_y))
-        rospy.loginfo("goalt  "+str(goal_theta))
-        rospy.loginfo("goali"+str(goal_index))
-        # rospy.loginfo("cx"+str(current_x))
-        # rospy.loginfo("cy"+str(current_y))
-        rospy.loginfo("ct"+str(current_theta))
+        # rospy.loginfo("start  "+str(start))
+        # rospy.loginfo("goalx "+str(goal_x))
+        # rospy.loginfo("goaly "+str(goal_y))
+        # rospy.loginfo("goalt  "+str(goal_theta))
+        rospy.loginfo("goali "+str(goal_index))
+        # rospy.loginfo("cx "+str(current_x))
+        # rospy.loginfo("cy "+str(current_y))
+        # rospy.loginfo("ct "+str(current_theta))
 
         goal_msg = Marker()
         goal_msg.header.frame_id = map_frame
@@ -429,58 +437,25 @@ if __name__ == '__main__':
         Q_dy = 0 * np.eye(n_dy)
         # Qf_dy = 1000*np.eye(n_dy)
         # increase cost to solve deviation
-        # Australia [50000.0, 50000.0, 500.0, 130.0, 0.0, 0.0]
-        Qf_dy = np.diag([80000.0, 80000.0, 50000.0, 130.0, 0.0, 0.0])
+        # Australia [50000.0, 50000.0, 50000.0, 130.0, 0.0, 0.0]
+        # Shanghai [80000.0, 80000.0, 50000.0, 140.0, 0.0, 0.0]
+        # Gulf [80000.0, 80000.0, 50000.0, 125.0, 0.0, 0.0]
+        Qf_dy = np.diag([40000.0, 40000.0, 90000.0, 130.0, 0.0, 0.0])
 
-        # current_LiDAR = ()
-        # while len(current_LiDAR) == 0:
-        #     current_LiDAR = LiDAR_raw
-        #
-        # index = -1
-        # LiDAR_min_distance = 0x3F3F3F3F
-        # for i in range(scan_beams):
-        #     if LiDAR_min_distance > current_LiDAR[i]:
-        #         LiDAR_min_distance = current_LiDAR[i]
-        #         index = i
-        #
-        # theta_to_nearest = current_theta - field_of_view / 2 + field_of_view / scan_beams * index
-        # distance_to_nearest_x = LiDAR_min_distance * math.cos(theta_to_nearest) + current_x
-        # distance_to_nearest_y = LiDAR_min_distance * math.sin(theta_to_nearest) + current_y
-        # rospy.loginfo(distance_to_nearest_x)
-        # rospy.loginfo(distance_to_nearest_y)
 
         # car state constrains
-        upx_dy = np.array([10000, 10000, 10, 100, 5, 50])
-        lowx_dy = np.array([-10000, -10000, -10, 0, -5, -50])
+        upx_dy = np.array([10000, 10000, 10000, 100, 50, 50])
+        lowx_dy = np.array([-10000, -10000, -10000, 0, -50, -50])
         # input constrains
         # Australia 1
-        bu = np.array([max_speed, max_steering_angle+1.3])
+        # Shanghai 1.3
+        # Gulf 1.3
+        bu = np.array([max_speed, max_steering_angle+1.4])
 
 
         ## Solving the problem
         nlp_kinematic = NFTOCPNLP(N, Q_dy, R, Qf_dy, xRef_dy, upx_dy, lowx_dy, bu, dynamic_model)
 
-
-        # marker_msg = Marker()
-        # marker_msg.header.frame_id = map_frame
-        # marker_msg.header.stamp = rospy.Time.now()
-        # marker_msg.ns = "path"
-        # marker_msg.id = 1
-        # marker_msg.type = visualization_msgs.msg.Marker.CUBE_LIST
-        #
-        # marker_msg.action = visualization_msgs.msg.Marker.MODIFY
-        # # marker_msg.pose.position.x = current_x
-        # # marker_msg.pose.position.y = current_y
-        # marker_msg.pose.position.z = 0
-        # marker_msg.pose.orientation.w = current_theta
-        # marker_msg.scale.x = 0.05
-        # marker_msg.scale.y = 0.05
-        # marker_msg.scale.z = 0.05
-        # marker_msg.color.a = 1.0
-        # marker_msg.color.r = 0.3
-        # marker_msg.color.g = 0.7
-        # marker_msg.color.b = 0.1
-        # sys_dy.reset_IC()
         xPredNLP_dy = []
         uPredNLP_dy = []
         CostSolved_dy = []
@@ -500,22 +475,3 @@ if __name__ == '__main__':
             ack_msg.drive.steering_angle = ut_dy[1]
             ack_msg.drive.speed = ut_dy[0]
             drive_pub_red.publish(ack_msg)
-
-
-
-            # for row in nlp_kinematic.xPred:
-            #     points = geometry_msgs.msg.Point()
-            #     points.x = row[0]
-            #     points.y = row[1]
-            #     marker_msg.points.append(points)
-            # goal_path_pub.publish(marker_msg)
-
-    # try:
-    #     # while not rospy.is_shutdown():
-    #     #     hello_str = "hello world %s" % rospy.get_time()
-    #     #     rospy.loginfo(hello_str)
-    #     #     pub.publish(hello_str)
-    #     #     rate.sleep()
-    # except rospy.ROSInterruptException:
-    #     pass
-    rospy.spin()

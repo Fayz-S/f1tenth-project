@@ -151,7 +151,7 @@ private:
     // flag that indicate start or stop recording data
     bool log_data_flag = 0;
     // the path where save data
-    char *path = "/media/psf/Ubuntu VM";
+    char *path = "/media/psf/Ubuntu";
     // name of current map
     std::string map_name;
     // save vehicle state
@@ -165,9 +165,10 @@ public:
     RacecarSimulator() : im_server("racecar_sim") {
         // Initialize the node handle
         n = ros::NodeHandle("~");
-
+        // monaco x:16 y:-2 t:0
+        // de-espana x:18 y:31 t:3.14
         // Initialize car state_blue and driving commands
-        state_blue = {.x=20, .y=2, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=18, .y=28, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -175,8 +176,9 @@ public:
 
         previous_seconds_blue = ros::Time::now().toSec();
         previous_seconds_red = ros::Time::now().toSec();
-
-        state_red = {.x=23, .y=0.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        // monaco x:10 y:-1 t:0
+        // de-espana x:22 y:30.5 t:3.14
+        state_red = {.x=22, .y=27.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_red = 0.0;
         steer_angle_vel_red = 0.0;
         desired_speed_red = 0.0;
@@ -1178,10 +1180,15 @@ public:
 //        int bias_x = 0;
 //        int bias_y = -65.1;
         // Gulf-Air-Bahrain
-        int weight_x = 6;
-        int weight_y = 6;
+//        int weight_x = 6;
+//        int weight_y = 6;
+//        int bias_x = 0;
+//        int bias_y = -65.4;
+        // Malaysian
+        int weight_x = 3;
+        int weight_y = 3;
         int bias_x = 0;
-        int bias_y = -65.4;
+        int bias_y = -60;
 
         std::string line;
         getline(readcsv, line);
