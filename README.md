@@ -1,4 +1,6 @@
-# THIS REPO IS NO LONGER MAINTAINED
+# [DISSERTATION] F1TENTH Simulator Two-Agents
+
+
 ## If you need a F1TENTH simulation in ROS, we have moved to a containerized ROS 2 simulation here: [https://github.com/f1tenth/f1tenth_gym_ros](https://github.com/f1tenth/f1tenth_gym_ros)
 
 # F1TENTH Racecar Simulator
