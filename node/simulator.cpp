@@ -27,8 +27,7 @@
 
 #include "f1tenth_simulator/car_state.hpp"
 #include "f1tenth_simulator/car_params.hpp"
-#include "f1tenth_simulator/ks_kinematics.hpp"
-#include "f1tenth_simulator/st_kinematics.hpp"
+#include "f1tenth_simulator/vehicle_model.hpp"
 #include "f1tenth_simulator/precompute.hpp"
 
 #include <iostream>
@@ -215,8 +214,8 @@ public:
         int scan_beams;
         double update_pose_rate, scan_std_dev;
         double scan_max_range;
-        n.getParam("wheelbase", params_blue.wheelbase);
-        n.getParam("wheelbase", params_red.wheelbase);
+
+
         n.getParam("update_pose_rate", update_pose_rate);
         n.getParam("scan_beams", scan_beams);
         n.getParam("scan_field_of_view", scan_fov);
@@ -224,12 +223,10 @@ public:
         n.getParam("scan_max_range", scan_max_range);
         n.getParam("map_free_threshold", map_free_threshold);
         n.getParam("scan_distance_to_base_link", scan_distance_to_base_link);
-        n.getParam("max_speed", max_speed);
-        n.getParam("max_steering_angle", max_steering_angle);
-        n.getParam("max_accel", max_accel);
-        n.getParam("max_decel", max_decel);
-        n.getParam("max_steering_vel", max_steering_vel);
+
         n.getParam("width", width);
+
+        n.getParam("wheelbase", params_blue.wheelbase);
         n.getParam("friction_coeff", params_blue.friction_coeff);
         n.getParam("height_cg", params_blue.h_cg);
         n.getParam("l_cg2rear", params_blue.l_r);
@@ -247,7 +244,13 @@ public:
         n.getParam("empirical_Pacejka_parameters_B_r", params_blue.B_r);
         n.getParam("empirical_Pacejka_parameters_C_r", params_blue.C_r);
         n.getParam("empirical_Pacejka_parameters_D_r", params_blue.D_r);
+        n.getParam("max_speed", params_blue.max_speed);
+        n.getParam("max_steering_angle", params_blue.max_steering_angle);
+        n.getParam("max_steering_vel", params_blue.max_steering_vel);
+        n.getParam("max_accel", params_blue.max_accel);
+        n.getParam("max_decel", params_blue.max_decel);
 
+        n.getParam("wheelbase", params_red.wheelbase);
         n.getParam("friction_coeff", params_red.friction_coeff);
         n.getParam("height_cg", params_red.h_cg);
         n.getParam("l_cg2rear", params_red.l_r);
@@ -265,6 +268,11 @@ public:
         n.getParam("empirical_Pacejka_parameters_B_r", params_red.B_r);
         n.getParam("empirical_Pacejka_parameters_C_r", params_red.C_r);
         n.getParam("empirical_Pacejka_parameters_D_r", params_red.D_r);
+        n.getParam("max_speed", params_red.max_speed);
+        n.getParam("max_steering_angle", params_red.max_steering_angle);
+        n.getParam("max_steering_vel", params_red.max_steering_vel);
+        n.getParam("max_accel", params_red.max_accel);
+        n.getParam("max_decel", params_red.max_decel);
 
         n.getParam("data_topic", data_topic);
         n.getParam("carState_topic_red", carState_topic_red);
@@ -412,17 +420,6 @@ public:
 
     void update_pose_blue(const ros::TimerEvent &) {
         // simulate P controller
-        compute_accel_blue(desired_speed_blue);
-        double actual_ang_blue = 0.0;
-        if (steering_buffer_blue.size() < buffer_length) {
-            steering_buffer_blue.push_back(desired_steer_ang_blue);
-            actual_ang_blue = 0.0;
-        } else {
-            steering_buffer_blue.insert(steering_buffer_blue.begin(), desired_steer_ang_blue);
-            actual_ang_blue = steering_buffer_blue.back();
-            steering_buffer_blue.pop_back();
-        }
-        set_steer_angle_vel_blue(compute_steer_vel_blue(actual_ang_blue));
 
         // Update the pose
         ros::Time timestamp = ros::Time::now();
@@ -430,13 +427,13 @@ public:
 
         state_blue = STKinematics::update(
                 state_blue,
-                accel_blue,
-                steer_angle_vel_blue,
+                desired_speed_blue,
+                desired_steer_ang_blue,
                 params_blue,
                 current_seconds - previous_seconds_blue);
 
-        state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -max_speed), max_speed);
-        state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -max_steering_angle), max_steering_angle);
+        state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -params_blue.max_speed), params_blue.max_speed);
+        state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -params_blue.max_steering_angle), params_blue.max_steering_angle);
 //        ROS_INFO_STREAM("V blue "<<state_blue.velocity_x);
 
         //ROS_INFO_STREAM("STEERING "<<state_blue.theta);
@@ -591,30 +588,21 @@ public:
     } // end of update_pose
 
     void update_pose_red(const ros::TimerEvent &) {
-        // simulate P controller
-        compute_accel_red(desired_speed_red);
-        double actual_ang_red = 0.0;
-        if (steering_buffer_red.size() < buffer_length) {
-            steering_buffer_red.push_back(desired_steer_ang_red);
-            actual_ang_red = 0.0;
-        } else {
-            steering_buffer_red.insert(steering_buffer_red.begin(), desired_steer_ang_red);
-            actual_ang_red = steering_buffer_red.back();
-            steering_buffer_red.pop_back();
-        }
-        set_steer_angle_vel_red(compute_steer_vel_red(actual_ang_red));
 
         // Update the pose
         ros::Time timestamp = ros::Time::now();
         double current_seconds = timestamp.toSec();
+
         state_red = STKinematics::update(
                 state_red,
-                accel_red,
-                steer_angle_vel_red,
+                desired_speed_red,
+                desired_steer_ang_red,
                 params_red,
                 current_seconds - previous_seconds_red);
-        state_red.velocity_x = std::min(std::max(state_red.velocity_x, -max_speed), max_speed);
-        state_red.steer_angle = std::min(std::max(state_red.steer_angle, -max_steering_angle), max_steering_angle);
+
+        state_red.velocity_x = std::min(std::max(state_red.velocity_x, -params_red.max_speed), params_red.max_speed);
+        state_red.steer_angle = std::min(std::max(state_red.steer_angle, -params_red.max_steering_angle), params_red.max_steering_angle);
+
 //        ROS_INFO_STREAM("V red "<<state_red.velocity_x);
         previous_seconds_red = current_seconds;
 
@@ -908,21 +896,7 @@ public:
         desired_steer_ang_red = 0.0;
     }
 
-    void set_accel_blue(double accel_) {
-        accel_blue = std::min(std::max(accel_, -max_accel), max_accel);
-    }
 
-    void set_accel_red(double accel_) {
-        accel_red = std::min(std::max(accel_, -max_accel), max_accel);
-    }
-
-    void set_steer_angle_vel_blue(double steer_angle_vel_) {
-        steer_angle_vel_blue = std::min(std::max(steer_angle_vel_, -max_steering_vel), max_steering_vel);
-    }
-
-    void set_steer_angle_vel_red(double steer_angle_vel_) {
-        steer_angle_vel_red = std::min(std::max(steer_angle_vel_, -max_steering_vel), max_steering_vel);
-    }
 
     void add_obs(int ind) {
         std::vector<int> rc = ind_2_rc(ind);
@@ -951,95 +925,8 @@ public:
         map_pub.publish(current_map);
     }
 
-    double compute_steer_vel_blue(double desired_angle) {
-        // get difference between current and desired
-        double dif = (desired_angle - state_blue.steer_angle);
 
-        // calculate velocity
-        double steer_vel;
-        if (std::abs(dif) > .0001)  // if the difference is not trivial
-            steer_vel = dif / std::abs(dif) * max_steering_vel;
-        else {
-            steer_vel = 0;
-        }
 
-        return steer_vel;
-    }
-
-    double compute_steer_vel_red(double desired_angle) {
-        // get difference between current and desired
-        double dif = (desired_angle - state_red.steer_angle);
-
-        // calculate velocity
-        double steer_vel;
-        if (std::abs(dif) > .0001)  // if the difference is not trivial
-            steer_vel = dif / std::abs(dif) * max_steering_vel;
-        else {
-            steer_vel = 0;
-        }
-
-        return steer_vel;
-    }
-
-    void compute_accel_blue(double desired_velocity) {
-        // get difference between current and desired
-        double dif = (desired_velocity - state_blue.velocity_x);
-
-        if (state_blue.velocity_x > 0) {
-            if (dif > 0) {
-                // accelerate
-                double kp = 2.0 * max_accel / max_speed;
-                set_accel_blue(kp * dif);
-            } else {
-                // brake
-                accel_blue = -max_decel;
-            }
-        } else if (state_blue.velocity_x < 0) {
-            if (dif > 0) {
-                // brake
-                accel_blue = max_decel;
-
-            } else {
-                // accelerate
-                double kp = 2.0 * max_accel / max_speed;
-                set_accel_blue(kp * dif);
-            }
-        } else {
-            // zero speed, accel_blue either way
-            double kp = 2.0 * max_accel / max_speed;
-            set_accel_blue(kp * dif);
-        }
-    }
-
-    void compute_accel_red(double desired_velocity) {
-        // get difference between current and desired
-        double dif = (desired_velocity - state_red.velocity_x);
-
-        if (state_red.velocity_x > 0) {
-            if (dif > 0) {
-                // accelerate
-                double kp = 2.0 * max_accel / max_speed;
-                set_accel_red(kp * dif);
-            } else {
-                // brake
-                accel_red = -max_decel;
-            }
-        } else if (state_red.velocity_x < 0) {
-            if (dif > 0) {
-                // brake
-                accel_red = max_decel;
-
-            } else {
-                // accelerate
-                double kp = 2.0 * max_accel / max_speed;
-                set_accel_red(kp * dif);
-            }
-        } else {
-            // zero speed, accel_red either way
-            double kp = 2.0 * max_accel / max_speed;
-            set_accel_red(kp * dif);
-        }
-    }
 
     /// ---------------------- CALLBACK FUNCTIONS ----------------------
 

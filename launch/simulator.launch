@@ -4,11 +4,16 @@
   <!-- https://wiki.ros.org/roslaunch/XML/rosparam -->
   <!-- https://wiki.ros.org/roslaunch/XML#substitution_args -->
   <!-- https://answers.ros.org/question/37916/when-to-use-param-and-rosparam-on-launch-file/ -->
+
   <!-- Listen to messages from joysicks -->
   <node pkg="joy" name="joy_node" type="joy_node">
+
     <!-- depends on different environment, joy can have different index, can be found by command ls /dev/input/.
-         and referred by jsX. after known which index you want to use, replace below index, value="/dev/input/jsX", with that. -->
+         and referred by jsX. after known which index you want to use, replace below index, value="/dev/input/jsX".
+         https://wiki.ros.org/joy/Tutorials/ConfiguringALinuxJoystick
+    -->
     <param name="dev" type="string" value="/dev/input/js1" />
+
     <!-- due to the joy usually cannot reset to 0, we need a threshold for that which is in percentage-->
     <param name="deadzone" value="0.20" />
   </node>
@@ -47,20 +52,18 @@
     <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
-<!--  <node pkg="f1tenth_simulator" name="MPC_red" type="MPC_red.py" output="screen">-->
-<!--    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>-->
-<!--  </node>-->
+  <node pkg="f1tenth_simulator" name="MPC_red" type="MPC_red.py" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  </node>
 
-  <node pkg="f1tenth_simulator" name="LSTM_overtake_red" type="LSTM_overtake_red.py" output="screen">
+  <node pkg="f1tenth_simulator" name="LSTM_overtake_red" type="ML_overtaking_red.py" output="screen">
     <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   </node>
 
   <!-- ***Put launch command for new planner here:-->
   <!-- Launch the New Planner Node -->
   <!--   <node pkg="f1tenth_simulator" name="new node's name" type="new file name" output="screen">
-          <rosparam command="load" file="$(find f1tenth_simulator)/params.yaml"/>
+          <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
   	 </node>    -->
-
-  
 
 </launch>

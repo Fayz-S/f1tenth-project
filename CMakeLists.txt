@@ -82,8 +82,11 @@ if(DEFINED CATKIN_DEVEL_PREFIX)
 
   catkin_install_python(PROGRAMS node/MPC_red.py
           DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-  catkin_install_python(PROGRAMS node/LSTM_overtake_red.py
+  catkin_install_python(PROGRAMS node/ML_overtaking_red.py
           DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+  # You need to install your new python file here
+#  catkin_install_python(PROGRAMS folder/name.py
+#          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
   # Add the nodes
   file(GLOB NODE_SRC_FILES node/*.cpp)

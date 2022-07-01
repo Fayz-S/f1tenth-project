@@ -133,7 +133,7 @@ rand_drive_topic: "/rand_drive"
 brake_drive_topic: "/brake"
 nav_drive_topic: "/nav"
 MPC_drive_topic: "/mpc"
-LSTM_drive_topic: "/lstm"
+overtaking_drive_topic: "/overtake"
 # **Add name for new planning method here**
 new_drive_topic: "/new_drive"
 
@@ -151,6 +151,6 @@ scan_frame_red: "red/laser"
 broadcast_transform: true
 publish_ground_truth_pose: true
 reference_line: "/minimum_time"
-map_name: "Malaysianf"
+map_name: "Malaysian"
 mpc_goal_path: "/goal_and_path"
 switch_topic_red: "/MPC_ML"

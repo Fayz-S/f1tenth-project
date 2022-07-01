@@ -1,17 +1,20 @@
 #include <cmath>
 #include <ros/ros.h>
 #include "f1tenth_simulator/car_state.hpp"
-#include "f1tenth_simulator/st_kinematics.hpp"
+#include "f1tenth_simulator/vehicle_model.hpp"
 #include <iostream>
 
 using namespace racecar_simulator;
 
-CarState STKinematics::update(CarState start, double accel, double steer_angle_vel, CarParams p, double dt) {
+CarState STKinematics::update(CarState start, double desired_speed, double desired_steer_ang, CarParams p, double dt) {
 
     double thresh = .5; // cut off to avoid singular behavior
     double err = .03; // deadband to avoid flip flop
     if (!start.st_dyn)
         thresh += err;
+
+    double accel = compute_accel(start, desired_speed, p);
+    double steer_angle_vel = compute_steer_vel(start, desired_steer_ang, p);
 
     // if velocity is low or negative, use normal Kinematic Single Track dynamics
     if (start.velocity_x < thresh) {
@@ -139,3 +142,57 @@ CarState STKinematics::update_k(
     return end;
 
 }
+
+double STKinematics::compute_accel(CarState & state, double desired_speed, CarParams & p) {
+    // get difference between current and desired
+    double dif = (desired_speed - state.velocity_x);
+
+    if (state.velocity_x > 0) {
+        if (dif > 0) {
+            // accelerate
+            double kp = 2.0 * p.max_accel / p.max_speed;
+            return set_accel(kp * dif, p);
+        } else {
+            // brake
+            return -p.max_decel;
+        }
+    } else if (state.velocity_x < 0) {
+        if (dif > 0) {
+            // brake
+            return p.max_decel;
+
+        } else {
+            // accelerate
+            double kp = 2.0 * p.max_accel / p.max_speed;
+            return set_accel(kp * dif, p);
+        }
+    } else {
+        // zero speed, accel either way
+        double kp = 2.0 * p.max_accel / p.max_speed;
+        return set_accel(kp * dif, p);
+    }
+}
+
+double STKinematics::set_accel(double accel_, CarParams & p) {
+    return std::min(std::max(accel_, -p.max_accel), p.max_accel);
+}
+
+double STKinematics::compute_steer_vel(CarState & state, double desired_steer_ang, CarParams & p) {
+    // get difference between current and desired
+    double dif = (desired_steer_ang - state.steer_angle);
+
+    // calculate velocity
+    double steer_vel;
+    if (std::abs(dif) > .0001)  // if the difference is not trivial
+        steer_vel = dif / std::abs(dif) * p.max_steering_vel;
+    else {
+        steer_vel = 0;
+    }
+
+    return set_steer_angle_vel(steer_vel, p);
+}
+
+double STKinematics::set_steer_angle_vel(double steer_angle_vel_, CarParams & p) {
+    return std::min(std::max(steer_angle_vel_, -p.max_steering_vel), p.max_steering_vel);
+}
+

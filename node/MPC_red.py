@@ -16,23 +16,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import geometry_msgs.msg
+import numpy as np
+import pandas as pd
+from casadi import *
+
 import rospy
+import rospkg
 import visualization_msgs.msg
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import OccupancyGrid
 from visualization_msgs.msg import Marker
-import numpy as np
-import math
-from casadi import *
-import rospkg
-import pandas as pd
 
-accelerate = 0
+import math
+
+"""
+This node is a standard Model Predictive Control algorithm, it subscribes carState and publish drive command
+"""
+
 
 class bicycle_model():
+    """
+    this is the vehicle model in Python version, only used for the nonlinear solver
+    """
 
     def __init__(self, wheelbase, friction_coeff, h_cg, l_f, l_r, cs_f, cs_r, mass, Iz, Cm1, Cm2, Cm3, B_f, C_f, D_f,
                  B_r, C_r, D_r, max_accel, max_decel, max_speed, max_steering_vel, max_steering_angle):
@@ -61,9 +68,16 @@ class bicycle_model():
         self.max_steering_angle = max_steering_angle
 
     def update_model(self, start_state, velocity, steering_angle, dt):
-        global accelerate
+        """
+        the only usage is in nonlinear solver, to get a new carState based on current carState and a drive command
 
-        self.compute_accel(velocity, start_state[3])
+        :param start_state: [0: x, 1: y, 2: theta, 3: velocity x, 4: velocity y, 5: steering_angle, 6: angular_velocity]
+        :param velocity:
+        :param steering_angle:
+        :param dt:
+        :return:
+        """
+        accelerate = self.compute_accel(velocity, start_state[3])
 
         start_state[3] = start_state[3] + 0.00001
 
@@ -89,17 +103,23 @@ class bicycle_model():
         return end_state
 
     def compute_accel(self, desired_velocity, current_velocity):
-        global accelerate
+        """
+
+        :param desired_velocity:
+        :param current_velocity:
+        :return:
+        """
 
         dif = desired_velocity - current_velocity
-
         kp = 2.0 * self.max_accel / self.max_speed
-        accelerate = kp*dif
+        return kp*dif
 
 
 
 class NFTOCPNLP(object):
+    """
 
+    """
     def __init__(self, N, Q, R, Qf, goal, upx, lowx, bu, NonLinearBicycleModel):
         # Define variables
         self.N = N

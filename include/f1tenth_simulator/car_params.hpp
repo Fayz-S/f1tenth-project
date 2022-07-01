@@ -21,6 +21,11 @@ struct CarParams {
     double B_r;
     double C_r;
     double D_r;
+    double max_speed;
+    double max_steering_angle;
+    double max_steering_vel;
+    double max_accel;
+    double max_decel;
 };
 
 }
