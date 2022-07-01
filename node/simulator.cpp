@@ -168,7 +168,7 @@ public:
         // monaco x:16 y:-2 t:0
         // de-espana x:18 y:31 t:3.14
         // Initialize car state_blue and driving commands
-        state_blue = {.x=18, .y=28, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=18, .y=31, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_blue = 0.0;
         steer_angle_vel_blue = 0.0;
         desired_speed_blue = 0.0;
@@ -178,7 +178,8 @@ public:
         previous_seconds_red = ros::Time::now().toSec();
         // monaco x:10 y:-1 t:0
         // de-espana x:22 y:30.5 t:3.14
-        state_red = {.x=22, .y=27.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        // Malaysian x:22 y:27.5 t:3.14
+        state_red = {.x=22, .y=30.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         accel_red = 0.0;
         steer_angle_vel_red = 0.0;
         desired_speed_red = 0.0;

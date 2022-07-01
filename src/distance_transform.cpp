@@ -1,3 +1,4 @@
+#include <ros/package.h>
 #include <cstddef>
 #include <vector>
 #include <cmath>
@@ -126,13 +127,14 @@ void DistanceTransform::distance_2d(
     double resolution,
     double boundary_value) {
 
-  distance_squared_2d(input, width, height, boundary_value);
+    distance_squared_2d(input, width, height, boundary_value);
 
-//    char* path = "/media/psf/Ubuntu VM";
+//    std::string path = ros::package::getPath("f1tenth_simulator");
 //    std::ofstream image(path + std::string("/image") + std::string(".csv"));
 //    if (image.is_open()) {
 //        std::string heading = "";
 //        for (int i = 0; i < width; ++i) {
+//            // the last column will be a NaN column
 //            heading += "heading,";
 //        }
 //        image << heading + "\n";
@@ -140,7 +142,7 @@ void DistanceTransform::distance_2d(
 //        for (int i = 0; i < height; ++i) {
 //            std::string temp = "";
 //            for (int j = width - 1; j >= 0; --j) {
-//                temp += std::to_string(sqrt(input[i*width + j])) + ",";
+//                temp += std::to_string(sqrt(input[i * width + j])) + ",";
 //            }
 //            temp += "\n";
 //            image << temp;
@@ -148,7 +150,7 @@ void DistanceTransform::distance_2d(
 //        image.close();
 //    }
 
-  for (size_t i = 0; i < input.size(); i++) {
-    input[i] = resolution * sqrt(input[i]);
-  }
+    for (size_t i = 0; i < input.size(); i++) {
+        input[i] = resolution * sqrt(input[i]);
+    }
 }

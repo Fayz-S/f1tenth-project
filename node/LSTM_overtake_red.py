@@ -1,11 +1,31 @@
 #!/usr/bin/env python3
-from tensorflow.python.keras.models import load_model
-import rospy
+
+"""
+Copyright 2022 Jiancheng Zhang
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
+from queue import Queue
 import numpy as np
+
+import rospy
+import rospkg
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 from std_msgs.msg import String
-from queue import Queue
+
+from tensorflow.python.keras.models import load_model
 
 size_of_input = 5
 LiDAR_raw_array = Queue(maxsize=size_of_input)
@@ -35,6 +55,8 @@ def carState_callback(data):
 
 if __name__ == '__main__':
     rospy.init_node("LSTM_overtake_red", anonymous=True)
+    rospack = rospkg.RosPack()
+
     # Australia 5 7 8 9 10 11 12 13 14
     # Shanghai 9 10 12 14
     # 14_5 14_3 12_3 10_4 10_3
@@ -57,7 +79,7 @@ if __name__ == '__main__':
     # 10_4 = 10_3 -> Australia+malaysian
 
     # structure of LSTM model is same as RNN_12_3
-    LSTM_model = load_model('/home/jz76/catkin_ws/src/f1tenth_simulator/model_RNN_14_5')
+    LSTM_model = load_model(rospack.get_path("f1tenth_simulator")+'/overtaking_models/model_RNN_10_4')
     LSTM_model.summary()
     LSTM_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
 
@@ -91,6 +113,6 @@ if __name__ == '__main__':
             # rospy.loginfo(command)
             ack_msg = AckermannDriveStamped()
             ack_msg.header.stamp = rospy.Time.now()
-            ack_msg.drive.steering_angle = command[0,-1,1]*0.192
+            ack_msg.drive.steering_angle = command[0,-1,1]*0.24
             ack_msg.drive.speed = command[0,-1,0]*14
             drive_pub_red.publish(ack_msg)

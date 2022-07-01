@@ -53,9 +53,9 @@ if(DEFINED CATKIN_DEVEL_PREFIX)
     sensor_msgs
     geometry_msgs
     rospy
+
     interactive_markers
     visualization_msgs
-
     std_msgs
     message_generation
     )

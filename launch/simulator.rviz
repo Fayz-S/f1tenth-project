@@ -291,7 +291,7 @@ Visualization Manager:
       Marker Topic: /minimum_time
       Name: Reference line
       Namespaces:
-        points: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -299,14 +299,14 @@ Visualization Manager:
       Marker Topic: /goal_and_path
       Name: MPC_path_goal
       Namespaces:
-        goal: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: red/base_link
+    Fixed Frame: blue/base_link
     Frame Rate: 120
   Name: root
   Tools:
@@ -330,7 +330,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 23.71175193786621
+      Distance: 17.304706573486328
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
