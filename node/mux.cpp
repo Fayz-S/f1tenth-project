@@ -138,7 +138,7 @@ public:
 
         int LSTM_mux_idx;
         std::string LSTM_drive_topic;
-        n.getParam("LSTM_drive_topic", LSTM_drive_topic);
+        n.getParam("overtaking_drive_topic", LSTM_drive_topic);
         n.getParam("LSTM_mux_idx", LSTM_mux_idx);
         add_channel(LSTM_drive_topic, drive_topic_red, LSTM_mux_idx);
 

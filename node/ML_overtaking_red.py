@@ -73,8 +73,7 @@ def carState_callback(data):
 
 if __name__ == '__main__':
 
-    rospy.init_node("LSTM_overtake_red", anonymous=True)
-    rospack = rospkg.RosPack()
+    rospy.init_node("ML_overtake_red", anonymous=True)
     """
     Australia 5 7 8 9 10 11 12 13 14
     Shanghai 9 10 12 14
@@ -97,8 +96,9 @@ if __name__ == '__main__':
     10_3 = 10_2 -> malaysian data
     10_4 = 10_3 -> Australia+malaysian
     """
+    rospack = rospkg.RosPack()
     # structure of LSTM model is same as RNN_12_3
-    overtaking_model = load_model(rospack.get_path("f1tenth_simulator")+'/overtaking_models/model_RNN_10_4')
+    overtaking_model = load_model(rospack.get_path("f1tenth_simulator")+'/overtaking_models/model_RNN_12_3')
     overtaking_model.summary()
     overtaking_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
 

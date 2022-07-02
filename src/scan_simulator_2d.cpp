@@ -124,6 +124,7 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
     double original_y = y;
 
     // Initialize the distance to the nearest obstacle
+    // if x and y is out of racetrack, distance_to_nearest = 0, and while loop will be skipped
     double distance_to_nearest = distance_transform(x, y);
     double total_distance = distance_to_nearest;
     // ray_tracing_epsilon is for position tolerance, the position of the car keeps changing even when the car is static, although changes are very tiny.
@@ -144,6 +145,27 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
         // Compute the nearest distance at that point
         distance_to_nearest = distance_transform(x, y);
         total_distance += distance_to_nearest;
+
+        // you can comment off the if section below, and you will see something like Moiré pattern
+        // when the racetrack is straight
+        // this is because the size of grid in distance_transform is not small enough
+        // We can apply a small distance to x and y, let them go back a little distance,
+        // and try again to see whether the x and y still in the obstacle or not
+        // this is the first time x and y out of the racetrack
+        if (distance_to_nearest == 0){
+            double error = 0;
+            while (distance_to_nearest == 0){
+                // accumulating error
+                error += 0.01;
+                // move back a little
+                x -= 0.01 * c;
+                y -= 0.01 * s;
+                distance_to_nearest = distance_transform(x, y);
+            }
+            // minus total error
+            total_distance -= error;
+            break;
+        }
     }
 
 
@@ -224,13 +246,13 @@ double ScanSimulator2D::trace_ray(double x, double y, double theta_index, double
                 // There will be four intersection point, but the real point we want is just one
                 // first of all, filter all points that not in square, which means both y and x is not between two points
                 // filter y
-                if ((points[i][0] - ray_tracing_epsilon >= array[i][0] and
-                     array[i][0] >= points[i][1] + ray_tracing_epsilon) or
+                if ((points[i][0] + ray_tracing_epsilon >= array[i][0] and
+                     array[i][0] >= points[i][1] - ray_tracing_epsilon) or
                     (points[i][0] - ray_tracing_epsilon <= array[i][0] and
                      array[i][0] <= points[i][1] + ray_tracing_epsilon)) {
                     // filter x
-                    if ((points[i][2] - ray_tracing_epsilon >= array[i][1] and
-                         array[i][1] >= points[i][3] + ray_tracing_epsilon) or
+                    if ((points[i][2] + ray_tracing_epsilon >= array[i][1] and
+                         array[i][1] >= points[i][3] - ray_tracing_epsilon) or
                         (points[i][2] - ray_tracing_epsilon <= array[i][1] and
                          array[i][1] <= points[i][3] + ray_tracing_epsilon)) {
                         // only one or two points left, we just pick out the smallest one, which is the first intersect points

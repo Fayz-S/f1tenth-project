@@ -6,6 +6,11 @@
 
 using namespace racecar_simulator;
 
+/*
+ * Here is the place to spend a lot of time minimizing the gap between simulated and real car
+ *
+ */
+
 CarState STKinematics::update(CarState start, double desired_speed, double desired_steer_ang, CarParams p, double dt) {
 
     double thresh = .5; // cut off to avoid singular behavior
@@ -25,7 +30,7 @@ CarState STKinematics::update(CarState start, double desired_speed, double desir
     double Fx_fr = p.Cm1 * d / p.Cm2 - start.velocity_x / p.Cm3;
     // slip angle
     double alpha_f = -std::atan((start.angular_velocity * p.l_f + start.velocity_y) / start.velocity_x) + start.steer_angle;
-    double alpha_r = std::atan((start.angular_velocity * p.l_r - start.velocity_y) / start.velocity_x);
+    double alpha_r =  std::atan((start.angular_velocity * p.l_r - start.velocity_y) / start.velocity_x);
 
     // lateral force
     double Fy_f = p.D_f * std::sin(p.C_f * std::atan(p.B_f * alpha_f))*25;

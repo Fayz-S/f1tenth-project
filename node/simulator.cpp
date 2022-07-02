@@ -361,7 +361,7 @@ public:
         steering_buffer_blue = std::vector<double>(buffer_length);
         steering_buffer_red = std::vector<double>(buffer_length);
 
-        // OBSTACLE BUTTON:
+
         // wait for one map message to get the map data array
         boost::shared_ptr<nav_msgs::OccupancyGrid const> map_ptr;
         nav_msgs::OccupancyGrid map_msg;
@@ -605,7 +605,7 @@ public:
 
 //        ROS_INFO_STREAM("V red "<<state_red.velocity_x);
         previous_seconds_red = current_seconds;
-
+        pub_carState_red(toString(state_red));
         /// Publish the pose as a transformation
         pub_pose_transform_red(timestamp);
 
@@ -618,7 +618,7 @@ public:
         // TODO: make and publish IMU message
         pub_imu(timestamp);
 
-        pub_carState_red(toString(state_red));
+
 
 
         /// KEEP in sim
@@ -841,7 +841,7 @@ public:
         }
     }
 
-    std::string toString(CarState &carState) {
+    std::string toString(CarState & carState) {
         return std::to_string(carState.x) + "," + std::to_string(carState.y) + "," + std::to_string(carState.theta) +
                "," + std::to_string(carState.velocity_x) + ","
                + std::to_string(carState.velocity_y) + "," + std::to_string(carState.steer_angle) + "," +
@@ -1295,10 +1295,7 @@ public:
 
     void pub_carState_red(std::string string){
         std_msgs::String msg;
-        std::stringstream ss;
-        ss << string;
-
-        msg.data = ss.str();
+        msg.data = string;
         carState_pub_red.publish(msg);
     }
 };

@@ -56,7 +56,7 @@ class ScanSimulator2D {
         double scan_std_dev_,
         double scan_max_range,
         double cube_width,
-        double ray_tracing_epsilon=0.0001,
+        double ray_tracing_epsilon=0.01,
         int theta_discretization=2000);
 
     void set_map(

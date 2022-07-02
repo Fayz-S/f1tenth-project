@@ -291,7 +291,7 @@ Visualization Manager:
       Marker Topic: /minimum_time
       Name: Reference line
       Namespaces:
-        {}
+        points: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -306,7 +306,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: blue/base_link
+    Fixed Frame: red/base_link
     Frame Rate: 120
   Name: root
   Tools:
