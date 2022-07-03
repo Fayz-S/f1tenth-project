@@ -129,8 +129,15 @@ void DistanceTransform::distance_2d(
 
     distance_squared_2d(input, width, height, boundary_value);
 
+    /*
+     * this code is for calculating minimum time trajectory, it will generate a csv file where has raw data of the input
+     * https://github.com/JZ76/Racetrack-Preparation
+     * once you get the csv file, you can comment it on.
+     *
+     */
 //    std::string path = ros::package::getPath("f1tenth_simulator");
 //    std::ofstream image(path + std::string("/image") + std::string(".csv"));
+//
 //    if (image.is_open()) {
 //        std::string heading = "";
 //        for (int i = 0; i < width; ++i) {
@@ -139,8 +146,10 @@ void DistanceTransform::distance_2d(
 //        }
 //        image << heading + "\n";
 //
+//        // from top to bottom
 //        for (int i = 0; i < height; ++i) {
 //            std::string temp = "";
+//            // from right to left
 //            for (int j = width - 1; j >= 0; --j) {
 //                temp += std::to_string(sqrt(input[i * width + j])) + ",";
 //            }

@@ -29,7 +29,6 @@ int main(int argc, char ** argv) {
     // Initialze publisher
     std::string keyboard_topic;
     n.getParam("keyboard_topic", keyboard_topic);
-
     ros::Publisher key_pub = n.advertise<std_msgs::String>(keyboard_topic, 10);
 
     //  struct termios {
@@ -45,29 +44,39 @@ int main(int argc, char ** argv) {
     // https://www.ibm.com/docs/en/zos/2.2.0?topic=functions-tcsetattr-set-attributes-terminal
 
     static struct termios old_setting, new_setting;
+
     // store the original setting of a terminal
-    tcgetattr( STDIN_FILENO, &old_setting);
-    // edit a new setting of terminal
+    tcgetattr(STDIN_FILENO, &old_setting);
+
+    // make a new setting of terminal
     new_setting = old_setting;
+
+    // c_lflag is the bitwise inclusive-OR of a number of kinds of symbols
     // ICANON is called line mode. Input is not delivered to the application until an entire line has been input.
-    // ICANON = 0011
-    // ~ICANON = 1100
+    // ICANON is the second bit in bitwise, if it is on, that bit should be 1
+    // ICANON = 0010
+    // ~ICANON = 1101
     // &: only 1 when both is 1, otherwise 0
-    // so that last two bit always 0, which means ICANON is turned off, the system does not wait for the user to enter a complete line.
+    // & operation doesn't affect other bit, because all the bit is 1 except the second in ~ICANON,
+    // So, if the original is 1, then after & operation it is still 1
+    // so that ICANON bit always 0, which means ICANON is turned off, the system does not wait for the user to enter a complete line.
     new_setting.c_lflag &= ~(ICANON);
+
     // set the new setting to the terminal
-    tcsetattr( STDIN_FILENO, 0, &new_setting);
+    // TCSANOW means the change should take place immediately.
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_setting);
 
-    //    struct sigaction {
-    //        void       (*sa_handler)(int);
-    //        sigset_t   sa_mask;
-    //        int        sa_flags;
-    //        void       (*sa_sigaction)(int, siginfo_t *, void *);
-    //    };
-    // https://www.ibm.com/docs/en/zos/2.2.0?topic=functions-sigaction-examine-change-signal-action
-
+    /*
+        struct sigaction {
+            void       (*sa_handler)(int);
+            sigset_t   sa_mask;
+            int        sa_flags;
+            void       (*sa_sigaction)(int, siginfo_t *, void *);
+        };
+     https://www.ibm.com/docs/en/zos/2.2.0?topic=functions-sigaction-examine-change-signal-action
+    */
     struct sigaction act;
-    // the action we want to do
+    // the action we are going to do
     act.sa_handler = sigHandler;
     // SIGINT is when the thread heard this certain signal, and takes some actions.
     // SIGINT means Ctrl+C which is shut down the application in a terminal
@@ -86,10 +95,9 @@ int main(int argc, char ** argv) {
         // Publish the character 
         msg.data = c;
         key_pub.publish(msg);
-
     }
     // set back terminal setting
-    tcsetattr( STDIN_FILENO, 0, &old_setting);
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_setting);
     
     return 0;
 }
