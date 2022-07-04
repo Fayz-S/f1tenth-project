@@ -38,7 +38,7 @@ update_pose_rate: 0.005
 
 # Lidar simulation parameters
 scan_beams: 1081
-scan_field_of_view: 4.71238898038469 #4.71 270degree # degree to radians: degree*PI/180
+scan_field_of_view: 4.71238898038469 # 270degree, degree to radians: degree*PI/180
 scan_max_range: 10
 
 # The distance from the center of the
@@ -103,7 +103,7 @@ new_key_char: "z"
 
 # Keyboard driving params
 keyboard_speed: 9  # meters/second
-keyboard_steer_ang: .3  # radians
+keyboard_steer_ang: 0.3  # radians
 
 # obstacle parameters
 obstacle_size: 2

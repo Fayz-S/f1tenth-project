@@ -630,6 +630,7 @@ public:
             scan_pose.x = state_red.x + scan_distance_to_base_link * std::cos(state_red.theta);
             scan_pose.y = state_red.y + scan_distance_to_base_link * std::sin(state_red.theta);
             scan_pose.theta = state_red.theta;
+
             Pose2D opponent_pose;
             opponent_pose.x = state_blue.x;
             opponent_pose.y = state_blue.y;

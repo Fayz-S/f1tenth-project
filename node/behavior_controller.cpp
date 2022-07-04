@@ -16,17 +16,16 @@
 
 using namespace racecar_simulator;
 
+/*
+ * this node is for switching between different controller
+ */
 class BehaviorController {
 private:
     // A ROS node
     ros::NodeHandle n;
 
-    // Listen for messages from joystick, keyboard, laser scan, odometry, and IMU
     ros::Subscriber joy_sub;
     ros::Subscriber key_sub;
-    ros::Subscriber laser_sub;
-    ros::Subscriber odom_sub;
-    ros::Subscriber imu_sub;
     ros::Subscriber brake_bool_sub;
     ros::Subscriber switch_sub_red;
 
@@ -34,6 +33,10 @@ private:
     ros::Publisher mux_pub;
     // Publisher for starting logging data signal
     ros::Publisher data_pub;
+
+    // Mux controller array
+    std::vector<bool> mux_controller;
+    int mux_size;
 
     // Mux indices
     int joy_mux_idx;
@@ -45,10 +48,6 @@ private:
     int lstm_mux_idx;
     // ***Add mux index for new planner here***
     // int new_mux_idx;
-
-    // Mux controller array
-    std::vector<bool> mux_controller;
-    int mux_size;
 
     // Button indices
     int joy_button_idx;
@@ -73,40 +72,22 @@ private:
     // ***Add key char for new planner here***
     // int new_key_char;
 
-    // Is ebrake on? (not engaged, but on)
+    // Is brake on? (not engaged, but on)
     bool safety_on;
-
-    // To roughly keep track of vehicle state
-    racecar_simulator::CarState state;
-
-    // precompute distance from lidar to edge of car for each beam
-    std::vector<double> car_distances;
-
-    // precompute cosines of scan angles
-    std::vector<double> cosines;
-
-    // for collision detection
-    double ttc_threshold;
-    bool in_collision=false;
-
-    // for collision logging
-    std::ofstream collision_file;
-    double beginning_seconds;
-    int collision_count=0;
 
     // flag
     bool log_data = false;
+
+    // {0: joy, 1: key, 2: random_walker, 3: brake, 4: nav, 5: MPC, 6: overtaking, 7: null, 8: null, 9: null, 10: null}
     std::vector<bool> joy_button_previous {false, false, false, false, false, false, false, false, false, false, false};
+
 public:
     BehaviorController() {
         // Initialize the node handle
         n = ros::NodeHandle("~");
 
         // get topic names
-        std::string scan_topic, odom_topic, imu_topic, joy_topic, keyboard_topic, brake_bool_topic, mux_topic, data_topic, switch_topic_red;
-        n.getParam("scan_topic", scan_topic);
-        n.getParam("odom_topic", odom_topic);
-        n.getParam("imu_topic", imu_topic);
+        std::string joy_topic, keyboard_topic, brake_bool_topic, mux_topic, data_topic, switch_topic_red;
         n.getParam("joy_topic", joy_topic);
         n.getParam("mux_topic", mux_topic);
         n.getParam("keyboard_topic", keyboard_topic);
@@ -119,11 +100,7 @@ public:
         // publisher for sending signal
         data_pub = n.advertise<std_msgs::Bool>(data_topic, 1);
 
-        // Start subscribers to listen to laser scan, joy, IMU, and odom messages
-        laser_sub = n.subscribe(scan_topic, 1, &BehaviorController::laser_callback, this);
         joy_sub = n.subscribe(joy_topic, 1, &BehaviorController::joy_callback, this);
-        imu_sub = n.subscribe(imu_topic, 1, &BehaviorController::imu_callback, this);
-        odom_sub = n.subscribe(odom_topic, 1, &BehaviorController::odom_callback, this);
         key_sub = n.subscribe(keyboard_topic, 1, &BehaviorController::key_callback, this);
         brake_bool_sub = n.subscribe(brake_bool_topic, 1, &BehaviorController::brake_callback, this);
         switch_sub_red = n.subscribe(switch_topic_red, 1, &BehaviorController::switch_callback, this);
@@ -172,31 +149,6 @@ public:
         // Start with ebrake off
         safety_on = false;
 
-        // Initialize state
-        state = {.x=0.0, .y=0.0, .theta=0.0, .velocity_x=0.0, .velocity_y=0.0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
-
-        // Get params for precomputation and collision detection
-        int scan_beams;
-        double scan_fov, scan_ang_incr, wheelbase, width, scan_distance_to_base_link;
-        n.getParam("ttc_threshold", ttc_threshold);
-        n.getParam("scan_beams", scan_beams);
-        n.getParam("scan_distance_to_base_link", scan_distance_to_base_link);
-        n.getParam("width", width);
-        n.getParam("wheelbase", wheelbase);
-        n.getParam("scan_field_of_view", scan_fov);
-        scan_ang_incr = scan_fov / scan_beams;
-
-        // Precompute cosine and distance to car at each angle of the laser scan
-        cosines = Precompute::get_cosines(scan_beams, -scan_fov/2.0, scan_ang_incr);
-        car_distances = Precompute::get_car_distances(scan_beams, wheelbase, width, 
-                scan_distance_to_base_link, -scan_fov/2.0, scan_ang_incr);
-
-        // Create collision file to be written to
-        std::string filename;
-        n.getParam("collision_file", filename);
-        collision_file.open(ros::package::getPath("f1tenth_simulator") + "/logs/" + filename + ".txt");
-        beginning_seconds = ros::Time::now().toSec();
-
     }
 
     /// ---------------------- GENERAL HELPER FUNCTIONS ----------------------
@@ -212,71 +164,6 @@ public:
 
         // publish mux message
         mux_pub.publish(mux_msg);
-    }
-
-    void change_controller(int controller_idx) {
-        // This changes the controller to the input index and publishes it
-
-        if (controller_idx == joy_mux_idx or controller_idx == key_mux_idx){
-            mux_controller[key_mux_idx] = false;
-            mux_controller[joy_mux_idx] = false;
-        }else{
-            // turn everything off
-            for (int i = 0; i < mux_size; i++) {
-                if (i != joy_mux_idx and i != key_mux_idx) {
-                    mux_controller[i] = false;
-                }
-            }
-        }
-
-        // turn on desired controller
-        mux_controller[controller_idx] = true;
-
-        publish_mux();
-    }
-
-    void collision_checker(const sensor_msgs::LaserScan & msg) {
-        // This function calculates TTC to see if there's a collision
-        if (state.velocity_x != 0) {
-            for (size_t i = 0; i < msg.ranges.size(); i++) {
-                double angle = msg.angle_min + i * msg.angle_increment;
-
-                // calculate projected velocity
-                double proj_velocity = state.velocity_x * cosines[i];
-                double ttc = (msg.ranges[i] - car_distances[i]) / proj_velocity;
-
-                // if it's small, there's a collision
-                if ((ttc < ttc_threshold) && (ttc >= 0.0)) { 
-                    // Send a blank mux and write to file
-                    collision_helper();
-
-                    in_collision = true;
-
-                    collision_count++;
-                    collision_file << "Collision #" << collision_count << " detected:\n";
-                    collision_file << "TTC: " << ttc << " seconds\n";
-                    collision_file << "Angle to obstacle: " << angle << " radians\n";
-                    collision_file << "Time since start of sim: " << (ros::Time::now().toSec() - beginning_seconds) << " seconds\n";
-                    collision_file << "\n";
-                    return;
-                }
-            }
-            // if it's gone through all beams without detecting a collision, reset in_collision
-            in_collision = false;
-        }
-    }
-
-    void collision_helper() {
-        // This function will turn off ebrake, clear the mux and publish it
-
-        safety_on = false;
-
-        // turn everything off
-        for (int i = 0; i < mux_size; i++) {
-            mux_controller[i] = false;
-        }
-
-        publish_mux();
     }
 
     void toggle_mux(int mux_idx, std::string driver_name) {
@@ -306,8 +193,7 @@ public:
         publish_mux();
     }
 
-
-    /// ---------------------- CALLBACK FUNCTIONS ----------------------
+// ---------------------- CALLBACK FUNCTIONS ---------------------------------------------------------------------------
 
     void brake_callback(const std_msgs::Bool & msg) {
         if (msg.data && safety_on) {
@@ -318,12 +204,19 @@ public:
     }
 
     void joy_callback(const sensor_msgs::Joy & msg) {
+        // the reason joy_callback looks different from key_callback is due to the different way of message publishing
+        // In keyboard node, when a key is press down, a message is published, like a switch
+        // In joy_node, if you move a joystick, the node will keep publishing data, like a data stream
+        // So, when a button is down, with a joystick is moving, the message will contain same data for the button,
+        // e.g. a lot of on
+        // but this will lead to start and stop recording data over and over if we use implementation like keyboard
+        // what we really want is, only change the flag when the button is down for the first time rather than holding it
+
+        // if the button is on in the msg
         if (msg.buttons[data_button_idx]) {
-            // this is to prevent keep sending same flag
-            // when the button is down, with other axis have inputs, this will also publish message
-            // but this will lead to start and stop recording data over and over
-            // what I really want is, only change the flag when the button is down for the first time rather than holding it
+            // if the button is the first time down
             if (!joy_button_previous[data_button_idx]) {
+                // set the flag to true, so if the button keeps down, we will skip
                 joy_button_previous[data_button_idx] = true;
                 // a switch
                 log_data = !log_data;
@@ -334,9 +227,10 @@ public:
                 data_pub.publish(msg);
             }
         } else {
+            // if the button is released, reset the flag
             joy_button_previous[data_button_idx] = false;
         }
-        // Changing mux_controller:
+
         if (msg.buttons[joy_button_idx]) {
             if (!joy_button_previous[joy_button_idx]) {
                 joy_button_previous[joy_button_idx] = true;
@@ -346,6 +240,7 @@ public:
         } else {
             joy_button_previous[joy_button_idx] = false;
         }
+
         if (msg.buttons[key_button_idx]) {
             if (!joy_button_previous[key_button_idx]) {
                 joy_button_previous[key_button_idx] = true;
@@ -355,6 +250,7 @@ public:
         } else {
             joy_button_previous[key_button_idx] = false;
         }
+
         if (msg.buttons[brake_button_idx]) {
             if (!joy_button_previous[brake_button_idx]) {
                 joy_button_previous[brake_button_idx] = true;
@@ -370,6 +266,7 @@ public:
         } else {
             joy_button_previous[brake_button_idx] = false;
         }
+
         if (msg.buttons[random_walk_button_idx]) {
             if (!joy_button_previous[random_walk_button_idx]) {
                 joy_button_previous[random_walk_button_idx] = true;
@@ -379,6 +276,7 @@ public:
         } else {
             joy_button_previous[random_walk_button_idx] = false;
         }
+
         if (msg.buttons[nav_button_idx]) {
             if (!joy_button_previous[nav_button_idx]) {
                 joy_button_previous[nav_button_idx] = true;
@@ -388,6 +286,7 @@ public:
         } else {
             joy_button_previous[nav_button_idx] = false;
         }
+
         if (msg.axes[mpc_axis_idx] == 1) {
             if (!joy_button_previous[mpc_axis_idx]) {
                 joy_button_previous[mpc_axis_idx] = true;
@@ -396,6 +295,7 @@ public:
         } else {
             joy_button_previous[mpc_axis_idx] = false;
         }
+
         if (msg.axes[lstm_axis_idx] == 1) {
             if (!joy_button_previous[lstm_axis_idx]) {
                 joy_button_previous[lstm_axis_idx] = true;
@@ -405,15 +305,21 @@ public:
             joy_button_previous[lstm_axis_idx] = false;
         }
 
-        // ***Add new else if statement here for new planning method***
-        // if (msg.buttons[new_button_idx]) {
-        //  // new planner
-        //  toggle_mux(new_mux_idx, "New Planner");
-        // }
+//         ***Add new else if statement here for new planning method***
+//         if (msg.buttons/axes[new_button_idx]) {
+//             if (!joy_button_previous[new_button_idx]) {
+//                 joy_button_previous[new_button_idx] = true;
+//                 // new planner
+//                 toggle_mux(new_mux_idx, "New Planner");
+//             }
+//         } else {
+//             joy_button_previous[new_button_idx] = false;
+//         }
 
     }
 
     void key_callback(const std_msgs::String & msg) {
+
         // Changing mux controller:
         if (msg.data == joy_key_char) {
             // joystick
@@ -421,14 +327,12 @@ public:
         } else if (msg.data == keyboard_key_char) {
             // keyboard
             toggle_mux(key_mux_idx, "Keyboard");
-        }
-        if (msg.data == brake_key_char) {
+        } else if (msg.data == brake_key_char) {
             // emergency brake 
             if (safety_on) {
                 ROS_INFO("Emergency brake turned off");
                 safety_on = false;
-            }
-            else {
+            } else {
                 ROS_INFO("Emergency brake turned on");
                 safety_on = true;
             }
@@ -439,32 +343,18 @@ public:
             // nav
             toggle_mux(nav_mux_idx, "Navigation");
         } else if (msg.data == mpc_key_char) {
+            // MPC
             toggle_mux(mpc_mux_idx, "Model Predictive Control");
         } else if (msg.data == lstm_key_char) {
+            // overtaking
             toggle_mux(lstm_mux_idx, "LSTM overtaking");
         }
+
         // ***Add new else if statement here for new planning method***
-        // if (msg.data == new_key_char) {
+        // else if (msg.data == new_key_char) {
         //  // new planner
         //  toggle_mux(new_mux_idx, "New Planner");
         // }
-
-    }
-
-    void laser_callback(const sensor_msgs::LaserScan & msg) {
-        // check for a collision
-        //collision_checker(msg);
-    }
-
-    void odom_callback(const nav_msgs::Odometry & msg) {
-        // Keep track of state to be used elsewhere
-        state.velocity_x = msg.twist.twist.linear.x;
-        state.angular_velocity = msg.twist.twist.angular.z;
-        state.x = msg.pose.pose.position.x;
-        state.y = msg.pose.pose.position.y;
-    }
-
-    void imu_callback(const sensor_msgs::Imu & msg) {
 
     }
 
@@ -477,7 +367,6 @@ public:
 //            toggle_mux(mpc_mux_idx, "Model Predictive Control");
 //        }
     }
-
 
 };
 
