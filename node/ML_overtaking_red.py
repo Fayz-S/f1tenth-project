@@ -142,5 +142,5 @@ if __name__ == '__main__':
             ack_msg = AckermannDriveStamped()
             ack_msg.header.stamp = rospy.Time.now()
             ack_msg.drive.steering_angle = command[0,-1,1]*0.24
-            ack_msg.drive.speed = command[0,-1,0]*14
+            ack_msg.drive.speed = command[0,-1,0]*16
             drive_pub_red.publish(ack_msg)

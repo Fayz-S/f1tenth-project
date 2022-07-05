@@ -6,7 +6,7 @@
 
 using namespace racecar_simulator;
 
-/*
+/**
  * this file contains all the equations that describe a vehicle model
  * You may want the simulated car state as similar to the real car as possible
  * On the one hand, you need to tweak those parameters in params.yaml and edit equations
@@ -14,7 +14,7 @@ using namespace racecar_simulator;
  */
 
 CarState STKinematics::update(CarState start, double desired_speed, double desired_steer_ang, CarParams p, double dt) {
-    /*
+    /**
      * this method uses bicycle model with dynamic equations
      * Due to the original version (commented one) is very weired when turning at high speed
      * I implemented a new version, included motor, tire, and lateral force equations
@@ -168,11 +168,11 @@ double STKinematics::compute_accel(CarState & state, double desired_speed, CarPa
     } else if (state.velocity_x < 0) {
         if (dif > 0) {
             // brake
-            return p.max_decel;
+            return p.max_accel;
 
         } else {
             // accelerate
-            double kp = 2.0 * p.max_accel / p.max_speed;
+            double kp = 2.0 * p.max_decel / p.max_speed;
             return set_accel(kp * dif, p);
         }
     } else {

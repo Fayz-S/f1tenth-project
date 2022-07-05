@@ -1,8 +1,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
-// interactive marker
-#include <interactive_markers/interactive_marker_server.h>
 
+#include <interactive_markers/interactive_marker_server.h>
 #include <tf2/impl/utils.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -43,151 +42,93 @@ private:
     // A ROS node
     ros::NodeHandle n;
 
-    // The transformation frames used
-    std::string map_frame, base_frame_blue, scan_frame_blue, base_frame_red, scan_frame_red;
-
-    // obstacle states (1D index) and parameters
-    std::vector<int> added_obs;
-    // listen for clicked point for adding obstacles
-    ros::Subscriber obs_sub;
-    int obstacle_size;
-
-    // interactive markers' server
-    interactive_markers::InteractiveMarkerServer im_server;
-
-    // The car state_blue and parameters
-    CarState state_blue;
-    CarState state_red;
-    double previous_seconds_blue;
-    double previous_seconds_red;
-    double scan_distance_to_base_link;
-    double max_speed, max_steering_angle;
-    double max_accel, max_steering_vel, max_decel;
-    double desired_speed_blue, desired_steer_ang_blue, desired_speed_red, desired_steer_ang_red;
-    double accel_blue, steer_angle_vel_blue, accel_red, steer_angle_vel_red;
-    double cube_width;
-    CarParams params_blue;
-    CarParams params_red;
-    double width;
-
-    // A simulator of the laser
-    ScanSimulator2D scan_simulator;
-    double map_free_threshold;
+    double update_pose_rate;
 
     // For publishing transformations
     tf2_ros::TransformBroadcaster br;
 
+    std::string drive_topic_blue, drive_topic_red, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red,
+                map_topic, gt_pose_topic,pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line,
+                carState_topic_red, switch_topic_red;
+
+    // The transformation frames used
+    std::string map_frame, base_frame_blue, scan_frame_blue, base_frame_red, scan_frame_red;
+
+    // The car state_blue and parameters
+    CarState state_blue, state_red;
+    CarParams params_blue, params_red;
+    double desired_speed_blue, desired_steer_ang_blue, desired_speed_red, desired_steer_ang_red;
+    double previous_seconds_blue, previous_seconds_red;
+    double scan_distance_to_base_link;
+    double cube_width;
+    double width;
+
     // A timer to update the pose
-    ros::Timer update_pose_timer_blue;
-    ros::Timer update_pose_timer_red;
+    ros::Timer update_pose_timer_blue, update_pose_timer_red;
 
-    // Listen for drive commands
-    ros::Subscriber drive_sub_blue;
-    ros::Subscriber drive_sub_red;
-
-    // Listen for a map
-    ros::Subscriber map_sub;
-    bool map_exists = false;
-
-    // Listen for updates to the pose
-    ros::Subscriber pose_sub_blue;
-    ros::Subscriber pose_sub_red;
-    ros::Subscriber pose_rviz_sub;
-
-    ros::Subscriber data_sub;
+    // A simulator of the laser
+    ScanSimulator2D scan_simulator;
 
     // Publish a scan, odometry, and imu data
     bool broadcast_transform;
     bool pub_gt_pose;
-    ros::Publisher scan_pub_blue;
-    ros::Publisher scan_pub_red;
+
+    ros::Publisher scan_pub_blue, scan_pub_red;
     ros::Publisher pose_pub;
     ros::Publisher carState_pub_red;
     ros::Publisher switch_pub_red;
-
     ros::Publisher odom_pub;
     ros::Publisher imu_pub;
+    ros::Publisher reference_line_pub;
+
+    ros::Subscriber drive_sub_blue, drive_sub_red;
+    ros::Subscriber pose_sub_blue, pose_sub_red;
+    ros::Subscriber data_sub;
 
     // publisher for map with obstacles
     ros::Publisher map_pub;
-
-    ros::Publisher reference_line_pub;
-
+    // Listen for a map
+    ros::Subscriber map_sub;
+    double map_free_threshold;
+    bool map_exists = false;
     // keep an original map for obstacles
     nav_msgs::OccupancyGrid original_map;
     nav_msgs::OccupancyGrid current_map;
-
-    // for obstacle collision
+    // name of current map
+    std::string map_name;
     int map_width, map_height;
     double map_resolution, origin_x, origin_y;
 
-    // safety margin for collisions
-    double thresh;
-    double speed_clip_diff;
-
     // precompute cosines of scan angles
     std::vector<double> cosines;
-
-    // scan parameters
-    double scan_fov;
-    double scan_ang_incr;
-
-    // pi
-    const double PI = 3.1415;
-
     // precompute distance from lidar to edge of car for each beam
     std::vector<double> car_distances;
-
     // for collision check
     bool TTC = false;
     double ttc_threshold;
 
-    // steering delay
-    int buffer_length;
-    std::vector<double> steering_buffer_blue;
-    std::vector<double> steering_buffer_red;
+    // scan parameters
+    double scan_fov;
+    double scan_ang_incr;
+    int scan_beams;
+    double scan_std_dev;
+    double scan_max_range;
 
     // flag that indicate start or stop recording data
     bool log_data_flag = 0;
     // the path where save data
     char *path = "/media/psf/Ubuntu";
-    // name of current map
-    std::string map_name;
     // save vehicle state
-    std::vector<std::string> car_state_blue;
-    std::vector<std::string> car_state_red;
+    std::vector<std::string> car_state_blue, car_state_red;
     // save data for machine learning
     std::vector<std::string> steering_gas_lidar_blue;
 
 public:
-
-    RacecarSimulator() : im_server("racecar_sim") {
+    RacecarSimulator() {
         // Initialize the node handle
         n = ros::NodeHandle("~");
-        // monaco x:16 y:-2 t:0
-        // de-espana x:18 y:31 t:3.14
-        // Initialize car state_blue and driving commands
-        state_blue = {.x=18, .y=31, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
-        accel_blue = 0.0;
-        steer_angle_vel_blue = 0.0;
-        desired_speed_blue = 0.0;
-        desired_steer_ang_blue = 0.0;
-
-        previous_seconds_blue = ros::Time::now().toSec();
-        previous_seconds_red = ros::Time::now().toSec();
-        // monaco x:10 y:-1 t:0
-        // de-espana x:22 y:30.5 t:3.14
-        // Malaysian x:22 y:27.5 t:3.14
-        state_red = {.x=22, .y=30.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
-        accel_red = 0.0;
-        steer_angle_vel_red = 0.0;
-        desired_speed_red = 0.0;
-        desired_steer_ang_red = 0.0;
-
 
         // Get the topic names
-        std::string drive_topic_blue, drive_topic_red, map_topic, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red, gt_pose_topic,
-                pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line, carState_topic_red, switch_topic_red;
         n.getParam("drive_topic_blue", drive_topic_blue);
         n.getParam("drive_topic_red", drive_topic_red);
         n.getParam("map_topic", map_topic);
@@ -200,8 +141,6 @@ public:
         n.getParam("imu_topic", imu_topic);
         n.getParam("ground_truth_pose_topic", gt_pose_topic);
         n.getParam("cube_width", cube_width);
-        // Get steering delay params_blue
-        n.getParam("buffer_length", buffer_length);
 
         // Get the transformation frame names
         n.getParam("map_frame", map_frame);
@@ -209,11 +148,6 @@ public:
         n.getParam("scan_frame_blue", scan_frame_blue);
         n.getParam("base_frame_red", base_frame_red);
         n.getParam("scan_frame_red", scan_frame_red);
-
-        // Fetch the car parameters
-        int scan_beams;
-        double update_pose_rate, scan_std_dev;
-        double scan_max_range;
 
 
         n.getParam("update_pose_rate", update_pose_rate);
@@ -277,26 +211,41 @@ public:
         n.getParam("data_topic", data_topic);
         n.getParam("carState_topic_red", carState_topic_red);
         n.getParam("reference_line", reference_line);
-
+        n.getParam("switch_topic_red", switch_topic_red);
         n.getParam("map_name", map_name);
-        // clip velocity
-        n.getParam("speed_clip_diff", speed_clip_diff);
 
         // Determine if we should broadcast
         n.getParam("broadcast_transform", broadcast_transform);
         n.getParam("publish_ground_truth_pose", pub_gt_pose);
+        n.getParam("ttc_threshold", ttc_threshold);
 
-        // Get obstacle size parameter
-        n.getParam("obstacle_size", obstacle_size);
+        // monaco x:16 y:-2 t:0
+        // de-espana x:18 y:31 t:3.14
+        // Malaysian x:18 y:31 t:3.14
+        state_blue = {.x=18, .y=31, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        desired_speed_blue = 0.0;
+        desired_steer_ang_blue = 0.0;
 
-        n.getParam("switch_topic_red", switch_topic_red);
+        // monaco x:10 y:-1 t:0
+        // de-espana x:22 y:30.5 t:3.14
+        // Malaysian x:22 y:27.5 t:3.14
+        state_red = {.x=22, .y=30.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        desired_speed_red = 0.0;
+        desired_steer_ang_red = 0.0;
+
+        previous_seconds_blue = ros::Time::now().toSec();
+        previous_seconds_red = ros::Time::now().toSec();
+
+        // Start a timer to output the pose
+        update_pose_timer_blue = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_blue, this);
+        update_pose_timer_red = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_red, this);
+
+        // Start a subscriber to listen to drive commands
+        drive_sub_blue = n.subscribe(drive_topic_blue, 1, &RacecarSimulator::drive_callback_blue, this);
+        drive_sub_red = n.subscribe(drive_topic_red, 1, &RacecarSimulator::drive_callback_red, this);
+
         // Initialize a simulator of the laser scanner
-        scan_simulator = ScanSimulator2D(
-                scan_beams,
-                scan_fov,
-                scan_std_dev,
-                scan_max_range,
-                cube_width);
+        scan_simulator = ScanSimulator2D(scan_beams, scan_fov, scan_std_dev, scan_max_range, cube_width);
 
         // Make a publisher for laser scan messages
         scan_pub_blue = n.advertise<sensor_msgs::LaserScan>(scan_topic_blue, 1);
@@ -316,19 +265,9 @@ public:
 
         carState_pub_red = n.advertise<std_msgs::String>(carState_topic_red, 1);
 
-        switch_pub_red = n.advertise<std_msgs::String>(switch_topic_red, 1);
+        switch_pub_red = n.advertise<std_msgs::Bool>(switch_topic_red, 1);
 
-        // Start a timer to output the pose
-        //
-        update_pose_timer_red = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_red,
-                                              this);
-        update_pose_timer_blue = n.createTimer(ros::Duration(update_pose_rate), &RacecarSimulator::update_pose_blue,
-                                               this);
-
-
-        // Start a subscriber to listen to drive commands
-        drive_sub_blue = n.subscribe(drive_topic_blue, 1, &RacecarSimulator::drive_callback_blue, this);
-        drive_sub_red = n.subscribe(drive_topic_red, 1, &RacecarSimulator::drive_callback_red, this);
+        reference_line_pub = n.advertise<visualization_msgs::Marker>(reference_line, 0);
 
         // Start a subscriber to listen to new maps
         map_sub = n.subscribe(map_topic, 1, &RacecarSimulator::map_callback, this);
@@ -336,31 +275,15 @@ public:
         // Start a subscriber to listen to pose messages
         pose_sub_blue = n.subscribe(pose_topic_blue, 1, &RacecarSimulator::pose_callback_blue, this);
         pose_sub_red = n.subscribe(pose_topic_red, 1, &RacecarSimulator::pose_callback_red, this);
-        pose_rviz_sub = n.subscribe(pose_rviz_topic, 1, &RacecarSimulator::pose_rviz_callback, this);
 
         data_sub = n.subscribe(data_topic, 1, &RacecarSimulator::data_callback, this);
 
-        reference_line_pub = n.advertise<visualization_msgs::Marker>(reference_line, 0);
-
-
-        // obstacle subscriber
-        obs_sub = n.subscribe("/clicked_point", 1, &RacecarSimulator::obs_callback, this);
-
-        // get collision safety margin
-        n.getParam("coll_threshold", thresh);
-        n.getParam("ttc_threshold", ttc_threshold);
 
         scan_ang_incr = scan_simulator.get_angle_increment();
 
         cosines = Precompute::get_cosines(scan_beams, -scan_fov / 2.0, scan_ang_incr);
         car_distances = Precompute::get_car_distances(scan_beams, params_blue.wheelbase, width,
                                                       scan_distance_to_base_link, -scan_fov / 2.0, scan_ang_incr);
-
-
-        // steering delay buffer
-        steering_buffer_blue = std::vector<double>(buffer_length);
-        steering_buffer_red = std::vector<double>(buffer_length);
-
 
         // wait for one map message to get the map data array
         boost::shared_ptr<nav_msgs::OccupancyGrid const> map_ptr;
@@ -381,47 +304,17 @@ public:
         map_resolution = map_msg.info.resolution;
 
 
-        // create button for clearing obstacles
-        visualization_msgs::InteractiveMarker clear_obs_button;
-        clear_obs_button.header.frame_id = "map";
-        // clear_obs_button.pose.position.x = origin_x+(1/3)*map_width*map_resolution;
-        // clear_obs_button.pose.position.y = origin_y+(1/3)*map_height*map_resolution;
-        // TODO: find better positioning of buttons
-        clear_obs_button.pose.position.x = 0;
-        clear_obs_button.pose.position.y = -5;
-        clear_obs_button.scale = 1;
-        clear_obs_button.name = "clear_obstacles";
-        clear_obs_button.description = "Clear Obstacles\n(Left Click)";
-        visualization_msgs::InteractiveMarkerControl clear_obs_control;
-        clear_obs_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::BUTTON;
-        clear_obs_control.name = "clear_obstacles_control";
-        // make a box for the button
-        visualization_msgs::Marker clear_obs_marker;
-        clear_obs_marker.type = visualization_msgs::Marker::CUBE;
-        clear_obs_marker.scale.x = clear_obs_button.scale * 0.45;
-        clear_obs_marker.scale.y = clear_obs_button.scale * 0.65;
-        clear_obs_marker.scale.z = clear_obs_button.scale * 0.45;
-        clear_obs_marker.color.r = 0.0;
-        clear_obs_marker.color.g = 1.0;
-        clear_obs_marker.color.b = 0.0;
-        clear_obs_marker.color.a = 1.0;
-
-        clear_obs_control.markers.push_back(clear_obs_marker);
-        clear_obs_control.always_visible = true;
-        clear_obs_button.controls.push_back(clear_obs_control);
-
-        im_server.insert(clear_obs_button);
-        im_server.setCallback(clear_obs_button.name, boost::bind(&RacecarSimulator::clear_obstacles, this, _1));
-
-        im_server.applyChanges();
-
         ROS_INFO("Simulator constructed.");
     }
 
+    /**
+     * main loop and the core of the simulator
+     * First, update car state
+     * Second, update LiDAR scan data
+     * Third, using the LiDAR data to check collision
+     */
     void update_pose_blue(const ros::TimerEvent &) {
-        // simulate P controller
-
-        // Update the pose
+        // Update the car state
         ros::Time timestamp = ros::Time::now();
         double current_seconds = timestamp.toSec();
 
@@ -434,36 +327,30 @@ public:
 
         state_blue.velocity_x = std::min(std::max(state_blue.velocity_x, -params_blue.max_speed), params_blue.max_speed);
         state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -params_blue.max_steering_angle), params_blue.max_steering_angle);
-//        ROS_INFO_STREAM("V blue "<<state_blue.velocity_x);
 
-        //ROS_INFO_STREAM("STEERING "<<state_blue.theta);
-//        ROS_INFO_STREAM("angular_velocity "<<state_blue.angular_velocity);
+//        ROS_INFO_STREAM("V blue "<<state_blue.velocity_x);
 
         previous_seconds_blue = current_seconds;
 
-        /// Publish the pose as a transformation
+        // Publish the pose as a transformation
         pub_pose_transform_blue(timestamp);
 
-        /// Publish the steering angle as a transformation so the wheels move
+        // Publish the steering angle as a transformation so the wheels move
         pub_steer_ang_transform_blue(timestamp);
 
         // Make an odom message as well and publish it
         pub_odom_blue(timestamp);
 
-        // TODO: make and publish IMU message
-        pub_imu(timestamp);
-
-
-        /// KEEP in sim
         // If we have a map, perform a scan
         if (map_exists) {
-            // Get the pose of the lidar, given the pose of base link
+            // calculating the pose of the lidar, given the pose of base link
             // (base link is the center of the rear axle)
             Pose2D scan_pose;
             scan_pose.x = state_blue.x + scan_distance_to_base_link * std::cos(state_blue.theta);
             scan_pose.y = state_blue.y + scan_distance_to_base_link * std::sin(state_blue.theta);
             scan_pose.theta = state_blue.theta;
-            // we need the center position of opponent car
+
+            // we need the pose of opponent car for simulating LiDAR data
             Pose2D opponent_pose;
             opponent_pose.x = state_red.x;
             opponent_pose.y = state_red.y;
@@ -474,29 +361,31 @@ public:
 
             // Convert to float
             std::vector<float> scan_(scan.size());
-            // concat scan to a single string
+            // concat scan to a single string (this is for gathering data for machine learning, not necessarily)
             std::string scan_string;
+
             for (size_t i = 0; i < scan.size(); i++) {
                 scan_[i] = scan[i];
                 scan_string += std::to_string(scan_[i]) + ",";
             }
 
             // In order to implement box collider for both cars, which treating each car as a box or a rectangle in this 2D world
-            // then, the problem becomes decide whether two rectangle is overlapping or not
-            // we can check whether each point of a rectangle is IN another rectangle or not
+            // We can simplify the problem into decide whether two rectangle is overlapping or not
+            // To solve this problem, we can check whether each point of a rectangle is IN another rectangle or not
             // to do this, first, we need the coordinate of all corner points of two rectangles (red and blue)
             // second, use the vector cross product https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not
-            // third, loop four points
+            // third, loop four points, if none of them in another rectangle, we can say there is no collision between two cars
             // all four points of blue car
+            // front-right
             double x1_blue = scan_pose.x - width / 2 * std::cos(state_blue.theta + M_PI / 2);
             double y1_blue = scan_pose.y + width / 2 * std::sin(state_blue.theta + M_PI / 2);
-
+            // front-left
             double x2_blue = scan_pose.x + width / 2 * std::cos(state_blue.theta + M_PI / 2);
             double y2_blue = scan_pose.y - width / 2 * std::sin(state_blue.theta + M_PI / 2);
-
+            // rear-left
             double x3_blue = state_blue.x + width / 2 * std::cos(state_blue.theta + M_PI / 2);
             double y3_blue = state_blue.y - width / 2 * std::sin(state_blue.theta + M_PI / 2);
-
+            // rear-right
             double x4_blue = state_blue.x - width / 2 * std::cos(state_blue.theta + M_PI / 2);
             double y4_blue = state_blue.y + width / 2 * std::sin(state_blue.theta + M_PI / 2);
 
@@ -506,7 +395,7 @@ public:
                                                             {x3_blue, y3_blue},
                                                             {x4_blue, y4_blue}};
 
-            // all four points of red car
+            // all four points of the opponent car(red), calculation same as above
             double x1_red = state_red.x + params_red.wheelbase * std::cos(state_red.theta) -
                             width / 2 * std::cos(state_red.theta + M_PI / 2);
             double y1_red = state_red.y + params_red.wheelbase * std::sin(state_red.theta) +
@@ -526,10 +415,10 @@ public:
             // TTC Calculations are done here so the car can be halted in the simulator:
             // to reset TTC
             bool no_collision = true;
+
             if (state_blue.velocity_x != 0) {
                 for (size_t i = 0; i < scan_.size(); i++) {
                     // TTC calculations
-
                     // calculate projected velocity
                     double proj_velocity = state_blue.velocity_x * cosines[i];
                     double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
@@ -576,19 +465,20 @@ public:
             scan_msg.range_max = 100;
             scan_msg.ranges = scan_;
             scan_msg.intensities = scan_;
-
             scan_pub_blue.publish(scan_msg);
 
             // Publish a transformation between base link and laser
             pub_laser_link_transform_blue(timestamp);
-
+            // for machine learning, not necessarily
             save_data_blue(scan_string);
         }
         publish_reference_line();
-    } // end of update_pose
+    }
 
+    /**
+     * basically same as updata_pose_blue
+     */
     void update_pose_red(const ros::TimerEvent &) {
-
         // Update the pose
         ros::Time timestamp = ros::Time::now();
         double current_seconds = timestamp.toSec();
@@ -604,8 +494,11 @@ public:
         state_red.steer_angle = std::min(std::max(state_red.steer_angle, -params_red.max_steering_angle), params_red.max_steering_angle);
 
 //        ROS_INFO_STREAM("V red "<<state_red.velocity_x);
+
         previous_seconds_red = current_seconds;
+        // for machine learning, not necessarily
         pub_carState_red(toString(state_red));
+
         /// Publish the pose as a transformation
         pub_pose_transform_red(timestamp);
 
@@ -615,13 +508,7 @@ public:
         // Make an odom message as well and publish it
         pub_odom_red(timestamp);
 
-        // TODO: make and publish IMU message
-        pub_imu(timestamp);
 
-
-
-
-        /// KEEP in sim
         // If we have a map, perform a scan
         if (map_exists) {
             // Get the pose of the lidar, given the pose of base link
@@ -635,6 +522,7 @@ public:
             opponent_pose.x = state_blue.x;
             opponent_pose.y = state_blue.y;
             opponent_pose.theta = state_blue.theta;
+
             // Compute the scan from the lidar
             std::vector<double> scan = scan_simulator.scan(scan_pose, opponent_pose, true);
 
@@ -681,58 +569,55 @@ public:
             // TTC Calculations are done here so the car can be halted in the simulator:
             // detection based on the scan data
             bool no_collision = true;
-//            if (state_red.velocity_x != 0) {
-//                for (size_t i = 0; i < scan_.size(); i++) {
-//                    // TTC calculations
-//                    // calculate projected velocity
-//                    // the vector of velocity can be seen as always point to the middle beam, and cosines here is the cos of beams not cos of map frame,
-//                    // hence, the middle beam direction has cos0 = 1, and so on.
-//                    double proj_velocity = state_red.velocity_x * cosines[i];
-//                    double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
-//                    // if it's small enough to count as a collision
-//                    if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
-//                        if (!TTC) {
-//                            first_ttc_actions_red();
-//                        }
-//
-//                        no_collision = false;
-//                        TTC = true;
-//
-//                        ROS_INFO("LiDAR collision detected: RED");
-//                    }
-//                }
-//                for (int i = 0; i < 4; ++i) {
-//                    if ((vector_cross(x1_blue, y1_blue, x2_blue, y2_blue, points_red[i][0], points_red[i][1]) *
-//                         vector_cross(x3_blue, y3_blue, x4_blue, y4_blue, points_red[i][0], points_red[i][1]) >= 0) &&
-//                        (vector_cross(x2_blue, y2_blue, x3_blue, y3_blue, points_red[i][0], points_red[i][1]) *
-//                         vector_cross(x4_blue, y4_blue, x1_blue, y1_blue, points_red[i][0], points_red[i][1]) >= 0)) {
-//                        if (!TTC) {
-//                            first_ttc_actions_red();
-//                        }
-//                        no_collision = false;
-//                        TTC = true;
-//
-//                        ROS_INFO("Box collider detected: RED");
-//                    }
-//                }
-//            }
+            if (state_red.velocity_x != 0) {
+                for (size_t i = 0; i < scan_.size(); i++) {
+                    // TTC calculations
+                    // calculate projected velocity
+                    // the vector of velocity can be seen as always point to the middle beam, and cosines here is the cos of beams not cos of map frame,
+                    // hence, the middle beam direction has cos0 = 1, and so on.
+                    double proj_velocity = state_red.velocity_x * cosines[i];
+                    double ttc = (scan_[i] - car_distances[i]) / proj_velocity;
+                    // if it's small enough to count as a collision
+                    if ((ttc < ttc_threshold) && (ttc >= 0.0)) {
+                        if (!TTC) {
+                            first_ttc_actions_red();
+                        }
+
+                        no_collision = false;
+                        TTC = true;
+
+                        ROS_INFO("LiDAR collision detected: RED");
+                    }
+                }
+                for (int i = 0; i < 4; ++i) {
+                    if ((vector_cross(x1_blue, y1_blue, x2_blue, y2_blue, points_red[i][0], points_red[i][1]) *
+                         vector_cross(x3_blue, y3_blue, x4_blue, y4_blue, points_red[i][0], points_red[i][1]) >= 0) &&
+                        (vector_cross(x2_blue, y2_blue, x3_blue, y3_blue, points_red[i][0], points_red[i][1]) *
+                         vector_cross(x4_blue, y4_blue, x1_blue, y1_blue, points_red[i][0], points_red[i][1]) >= 0)) {
+                        if (!TTC) {
+                            first_ttc_actions_red();
+                        }
+                        no_collision = false;
+                        TTC = true;
+
+                        ROS_INFO("Box collider detected: RED");
+                    }
+                }
+            }
 
             // reset TTC
             if (no_collision)
                 TTC = false;
 
-            std_msgs::String msg;
-            std::stringstream ss;
-            ss << scan_simulator.see_opponent();
-            msg.data = ss.str();
+            // this is the flag for switching between MPC and overtaking algorithm
+            // if red car can see blue car within a certain distance, then using overtaking algorithm, otherwise MPC
+            std_msgs::Bool msg;
+            msg.data = scan_simulator.see_opponent();
             switch_pub_red.publish(msg);
 
             // Publish the laser message
             sensor_msgs::LaserScan scan_msg;
             scan_msg.header.stamp = timestamp;
-            //
-            // red
-            //
             scan_msg.header.frame_id = scan_frame_red;
             scan_msg.angle_min = -scan_simulator.get_field_of_view() / 2.;
             scan_msg.angle_max = scan_simulator.get_field_of_view() / 2.;
@@ -740,17 +625,14 @@ public:
             scan_msg.range_max = 100;
             scan_msg.ranges = scan_;
             scan_msg.intensities = scan_;
-
             scan_pub_red.publish(scan_msg);
-
 
             // Publish a transformation between base link and laser
             pub_laser_link_transform_red(timestamp);
 
             save_data_red();
         }
-
-    } // end of update_pose
+    }
 
     /// ---------------------- GENERAL HELPER FUNCTIONS ----------------------
     double vector_cross(double x1, double y1, double x2, double y2, double x, double y) {
@@ -758,31 +640,36 @@ public:
     }
 
     void save_data_blue(std::string scan) {
+        // if the flag is true, then record data to vector, but not write to file yet
+        // note that the frequency of recording is same as update_pose_rate, which depends on how fast your machine is as well as the storage
         if (log_data_flag) {
-            // if the flag is true, then record data to vector, but not write to file yet
-            // note that the frequency of recording is same as update_pose_rate, which depends on how fast your machine is as well as the storage
-            std::string ml_data =
-                    std::to_string(desired_speed_blue) + "," + std::to_string(desired_steer_ang_blue) + "," + scan;
+            std::string ml_data = std::to_string(desired_speed_blue) + "," + std::to_string(desired_steer_ang_blue) + "," + scan;
             steering_gas_lidar_blue.push_back(ml_data);
+
             std::string current_car_state = toString(state_blue);
             car_state_blue.push_back(current_car_state);
         } else {
             // if the flag is false, then write data to files
-            // we check whether the data vector is empty or not, because the flag probably will remain false, but we just want to write once
+            // But we also need to check whether the data vector is empty or not,
+            // like the flag is false when simulator started, but there is nothing to write
             if (!steering_gas_lidar_blue.empty()) {
                 // use current time to distinct different files
+                // this is very helpful since you can match three files by sorting them in name order
                 time_t now = time(0);
                 std::string date(std::ctime(&now));
                 std::ofstream file_blue(path + std::string("/ML_dataset_blue") + date + std::string(".csv"));
+
                 // if the file can be created
                 if (file_blue.is_open()) {
                     ROS_WARN("Starting writing ML data (blue)");
+
                     // write heading first
                     file_blue << "Speed,Steering_angle,LiDAR_scan\n";
                     // save every rows
                     for (std::string s: steering_gas_lidar_blue) {
                         file_blue << s + "\n";
                     }
+
                     // close the file
                     file_blue.close();
                     // clear the vector
@@ -796,14 +683,16 @@ public:
                 time_t now = time(0);
                 std::string date(std::ctime(&now));
                 std::ofstream file_blue(path + std::string("/car_state_blue_") + date + std::string(".csv"));
+
                 if (file_blue.is_open()) {
                     ROS_WARN("Starting writing data (blue)");
+
                     // heading
-                    file_blue
-                            << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
+                    file_blue << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
                     for (std::string s: car_state_blue) {
                         file_blue << s + "\n";
                     }
+
                     file_blue.close();
                     car_state_blue.clear();
                     ROS_WARN("Finishing writing data to %s/car_state_blue_%s.csv", path, std::ctime(&now));
@@ -827,8 +716,7 @@ public:
                 if (file_red.is_open()) {
                     ROS_WARN("Starting writing data (red)");
                     // heading
-                    file_red
-                            << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
+                    file_red << "Position_X,Position_Y,Theta,Velocity_X,Velocity_Y,Steering_angle,Angular_velocity,slip_angle\n";
                     for (std::string s: car_state_red) {
                         file_red << s + "\n";
                     }
@@ -843,32 +731,14 @@ public:
     }
 
     std::string toString(CarState & carState) {
-        return std::to_string(carState.x) + "," + std::to_string(carState.y) + "," + std::to_string(carState.theta) +
-               "," + std::to_string(carState.velocity_x) + ","
-               + std::to_string(carState.velocity_y) + "," + std::to_string(carState.steer_angle) + "," +
-               std::to_string(carState.angular_velocity) + ","
-               + std::to_string(carState.slip_angle);
-    }
-
-    std::vector<int> ind_2_rc(int ind) {
-        std::vector<int> rc;
-        int row = floor(ind / map_width);
-        int col = ind % map_width - 1;
-        rc.push_back(row);
-        rc.push_back(col);
-        return rc;
-    }
-
-    int rc_2_ind(int r, int c) {
-        return r * map_width + c;
-
-    }
-
-    std::vector<int> coord_2_cell_rc(double x, double y) {
-        std::vector<int> rc;
-        rc.push_back(static_cast<int>((y - origin_y) / map_resolution));
-        rc.push_back(static_cast<int>((x - origin_x) / map_resolution));
-        return rc;
+        return std::to_string(carState.x)                + ","
+             + std::to_string(carState.y)                + ","
+             + std::to_string(carState.theta)            + ","
+             + std::to_string(carState.velocity_x)       + ","
+             + std::to_string(carState.velocity_y)       + ","
+             + std::to_string(carState.steer_angle)      + ","
+             + std::to_string(carState.angular_velocity) + ","
+             + std::to_string(carState.slip_angle);
     }
 
     void first_ttc_actions_blue() {
@@ -878,8 +748,6 @@ public:
         state_blue.angular_velocity = 0.0;
         state_blue.slip_angle = 0.0;
         state_blue.steer_angle = 0.0;
-        steer_angle_vel_blue = 0.0;
-        accel_blue = 0.0;
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
     }
@@ -891,54 +759,11 @@ public:
         state_red.angular_velocity = 0.0;
         state_red.slip_angle = 0.0;
         state_red.steer_angle = 0.0;
-        steer_angle_vel_red = 0.0;
-        accel_red = 0.0;
         desired_speed_red = 0.0;
         desired_steer_ang_red = 0.0;
     }
 
-
-
-    void add_obs(int ind) {
-        std::vector<int> rc = ind_2_rc(ind);
-        for (int i = -obstacle_size; i < obstacle_size; i++) {
-            for (int j = -obstacle_size; j < obstacle_size; j++) {
-                int current_r = rc[0] + i;
-                int current_c = rc[1] + j;
-                int current_ind = rc_2_ind(current_r, current_c);
-                current_map.data[current_ind] = 100;
-            }
-        }
-        map_pub.publish(current_map);
-    }
-
-    void clear_obs(int ind) {
-        std::vector<int> rc = ind_2_rc(ind);
-        for (int i = -obstacle_size; i < obstacle_size; i++) {
-            for (int j = -obstacle_size; j < obstacle_size; j++) {
-                int current_r = rc[0] + i;
-                int current_c = rc[1] + j;
-                int current_ind = rc_2_ind(current_r, current_c);
-                current_map.data[current_ind] = 0;
-
-            }
-        }
-        map_pub.publish(current_map);
-    }
-
-
-
-
     /// ---------------------- CALLBACK FUNCTIONS ----------------------
-
-    void obs_callback(const geometry_msgs::PointStamped &msg) {
-        double x = msg.point.x;
-        double y = msg.point.y;
-        std::vector<int> rc = coord_2_cell_rc(x, y);
-        int ind = rc_2_ind(rc[0], rc[1]);
-        added_obs.push_back(ind);
-        add_obs(ind);
-    }
 
     void data_callback(const std_msgs::Bool &msg) {
         log_data_flag = msg.data;
@@ -965,14 +790,6 @@ public:
         state_red.theta = tf2::impl::getYaw(quat);
     }
 
-    void pose_rviz_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg) {
-        geometry_msgs::PoseStamped temp_pose;
-        temp_pose.header = msg->header;
-        temp_pose.pose = msg->pose.pose;
-        pose_callback_blue(temp_pose);
-        pose_callback_red(temp_pose);
-    }
-
     void drive_callback_blue(const ackermann_msgs::AckermannDriveStamped &msg) {
         desired_speed_blue = msg.drive.speed;
         desired_steer_ang_blue = msg.drive.steering_angle;
@@ -983,22 +800,9 @@ public:
         desired_steer_ang_red = msg.drive.steering_angle;
     }
 
-    // button callbacks
-    void clear_obstacles(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback) {
-        bool clear_obs_clicked = false;
-        if (feedback->event_type == 3) {
-            clear_obs_clicked = true;
-        }
-        if (clear_obs_clicked) {
-            ROS_INFO("Clearing obstacles.");
-            current_map = original_map;
-            map_pub.publish(current_map);
-
-            clear_obs_clicked = false;
-        }
-    }
 
     void map_callback(const nav_msgs::OccupancyGrid &msg) {
+        // http://docs.ros.org/en/lunar/api/nav_msgs/html/msg/OccupancyGrid.html
         // Fetch the map parameters
         size_t height = msg.info.height;
         size_t width = msg.info.width;
@@ -1008,30 +812,28 @@ public:
         // bottom right conner is the origin point
         origin.x = msg.info.origin.position.x;
         origin.y = msg.info.origin.position.y;
+
         geometry_msgs::Quaternion q = msg.info.origin.orientation;
         tf2::Quaternion quat(q.x, q.y, q.z, q.w);
-        ROS_INFO_STREAM(height);
         origin.theta = tf2::impl::getYaw(quat);
-        ROS_INFO_STREAM(width);
 
-        // Convert the map to probability values
+        ROS_INFO_STREAM("map height: " << height);
+        ROS_INFO_STREAM("map width: " << width);
+
+        // msg.data [0, 100], convert to [0, 1]. 0 means definitely not occupied, 1 means definitely occupied
         std::vector<double> map(msg.data.size());
+
         for (size_t i = 0; i < height * width; i++) {
             if (msg.data[i] > 100 or msg.data[i] < 0) {
                 map[i] = 0.5; // Unknown
             } else {
+//                ROS_INFO_STREAM((int)msg.data[i]);
                 map[i] = msg.data[i] / 100.;
             }
         }
 
         // Send the map to the scanner
-        scan_simulator.set_map(
-                map,
-                height,
-                width,
-                map_resolution,
-                origin,
-                map_free_threshold);
+        scan_simulator.set_map(map, height, width, map_resolution, origin, map_free_threshold);
 
         map_exists = true;
     }
@@ -1039,8 +841,10 @@ public:
     /// ---------------------- PUBLISHING HELPER FUNCTIONS ----------------------
 
     void publish_reference_line() {
+
         std::fstream readcsv(ros::package::getPath("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv");
-        // add target_link_libraries(simulator ${catkin_LIBRARIES}) in CMakeLists.txt
+
+        // https://wiki.ros.org/rviz/DisplayTypes/Marker
         visualization_msgs::Marker msg;
         msg.header.frame_id = map_frame;
         msg.header.stamp = ros::Time();
@@ -1058,6 +862,8 @@ public:
         msg.color.g = 0.82;
         msg.color.b = 0.4;
 
+        // weight is the scale in map_to_centerline.py in Racetrack-Preparation
+        // bias is offset value, need some attempts
         // Australia
 //        int weight_x = 5;
 //        int weight_y = 5;
@@ -1074,12 +880,17 @@ public:
 //        int bias_x = 0;
 //        int bias_y = -65.4;
         // Malaysian
+//        int weight_x = 3;
+//        int weight_y = 3;
+//        int bias_x = 0;
+//        int bias_y = -60;
         int weight_x = 3;
         int weight_y = 3;
         int bias_x = 0;
         int bias_y = -60;
 
         std::string line;
+        // this is the heading
         getline(readcsv, line);
 
         while (getline(readcsv, line)) {
@@ -1099,8 +910,8 @@ public:
             msg.points.push_back(p);
         }
 
-        reference_line_pub.publish(msg);
 //            ROS_INFO_STREAM(msg);
+        reference_line_pub.publish(msg);
     }
 
     void pub_pose_transform_blue(ros::Time timestamp) {
@@ -1124,9 +935,6 @@ public:
         ps.pose.orientation.y = quat.y();
         ps.pose.orientation.z = quat.z();
         ps.pose.orientation.w = quat.w();
-
-//            ROS_INFO_STREAM(state_blue.x);
-//            ROS_INFO_STREAM(state_blue.y);
 
         // Add a header to the transformation
         geometry_msgs::TransformStamped ts;
@@ -1165,9 +973,6 @@ public:
         ps.pose.orientation.y = quat.y();
         ps.pose.orientation.z = quat.z();
         ps.pose.orientation.w = quat.w();
-
-        //            ROS_INFO_STREAM(state_red.x);
-        //            ROS_INFO_STREAM(state_red.y);
 
         // Add a header to the transformation
         geometry_msgs::TransformStamped ts;
@@ -1283,16 +1088,6 @@ public:
         odom_pub.publish(odom);
     }
 
-    void pub_imu(ros::Time timestamp) {
-        // Make an IMU message and publish it
-        // TODO: make imu message
-        sensor_msgs::Imu imu;
-        imu.header.stamp = timestamp;
-        imu.header.frame_id = map_frame;
-
-
-        imu_pub.publish(imu);
-    }
 
     void pub_carState_red(std::string string){
         std_msgs::String msg;

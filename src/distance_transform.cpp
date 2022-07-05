@@ -129,7 +129,7 @@ void DistanceTransform::distance_2d(
 
     distance_squared_2d(input, width, height, boundary_value);
 
-    /*
+    /**
      * this code is for calculating minimum time trajectory, it will generate a csv file where has raw data of the input
      * https://github.com/JZ76/Racetrack-Preparation
      * once you get the csv file, you can comment it on.

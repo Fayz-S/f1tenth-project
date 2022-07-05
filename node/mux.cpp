@@ -10,7 +10,7 @@
 
 #include "f1tenth_simulator/channel.h"
 
-/*
+/**
  * this node is for publishing driving command from the selected controller
  */
 class Mux {
