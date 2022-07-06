@@ -43,7 +43,7 @@ private:
     // Make Channel class have access to these private variables
     friend class Channel;
 
-    // Params for joystick calculations
+    // Params for joy calculations
     int joy_speed_axis_blue, joy_angle_axis_blue, joy_speed_axis_red, joy_angle_axis_red;
     double max_speed, max_steering_angle;
 

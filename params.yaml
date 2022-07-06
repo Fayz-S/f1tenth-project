@@ -45,6 +45,7 @@ update_pose_rate: 0.005
 # LiDAR sensor parameters ----------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
+# https://www.hokuyo-aut.jp/dl/UST-10LX_Specification.pdf
 # number of total beams
 scan_beams: 1081
 # how many radians the LiDAR will scan? should between (0, 2pi]
@@ -55,7 +56,7 @@ scan_max_range: 10 # meters
 # Sidenote: For the F1tenth, the LiDAR is at head of a car
 scan_distance_to_base_link: 0.275 # meters
 # The standard deviation of the noise applied to the lidar simulation
-scan_std_dev: 0.01 # meters
+scan_std_dev: 0.03 # meters
 
 # ----------------------------------------------------------------------------------------------------------------------
 # occupancy grid threshold ---------------------------------------------------------------------------------------------
@@ -78,7 +79,7 @@ ttc_threshold: 0.01
 # ----------------------------------------------------------------------------------------------------------------------
 
 # total number of indices
-mux_size: 7
+mux_size: 99
 
 joy_mux_idx: 0
 key_mux_idx: 1
@@ -88,7 +89,7 @@ nav_mux_idx: 4
 MPC_mux_idx: 5
 LSTM_mux_idx: 6
 # **Add index for new planning method here**
-# **(increase mux_size accordingly)**
+# **(increasing accordingly)**
 # new_method_mux_idx: 7
 
 # ----------------------------------------------------------------------------------------------------------------------
