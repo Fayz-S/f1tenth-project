@@ -16,12 +16,12 @@ Please feel free to raise topics in Issues section, I will try my best to answer
 - Operating System: Ubuntu 20.04 (amd64/arm64)
 - Robot Operating System: ROS Noetic (desktop-full)     
     
-if you want to use overtaking algorithm:   
+If you want to use overtaking algorithm:   
 > [Depends on your GPU](https://www.tensorflow.org/install/pip#hardware_requirements), there are two different ways of installing tensorflow. If your GPU has cuda cores, you can install from pip. If not, you must build from source. Moreover, you can install tensorflow and other python packages in a Miniconda env, but you must activate that environment before launch the simulator in a new terminal every time.
 - tensorflow 2.10.0 (I think 2.9.0/2.8.0/2.7.0 should also work)
 - numpy 1.22.4
 
-if you want to use MPC algorithm:
+If you want to use MPC algorithm:
 
 - casadi 3.5.5
 - numpy 1.22.4
@@ -98,6 +98,14 @@ To make your changes works, you need to build the simulator again, by using `cat
     cd ..
     catkin_make
     
+You also need to manually delete `f1tenth_simulator_two_agents` dictionary in `~/catkin_ws/build`
+
+
+## Usage
+
+
+Please see Wiki section for instruction in detail
+
 
 ### RVIZ Visualization
 
