@@ -21,49 +21,49 @@
   <arg name="parameters_file" default="params.yaml"/>
 
   <!-- Launch a map from the maps folder-->
-  <arg name="map" default="$(find f1tenth_simulator)/maps/de-espana.yaml"/>
+  <arg name="map" default="$(find f1tenth_simulator_two_agents)/maps/de-espana.yaml"/>
   <node pkg="map_server" name="map_server" type="map_server" args="$(arg map)"/>
 
   <!-- Launch the racecar model -->
-  <include file="$(find f1tenth_simulator)/launch/racecar_model.launch"/>
+  <include file="$(find f1tenth_simulator_two_agents)/launch/racecar_model.launch"/>
 
   <!-- Begin the simulator with the parameters from params.yaml -->
-  <node pkg="f1tenth_simulator" name="f1tenth_simulator" type="simulator" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <node pkg="f1tenth_simulator_two_agents" name="f1tenth_simulator" type="simulator" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the mux node with the parameters from params.yaml -->
-  <node pkg="f1tenth_simulator" name="mux_controller" type="mux" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <node pkg="f1tenth_simulator_two_agents" name="mux_controller" type="mux" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the behavior controller node with the parameters from params.yaml -->
-  <node pkg="f1tenth_simulator" name="behavior_controller" type="behavior_controller" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <node pkg="f1tenth_simulator_two_agents" name="behavior_controller" type="behavior_controller" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the Random Walker Node -->
-  <node pkg="f1tenth_simulator" name="random_walker" type="random_walk" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <node pkg="f1tenth_simulator_two_agents" name="random_walker" type="random_walk" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
   <!-- Launch the Keyboard Node -->
-  <node pkg="f1tenth_simulator" name="keyboard" type="keyboard" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <node pkg="f1tenth_simulator_two_agents" name="keyboard" type="keyboard" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
-  <node pkg="f1tenth_simulator" name="MPC_red" type="MPC_red.py" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <node pkg="f1tenth_simulator_two_agents" name="MPC_red" type="MPC_red.py" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
-  <node pkg="f1tenth_simulator" name="LSTM_overtake_red" type="ML_overtaking_red.py" output="screen">
-    <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <node pkg="f1tenth_simulator_two_agents" name="LSTM_overtake_red" type="ML_overtaking_red.py" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
   <!-- ***Put launch command for new planner here:-->
   <!-- Launch the New Planner Node -->
-  <!--   <node pkg="f1tenth_simulator" name="new node's name" type="new file name" output="screen">
-          <rosparam command="load" file="$(find f1tenth_simulator)/$(arg parameters_file)"/>
+  <!--   <node pkg="f1tenth_simulator_two_agents" name="new node's name" type="new file name" output="screen">
+          <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   	 </node>    -->
 
 </launch>

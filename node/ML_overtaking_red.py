@@ -98,7 +98,7 @@ if __name__ == '__main__':
     """
     rospack = rospkg.RosPack()
     # structure of LSTM model is same as RNN_12_3
-    overtaking_model = load_model(rospack.get_path("f1tenth_simulator")+'/overtaking_models/model_RNN_12_3')
+    overtaking_model = load_model(rospack.get_path("f1tenth_simulator_two_agents")+'/overtaking_models/model_RNN_12_3')
     overtaking_model.summary()
     overtaking_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
 

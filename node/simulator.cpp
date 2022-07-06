@@ -842,7 +842,7 @@ public:
 
     void publish_reference_line() {
 
-        std::fstream readcsv(ros::package::getPath("f1tenth_simulator") + "/maps/" + map_name + "_minTime.csv");
+        std::fstream readcsv(ros::package::getPath("f1tenth_simulator_two_agents") + "/maps/" + map_name + "_minTime.csv");
 
         // https://wiki.ros.org/rviz/DisplayTypes/Marker
         visualization_msgs::Marker msg;
