@@ -104,7 +104,7 @@ You also need to manually delete `f1tenth_simulator_two_agents` dictionary in `~
 ## Usage
 
 
-Please see Wiki section for instruction in detail
+Please see [Wiki section](https://github.com/JZ76/f1tenth_simulator_two_agents/wiki) for instruction in detail
 
 
 ### RVIZ Visualization
