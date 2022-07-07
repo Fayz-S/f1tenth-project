@@ -79,16 +79,13 @@ if(DEFINED CATKIN_DEVEL_PREFIX)
   set(LIBS ${LIBS} ${catkin_LIBRARIES})
   include_directories(include ${catkin_INCLUDE_DIRS})
 
+  # Add the py nodes
+  file(GLOB NODE_PY_FILES node/*.py)
+  foreach(_node_file ${NODE_PY_FILES})
+      catkin_install_python(PROGRAMS ${_node_file} DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+  endforeach()
 
-  catkin_install_python(PROGRAMS node/MPC_red.py
-          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-  catkin_install_python(PROGRAMS node/ML_overtaking_red.py
-          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-  # You need to install your new python file here
-#  catkin_install_python(PROGRAMS folder/name.py
-#          DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-  # Add the nodes
+  # Add the cpp nodes
   file(GLOB NODE_SRC_FILES node/*.cpp)
   foreach(_node_file ${NODE_SRC_FILES})
       get_filename_component(_node_name ${_node_file} NAME_WE)

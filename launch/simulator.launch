@@ -42,13 +42,16 @@
     <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
-  <!-- Launch the Random Walker Node -->
-  <node pkg="f1tenth_simulator_two_agents" name="random_walker" type="random_walk" output="screen">
+  <!-- Launch the Keyboard Node -->
+  <node pkg="f1tenth_simulator_two_agents" name="keyboard" type="keyboard" output="screen">
     <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
-  <!-- Launch the Keyboard Node -->
-  <node pkg="f1tenth_simulator_two_agents" name="keyboard" type="keyboard" output="screen">
+
+  <!-- You can comment off nodes below if FPS of the simulator is lag -->
+
+  <!-- Launch the Random Walker Node -->
+  <node pkg="f1tenth_simulator_two_agents" name="random_walker" type="random_walk" output="screen">
     <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   </node>
 
