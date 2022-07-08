@@ -45,7 +45,7 @@ def LiDAR_callback(data):
     LiDAR_raw = data.ranges
 
     LiDAR_raw = np.asarray(LiDAR_raw)
-    LiDAR_raw = np.reshape(LiDAR_raw, (1,-1))
+    LiDAR_raw = np.reshape(LiDAR_raw, (1, -1))
 
     # First In First Out
     if LiDAR_raw_array.full():
@@ -64,7 +64,7 @@ def carState_callback(data):
     # car_state[5] is Steering_angle
     speed_steering.append(car_state[5])
     speed_steering = np.asarray(speed_steering)
-    speed_steering = np.reshape(speed_steering, (1,-1))
+    speed_steering = np.reshape(speed_steering, (1, -1))
 
     if car_state_array.full():
         car_state_array.get()
@@ -141,6 +141,6 @@ if __name__ == '__main__':
             # rospy.loginfo(command)
             ack_msg = AckermannDriveStamped()
             ack_msg.header.stamp = rospy.Time.now()
-            ack_msg.drive.steering_angle = command[0,-1,1]*0.24
-            ack_msg.drive.speed = command[0,-1,0]*16
+            ack_msg.drive.steering_angle = command[0, -1, 1] * 0.24
+            ack_msg.drive.speed = command[0, -1, 0] * 16
             drive_pub_red.publish(ack_msg)

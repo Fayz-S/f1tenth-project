@@ -314,10 +314,10 @@ public:
      * Third, using the LiDAR data to check collision
      */
     void update_pose_blue(const ros::TimerEvent &) {
-        // Update the car state
+
         ros::Time timestamp = ros::Time::now();
         double current_seconds = timestamp.toSec();
-
+        // Update the car state, all equation of vehicle model is in STKinematics class
         state_blue = STKinematics::update(
                 state_blue,
                 desired_speed_blue,
@@ -863,7 +863,7 @@ public:
         msg.color.b = 0.4;
 
         // weight is the scale in map_to_centerline.py in Racetrack-Preparation
-        // bias is offset value, need some attempts
+        // bias is offset value, need some attempts, usually is resolution* width or height
         // Australia
 //        int weight_x = 5;
 //        int weight_y = 5;
