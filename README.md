@@ -2,7 +2,7 @@
 
 
 > This repository is the first part of my dissertation "[F1TENTH](https://f1tenth.org/index.html): Development of A Multi-Agent Simulator and An Overtaking Algorithm Using Machine Learning".  
-> This is a lightweight 2D simulator of [F1TENTH Racecar](https://f1tenth.org/index.html). This simulator has 2D-LiDAR simulation, collision checker, vehicle model, planning algorithm, and other features.
+> This is a lightweight 2D simulator of [F1TENTH Racecar](https://f1tenth.org/index.html). It based on Robot Operating System, and using Rviz as visualization tool. This simulator has 2D-LiDAR simulation, collision checker, vehicle model, planning algorithm, and other features.
 
 Please feel free to raise topics in Issues section, I will try my best to answer them!
 
