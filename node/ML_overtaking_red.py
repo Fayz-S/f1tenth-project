@@ -102,6 +102,13 @@ if __name__ == '__main__':
     overtaking_model.summary()
     overtaking_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
 
+    for i, layer in enumerate(overtaking_model.layers):
+        print(i, layer)
+        try:
+            print(" ", layer.activation)
+        except AttributeError:
+            print(" no activation attribute")
+
     carState_topic = rospy.get_param("~carState_topic_red")
     rospy.Subscriber(carState_topic, String, carState_callback)
 

@@ -137,7 +137,7 @@ class NFTOCPNLP(object):
     !DANGER ZONE! Don't touch unless you know exactly what you are doing
     """
 
-    def __init__(self, N, Q, R, Qf, goal, upx, lowx, bu, NonLinearBicycleModel):
+    def __init__(self, N, Q, R, F, goal, upx, lowx, bu, NonLinearBicycleModel):
         # Define variables
         self.N = N
         self.n = Q.shape[1]
@@ -146,7 +146,7 @@ class NFTOCPNLP(object):
         self.lowx = lowx
         self.bu = bu
         self.Q = Q
-        self.Qf = Qf
+        self.Qf = F
         self.R = R
         self.goal = goal
         self.dt = dt
@@ -430,20 +430,21 @@ if __name__ == '__main__':
     dt = 0.01
 
     # for loss function
-    # when overshooting, change R
+    # when overshooting, increase R
     R = 5 * np.eye(d)
-    Q_dy = 0 * np.eye(n_dy)
+
+    Q = 1 * np.eye(n_dy)
 
     # increase cost to solve deviation
     # Australia [50000.0, 50000.0, 50000.0, 130.0, 0.0, 0.0]
     # Shanghai [80000.0, 80000.0, 60000.0, 140.0, 0.0, 0.0]
     # Gulf [80000.0, 80000.0, 50000.0, 125.0, 0.0, 0.0]
     # Malaysian [40000.0, 40000.0, 90000.0, 130.0, 0.0, 0.0]
-    Qf_dy = np.diag([40000.0, 40000.0, 90000.0, 130.0, 0.0, 0.0])
+    F = np.diag([40000.0, 40000.0, 90000.0, 130.0, 0.0, 0.0])
 
     # car state constrains
-    upx_dy = np.array([10000, 10000, 10000, 100, 50, 50])
-    lowx_dy = np.array([-10000, -10000, -10000, 0, -50, -50])
+    upx = np.array([10000, 10000, 10000, 100, 50, 50])
+    lowx = np.array([-10000, -10000, -10000, 0, -50, -50])
 
     # driving command constrains
     # Australia 1
@@ -558,14 +559,14 @@ if __name__ == '__main__':
         goal_path_pub.publish(goal_msg)
 
         # goals
-        xRef_dy = [goal_x, goal_y, goal_theta, 100, 0, 0]
+        xRef = [goal_x, goal_y, goal_theta, 100, 0, 0]
 
         # latest car state
         x0_dy = x_cl_nlp_dy[0:6]
         x0_dy[5] = x_cl_nlp_dy[6]
 
         # Solving the problem
-        nlp_kinematic = NFTOCPNLP(N, Q_dy, R, Qf_dy, xRef_dy, upx_dy, lowx_dy, bu, dynamic_model)
+        nlp_kinematic = NFTOCPNLP(N, Q, R, F, xRef, upx, lowx, bu, dynamic_model)
         ut_dy = nlp_kinematic.solve(x0_dy)
 
         # rospy.loginfo(ut_dy)
