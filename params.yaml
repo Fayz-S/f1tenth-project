@@ -184,7 +184,7 @@ base_frame_blue: "blue/base_link"
 scan_frame_blue: "blue/laser"
 base_frame_red: "red/base_link"
 scan_frame_red: "red/laser"
-map_name: "Malaysian"
+map_name: "de-espana"
 
 broadcast_transform: true
 publish_ground_truth_pose: true

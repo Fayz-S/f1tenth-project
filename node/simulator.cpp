@@ -222,6 +222,7 @@ public:
         // monaco x:16 y:-2 t:0
         // de-espana x:18 y:31 t:3.14
         // Malaysian x:18 y:31 t:3.14
+        // Circuit-Of-The-Americas x:26 y:6 t:2.9
         state_blue = {.x=18, .y=31, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
@@ -229,6 +230,7 @@ public:
         // monaco x:10 y:-1 t:0
         // de-espana x:22 y:30.5 t:3.14
         // Malaysian x:22 y:27.5 t:3.14
+        // Circuit-Of-The-Americas x:30 y:3 t:2.9
         state_red = {.x=22, .y=30.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_red = 0.0;
         desired_steer_ang_red = 0.0;
@@ -865,29 +867,34 @@ public:
         // weight is the scale in map_to_centerline.py in Racetrack-Preparation
         // bias is offset value, need some attempts, usually is resolution* width or height
         // Australia
-//        int weight_x = 5;
-//        int weight_y = 5;
-//        int bias_x = -120;
-//        int bias_y = 0;
+//        double weight_x = 5;
+//        double weight_y = 5;
+//        double bias_x = -120;
+//        double bias_y = 0;
         // Shanghai
-//        int weight_x = 5;
-//        int weight_y = 5;
-//        int bias_x = 0;
-//        int bias_y = -65.1;
+//        double weight_x = 5;
+//        double weight_y = 5;
+//        double bias_x = 0;
+//        double bias_y = -65.1;
         // Gulf-Air-Bahrain
-//        int weight_x = 6;
-//        int weight_y = 6;
-//        int bias_x = 0;
-//        int bias_y = -65.4;
+//        double weight_x = 6;
+//        double weight_y = 6;
+//        double bias_x = 0;
+//        double bias_y = -65.4;
         // Malaysian
-//        int weight_x = 3;
-//        int weight_y = 3;
-//        int bias_x = 0;
-//        int bias_y = -60;
-        int weight_x = 3;
-        int weight_y = 3;
-        int bias_x = 0;
-        int bias_y = -60;
+//        double weight_x = 3;
+//        double weight_y = 3;
+//        double bias_x = 0;
+//        double bias_y = -60;
+        // Circuit-Of-The-Americas
+//        double weight_x = 3;
+//        double weight_y = 3;
+//        double bias_x = 0;
+//        double bias_y = -75;
+        double weight_x = 3;
+        double weight_y = 3;
+        double bias_x = 0;
+        double bias_y = -85.9;
 
         std::string line;
         // this is the heading

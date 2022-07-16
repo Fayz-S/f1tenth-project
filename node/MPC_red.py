@@ -323,7 +323,7 @@ if __name__ == '__main__':
     weight_x = 3
     weight_y = 3
     bias_x = 0
-    bias_y = -60
+    bias_y = -85.9
 
     # a new dataframe that only contains useful information
     reference_line_x_y_theta = pd.DataFrame()
@@ -467,7 +467,7 @@ if __name__ == '__main__':
 
     # + 2*pi is to make sure the car theta is same as goal theta at the beginning
     # this value can only be 0 or +-2pi, i.e. rotate 0 or +-360
-    goal_theta = reference_line_x_y_theta.iloc[pointer, 2] + 2*math.pi
+    goal_theta = reference_line_x_y_theta.iloc[pointer, 2]
 
     # main loop
     while not rospy.is_shutdown():
