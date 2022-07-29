@@ -323,7 +323,7 @@ if __name__ == '__main__':
     weight_x = 3
     weight_y = 3
     bias_x = 0
-    bias_y = -85.9
+    bias_y = -112.5
 
     # a new dataframe that only contains useful information
     reference_line_x_y_theta = pd.DataFrame()
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     # this flag shows whether the case is pi to -pi or -pi to pi
     flag_turned = False
     for index in range(size):
-        # jump index 0
+        # skip index 0
         if index != 0:
             # in most cases, this equation is correct
             diff = reference_line_x_y_theta.iloc[index, 2] - original
@@ -367,7 +367,7 @@ if __name__ == '__main__':
             # if both numbers is less than 1
             # So, if the result less than -1, which means there is one positive number times another negative number,
             # And absolute of both number is greater than 1
-            if original * reference_line_x_y_theta.iloc[index, 2] <= -1:
+            if (math.fabs(original) > 2 and math.fabs(reference_line_x_y_theta.iloc[index, 2]) > 2) and original * reference_line_x_y_theta.iloc[index, 2] < 0:
                 # turn on the flag, so that we will calculate them specially
                 flag_turned = True
 
@@ -420,6 +420,7 @@ if __name__ == '__main__':
     # Shanghai 11
     # Gulf 11
     # Malaysian 10
+    # Circuit-Of-The-Americas 10
     N = 10
 
     # dimension of the car state
@@ -440,7 +441,8 @@ if __name__ == '__main__':
     # Shanghai [80000.0, 80000.0, 60000.0, 140.0, 0.0, 0.0]
     # Gulf [80000.0, 80000.0, 50000.0, 125.0, 0.0, 0.0]
     # Malaysian [40000.0, 40000.0, 90000.0, 130.0, 0.0, 0.0]
-    F = np.diag([40000.0, 40000.0, 90000.0, 130.0, 0.0, 0.0])
+    # Circuit-Of-The-Americas [100000.0, 100000.0, 70000.0, 100.0, 0.0, 0.0]
+    F = np.diag([100000.0, 100000.0, 70000.0, 110.0, 0.0, 0.0])
 
     # car state constrains
     upx = np.array([10000, 10000, 10000, 100, 50, 50])
@@ -451,6 +453,7 @@ if __name__ == '__main__':
     # Shanghai 1.3
     # Gulf 1.3
     # Malaysian 1.4
+    # Circuit-Of-The-Americas 1.4
     bu = np.array([max_speed, max_steering_angle+1.4])
 
     # the start is the current position, so we need to set a goal ahead to the current position
@@ -461,6 +464,7 @@ if __name__ == '__main__':
     # Shanghai 2
     # Gulf 3
     # Malaysian 2
+    # Circuit-Of-The-Americas 2
     bias_index = 2
     # pointer is the last goal index
     pointer = start + bias_index
@@ -525,6 +529,7 @@ if __name__ == '__main__':
         # Besides, there is no large performance difference between prefix and sum all delta in a while loop,
         # because every time updating the goal_index, the goal_index will increase only few points
         while pointer != goal_index:
+            # rospy.loginfo("pointer "+str(pointer))
             # accumulate all delta theta between last goal and current goal
             goal_theta += reference_line_x_y_theta.iloc[pointer, 3]
             pointer += 1

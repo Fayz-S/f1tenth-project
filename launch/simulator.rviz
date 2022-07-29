@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /MPC_path_goal1/Status1
       Splitter Ratio: 0.42446044087409973
     Tree Height: 1925
   - Class: rviz/Selection
@@ -229,7 +228,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: red/base_link
+    Fixed Frame: blue/base_link
     Frame Rate: 120
   Name: root
   Tools:
@@ -253,7 +252,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 17.304706573486328
+      Distance: 19.381271362304688
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -269,9 +268,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5497963428497314
+      Pitch: 1.5597963333129883
       Target Frame: <Fixed Frame>
-      Yaw: 3.1673195362091064
+      Yaw: 3.1573195457458496
     Saved: ~
 Window Geometry:
   Displays:

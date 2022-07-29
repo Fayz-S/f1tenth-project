@@ -174,7 +174,7 @@ public:
         if (mux_controller[joy_mux_idx]) {
 
             // possibly this will be changed depends on different joystick
-            double desired_velocity_blue = -16.0 / 2 * (msg.axes[joy_speed_axis_blue] - 1);
+            double desired_velocity_blue = -18 / 2 * (msg.axes[joy_speed_axis_blue] - 1);
             double desired_steer_blue = max_steering_angle * msg.axes[joy_angle_axis_blue];
 
             double desired_velocity_red = -max_speed / 2 * (msg.axes[joy_speed_axis_red] - 1);
