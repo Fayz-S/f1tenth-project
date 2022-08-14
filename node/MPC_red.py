@@ -323,7 +323,7 @@ if __name__ == '__main__':
     weight_x = 3
     weight_y = 3
     bias_x = 0
-    bias_y = -112.5
+    bias_y = -85.9
 
     # a new dataframe that only contains useful information
     reference_line_x_y_theta = pd.DataFrame()

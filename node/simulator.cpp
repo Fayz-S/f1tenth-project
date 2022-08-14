@@ -223,7 +223,7 @@ public:
         // de-espana x:18 y:31 t:3.14
         // Malaysian x:18 y:31 t:3.14
         // Circuit-Of-The-Americas x:26 y:6 t:2.9
-        state_blue = {.x=73, .y=42, .theta=1.93, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=18, .y=31, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
 
@@ -231,7 +231,7 @@ public:
         // de-espana x:22 y:30.5 t:3.14
         // Malaysian x:22 y:27.5 t:3.14
         // Circuit-Of-The-Americas x:30 y:3 t:2.9
-        state_red = {.x=75, .y=40, .theta=-0.5, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=22, .y=30.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_red = 0.0;
         desired_steer_ang_red = 0.0;
 
@@ -894,10 +894,16 @@ public:
 //        double weight_y = 3;
 //        double bias_x = 0;
 //        double bias_y = -112.5;
+        //de-espana
+//        double weight_x = 3;
+//        double weight_y = 3;
+//        double bias_x = 0;
+//        double bias_y = -85.9;
+
         double weight_x = 3;
         double weight_y = 3;
         double bias_x = 0;
-        double bias_y = -112.5;
+        double bias_y = -85.9;
 
         std::string line;
         // this is the heading
