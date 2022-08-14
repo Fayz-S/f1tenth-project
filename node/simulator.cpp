@@ -223,7 +223,7 @@ public:
         // de-espana x:18 y:31 t:3.14
         // Malaysian x:18 y:31 t:3.14
         // Circuit-Of-The-Americas x:26 y:6 t:2.9
-        state_blue = {.x=26, .y=12, .theta=2.9, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=73, .y=42, .theta=1.93, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
 
@@ -231,7 +231,7 @@ public:
         // de-espana x:22 y:30.5 t:3.14
         // Malaysian x:22 y:27.5 t:3.14
         // Circuit-Of-The-Americas x:30 y:3 t:2.9
-        state_red = {.x=30, .y=9, .theta=2.9, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=75, .y=40, .theta=-0.5, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_red = 0.0;
         desired_steer_ang_red = 0.0;
 
@@ -331,6 +331,9 @@ public:
         state_blue.steer_angle = std::min(std::max(state_blue.steer_angle, -params_blue.max_steering_angle), params_blue.max_steering_angle);
 
 //        ROS_INFO_STREAM("V blue "<<state_blue.velocity_x);
+//        ROS_INFO_STREAM("X blue "<<state_blue.x);
+//        ROS_INFO_STREAM("Y blue "<<state_blue.y);
+//        ROS_INFO_STREAM("T blue "<<state_blue.theta);
 
         previous_seconds_blue = current_seconds;
 

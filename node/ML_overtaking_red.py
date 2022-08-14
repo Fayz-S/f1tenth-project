@@ -33,7 +33,7 @@ This node subscribes red car's LiDAR and carState, publish driving command for r
 
 # how many timestamps will be used?
 # larger input means the model will use more inputs data, but the performance will not necessarily be better!
-size_of_input = 15
+size_of_input = 6
 LiDAR_raw_array = Queue(maxsize=size_of_input)
 car_state_array = Queue(maxsize=size_of_input)
 
@@ -97,8 +97,7 @@ if __name__ == '__main__':
     10_4 = 10_3 -> Australia+malaysian
     """
     rospack = rospkg.RosPack()
-    # structure of LSTM model is same as RNN_12_3
-    overtaking_model = load_model(rospack.get_path("f1tenth_simulator_two_agents")+'/overtaking_models/model_RNN_14_5')
+    overtaking_model = load_model(rospack.get_path("f1tenth_simulator_two_agents")+'/overtaking_models/model_LSTM_10_3')
     overtaking_model.summary()
     overtaking_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
 
@@ -149,5 +148,5 @@ if __name__ == '__main__':
             ack_msg = AckermannDriveStamped()
             ack_msg.header.stamp = rospy.Time.now()
             ack_msg.drive.steering_angle = command[0, -1, 1] * 0.24
-            ack_msg.drive.speed = command[0, -1, 0] * 19
+            ack_msg.drive.speed = command[0, -1, 0] * 17
             drive_pub_red.publish(ack_msg)
