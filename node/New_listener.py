@@ -24,9 +24,6 @@ import rospkg
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 from std_msgs.msg import String
-
-from tensorflow.python.keras.models import load_model
-
 """
 This node subscribes red car's LiDAR and carState, publish driving command for red car
 """
@@ -70,7 +67,6 @@ def carState_callback(data):
         car_state_array.get()
     car_state_array.put(speed_steering)
 
-
 if __name__ == '__main__':
 
     rospy.init_node("ML_overtake_red", anonymous=True)
@@ -95,20 +91,7 @@ if __name__ == '__main__':
     10_2 = 10_1 -> Gulf data
     10_3 = 10_2 -> malaysian data
     10_4 = 10_3 -> Australia+malaysian
-    """
-    rospack = rospkg.RosPack()
-    overtaking_model = load_model(rospack.get_path(
-        "f1tenth_simulator_two_agents")+'/overtaking_models/model_LSTM_10_3')
-    overtaking_model.summary()
-    overtaking_model.compile(loss="mean_absolute_error",
-                             optimizer="adam", metrics=['mean_absolute_error'])
-
-    for i, layer in enumerate(overtaking_model.layers):
-        print(i, layer)
-        try:
-            print(" ", layer.activation)
-        except AttributeError:
-            print(" no activation attribute")
+    """ 
 
     carState_topic = rospy.get_param("~carState_topic_red")
     rospy.Subscriber(carState_topic, String, carState_callback)
@@ -116,40 +99,29 @@ if __name__ == '__main__':
     scan_topic_red = rospy.get_param("~scan_topic_red")
     rospy.Subscriber(scan_topic_red, LaserScan, LiDAR_callback)
 
-    overtaking_drive_topic = rospy.get_param("~overtaking_drive_topic")
-    drive_pub_red = rospy.Publisher(
-        overtaking_drive_topic, AckermannDriveStamped, queue_size=10)
-
     # the LiDAR_raw_array need at least one LiDAR data in it
     rospy.wait_for_message(scan_topic_red, LaserScan)
 
     while not rospy.is_shutdown():
         inputA = np.asarray(list(LiDAR_raw_array.queue))
-        inputB = np.asarray(list(car_state_array.queue))
+        car_state = np.asarray(list(car_state_array.queue))
 
         # inputA: (size_of_input, 1, 1081) means there are size_of_input number of instances, each instance is 1*1081
         # inputB: (size_of_input, 1, 2) means there are size_of_input number of instances, each instance is 1*2
         lengthA = inputA.shape[0]
-        lengthB = inputB.shape[0]
+        lengthB = car_state.shape[0]
         length_min = min(lengthA, lengthB)
 
         # After both LiDAR_raw_array and car_state_array reached size_of_input, we can start feed them to the model
         if length_min == size_of_input:
 
             # we want there are just one instance, each instance is size_of_input*1081 or 2
-            inputA = np.reshape(inputA, (1, size_of_input, -1))
-            inputB = np.reshape(inputB, (1, size_of_input, -1))
-            # rospy.loginfo(inputA.shape)
-            # rospy.loginfo(inputB.shape)
-            # inputA: (1, size_of_input, 1081)
-            # inputB: (1, size_of_input, 2)
+            # print("A: ", inputA)
+            # print ("Red Velocity: ", car_state[3])
+            print ("Red Steering: ", np.degrees(car_state[5]))
+            rospy.sleep(2)
 
-            # if you want to see more info, change verbose to 1
-            command = overtaking_model.predict([inputA, inputB], verbose=0)
 
-            # rospy.loginfo(command)
-            ack_msg = AckermannDriveStamped()
-            ack_msg.header.stamp = rospy.Time.now()
-            ack_msg.drive.steering_angle = command[0, -1, 1] * 0.24
-            ack_msg.drive.speed = command[0, -1, 0] * 17
-            drive_pub_red.publish(ack_msg)
+            
+
+        

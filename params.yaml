@@ -10,8 +10,8 @@ width: 0.2032 # meters
 cube_width: 0.20
 # Limits on the speed and steering angle
 max_speed: 27. #  meters/second
-max_steering_angle: 0.192 # radians
-max_steering_vel: 1.9 # radians/second
+max_steering_angle: 0.227 # 0.192 #radians 
+max_steering_vel: 1.9 # 1.9 # radians/second
 max_accel: 7.51 # meters/second^2
 max_decel: 8.26 # meters/second^2
 friction_coeff: 5.923
@@ -98,13 +98,21 @@ LSTM_mux_idx: 6
 
 # Enables joystick if true
 joy: true
-
+# Button guide:
+# - 0: A
+# - 1: B
+# - 2: X
+# - 3: Y
+# - 4: LB
+# - 5: RB
+# - 6: Left D-Pad
+# - 7: Up D-Pad
 # joy axis and button index depends on different controller, must check before using different controller
 # axis index (must unique)
 joy_speed_axis_blue: 5 # LT
-joy_angle_axis_blue: 0 # left joystick (horizon direction)
+joy_angle_axis_blue: 3 # left joystick (horizon direction)
 joy_speed_axis_red: 2 # RT
-joy_angle_axis_red: 3 # right joystick (horizon direction)
+joy_angle_axis_red: 0 # right joystick (horizon direction)
 MPC_axis_idx: 7 # up button
 LSTM_axis_idx: 6 # left button
 
@@ -135,7 +143,7 @@ LSTM_key_char: "u"
 
 # Keyboard driving params
 keyboard_speed: 9  # meters/second
-keyboard_steer_ang: 0.3  # radians
+keyboard_steer_ang: 0.2 # radians
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Topics ---------------------------------------------------------------------------------------------------------------

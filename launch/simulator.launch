@@ -12,7 +12,7 @@
          and referred by jsX. after known which index you want to use, replace below index, value="/dev/input/jsX".
          https://wiki.ros.org/joy/Tutorials/ConfiguringALinuxJoystick
     -->
-    <param name="dev" type="string" value="/dev/input/js1" />
+    <param name="dev" type="string" value="/dev/input/js0" />
 
     <!-- due to the joy usually cannot reset to 0, we need a threshold for that which is in percentage-->
     <param name="deadzone" value="0.20" />
@@ -68,5 +68,7 @@
   <!--   <node pkg="f1tenth_simulator_two_agents" name="new node's name" type="new file name" output="screen">
           <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
   	 </node>    -->
-
+   <node pkg="f1tenth_simulator_two_agents" name="New_listener" type="New_listener.py" output="screen">
+          <rosparam command="load" file="$(find f1tenth_simulator_two_agents)/$(arg parameters_file)"/>
+  	</node>    
 </launch>
