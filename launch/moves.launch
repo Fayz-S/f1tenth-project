@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- https://wiki.ros.org/roslaunch/XML/node -->
+  <!-- https://wiki.ros.org/roslaunch/XML/rosparam -->
+  <!-- https://wiki.ros.org/roslaunch/XML#substitution_args -->
+  <!-- https://answers.ros.org/question/37916/when-to-use-param-and-rosparam-on-launch-file/ -->
+
+  <arg name="parameters_file" default="params.yaml"/>
+  <!-- <param name="/use_sim_time" value="true"/> -->
+
+  <arg name="mc_input_file" default="$(find f1tenth_simulator_rules)/node/move_forward.yaml"/>
+
+  <node pkg="f1tenth_simulator_rules" name="Move_controller" type="Move_controller.py" args="$(arg mc_input_file)" output="screen">
+    <rosparam command="load" file="$(find f1tenth_simulator_rules)/$(arg parameters_file)"/>
+  </node> 
+
+</launch>
