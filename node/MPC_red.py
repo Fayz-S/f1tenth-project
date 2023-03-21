@@ -315,7 +315,7 @@ if __name__ == '__main__':
     # https://wiki.ros.org/Packages#Client_Library_Support
     # get an instance of RosPack with the default search paths
     rospack = rospkg.RosPack()
-    reference_line_raw = pd.read_csv(rospack.get_path("f1tenth_simulator_two_agents") + "/maps/" + map_name + "_minTime.csv", sep=";")
+    reference_line_raw = pd.read_csv(rospack.get_path("f1tenth_simulator_rules") + "/maps/" + map_name + "_minTime.csv", sep=";")
     # how many rows in the csv file
     size = reference_line_raw.shape[0]
 

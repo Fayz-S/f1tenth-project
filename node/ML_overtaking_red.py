@@ -98,7 +98,7 @@ if __name__ == '__main__':
     """
     rospack = rospkg.RosPack()
     overtaking_model = load_model(rospack.get_path(
-        "f1tenth_simulator_two_agents")+'/overtaking_models/model_LSTM_10_3')
+        "f1tenth_simulator_rules")+'/overtaking_models/model_LSTM_10_3')
     overtaking_model.summary()
     overtaking_model.compile(loss="mean_absolute_error",
                              optimizer="adam", metrics=['mean_absolute_error'])
