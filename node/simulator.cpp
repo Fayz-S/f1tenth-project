@@ -219,11 +219,18 @@ public:
         n.getParam("publish_ground_truth_pose", pub_gt_pose);
         n.getParam("ttc_threshold", ttc_threshold);
 
+
+        // Set starting x and y positions of cars here
+        // - Straight overtaking defence scenario 1:
+            // Red car: x = 76.5, y = 31.4
+            // Blue car: x = 77, y = 31.4
+
+
         // monaco x:16 y:-2 t:0
         // de-espana x:18 y:31 t:3.14
         // Malaysian x:18 y:31 t:3.14
         // Circuit-Of-The-Americas x:26 y:6 t:2.9
-        state_blue = {.x=18, .y=31, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_blue = {.x=77, .y=31.4, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
 
@@ -231,7 +238,7 @@ public:
         // de-espana x:22 y:30.5 t:3.14
         // Malaysian x:22 y:27.5 t:3.14
         // Circuit-Of-The-Americas x:30 y:3 t:2.9
-        state_red = {.x=22, .y=30.5, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=75.8, .y=30.6, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_red = 0.0;
         desired_steer_ang_red = 0.0;
 
@@ -847,7 +854,7 @@ public:
 
     void publish_reference_line() {
 
-        std::fstream readcsv(ros::package::getPath("f1tenth_simulator_two_agents") + "/maps/" + map_name + "_minTime.csv");
+        std::fstream readcsv(ros::package::getPath("f1tenth_simulator_rules") + "/maps/" + map_name + "_minTime.csv");
 
         // https://wiki.ros.org/rviz/DisplayTypes/Marker
         visualization_msgs::Marker msg;

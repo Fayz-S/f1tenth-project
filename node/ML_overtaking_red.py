@@ -97,9 +97,11 @@ if __name__ == '__main__':
     10_4 = 10_3 -> Australia+malaysian
     """
     rospack = rospkg.RosPack()
-    overtaking_model = load_model(rospack.get_path("f1tenth_simulator_two_agents")+'/overtaking_models/model_LSTM_10_3')
+    overtaking_model = load_model(rospack.get_path(
+        "f1tenth_simulator_rules")+'/overtaking_models/model_LSTM_10_3')
     overtaking_model.summary()
-    overtaking_model.compile(loss="mean_absolute_error", optimizer="adam", metrics=['mean_absolute_error'])
+    overtaking_model.compile(loss="mean_absolute_error",
+                             optimizer="adam", metrics=['mean_absolute_error'])
 
     for i, layer in enumerate(overtaking_model.layers):
         print(i, layer)
@@ -115,7 +117,8 @@ if __name__ == '__main__':
     rospy.Subscriber(scan_topic_red, LaserScan, LiDAR_callback)
 
     overtaking_drive_topic = rospy.get_param("~overtaking_drive_topic")
-    drive_pub_red = rospy.Publisher(overtaking_drive_topic, AckermannDriveStamped, queue_size=10)
+    drive_pub_red = rospy.Publisher(
+        overtaking_drive_topic, AckermannDriveStamped, queue_size=10)
 
     # the LiDAR_raw_array need at least one LiDAR data in it
     rospy.wait_for_message(scan_topic_red, LaserScan)

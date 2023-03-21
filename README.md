@@ -1,4 +1,4 @@
-# [DISSERTATION] F1TENTH Simulator Two-Agents
+# [DISSERTATION] F1TENTH Simulator for enforcing f1 rules
 
 
 > This repository is the first part of my dissertation "[F1TENTH](https://f1tenth.org/index.html): Development of A Multi-Agent Simulator and An Overtaking Algorithm Using Machine Learning".  
