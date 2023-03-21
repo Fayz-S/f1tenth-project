@@ -86,7 +86,11 @@ if __name__ == '__main__':
     carState_topic = rospy.get_param("~carState_topic_red")
     rospy.Subscriber(carState_topic, String, carState_callback)
     on_straight = True
-    angle_changed = False
+    angle_changed_recent = False
+    timer = rospy.Duration(0)
+    turning_angle = 0.1
+    defence_move_time = rospy.Duration(1)
+    angle = 0
     while not rospy.is_shutdown():
         # if (red_car_state.steer_angle > 0.1 or red_car_state.steer_angle < -0.1) and red_car_state.velocity_x > 0.5:
         #     print("red car is turning")
@@ -100,10 +104,25 @@ if __name__ == '__main__':
         # if (rospy.get_time() % 1 < 0.00000005):
         #     print(red_car_state.steer_angle)
         if on_straight:
-            
-            if red_car_state.steer_angle > 0.1 or red_car_state.steer_angle < -0.1:
-                if angle_changed:
+            if (red_car_state.steer_angle > turning_angle or red_car_state.steer_angle < turning_angle ):# and (red_car_state.velocity_x > 0.2 or red_car_state.velocity_y > 0.2):
+                if angle_changed_recent:
+                    if rospy.Time.now() - timer < defence_move_time:
+                        if angle - red_car_state.steer_angle > turning_angle * 2 and angle + red_car_state.steer_angle < turning_angle / 2:
+                            if defensive_move_made:
+                                print ("VIOLATION: Red car attempted defensive maneouvre more than once on straight")
+                            else:
+                                defensive_move_made = True
+                                angle_changed_recent = False
+                    else:
+                        angle_changed_recent = False
+                else:
+                    angle_changed_recent = True
+                    angle = red_car_state.steer_angle
+                    timer = rospy.Time.now()
+
+  
                     
+                        
             # if (red_car_state.angular_velocity > 0.1 or red_car_state.angular_velocity < -0.1) and red_car_state.velocity_x > 0.5:
             #     # print("red car is turning")
             #     if float(rospy.get_time() - timer) < 1 and float(rospy.get_time() - timer) > 0.5:

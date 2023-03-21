@@ -22,7 +22,7 @@ def parse_moves_list(moves_filename):
 def publish_car_msg(car_topic, car_msg, move):
     car_msg.drive.steering_angle = move['steering_angle'] 
     car_msg.drive.speed = move['speed']
-    print(f"speed published: {move['speed']}")
+    # print(f"speed published: {move['speed']}")
     car_msg.header.stamp = rospy.Time.now()
     car_topic.publish(car_msg)
     
