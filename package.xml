@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-  <name>f1tenth_simulator_two_agents</name>
+  <name>f1tenth_simulator_rules</name>
   <version>1.0.1</version>
-  <description>A simulator of the F1TENTH racecar.</description>
+  <description>A simulator of the F1TENTH racecar taken from Jiancheng Zhang.</description>
 
-  <maintainer email="910296345@qq.com">Jiancheng Zhang</maintainer>
+  <maintainer email="fayz.siddiqui@outlook.com"></maintainer>
 
   <license>Apache2.0</license>
   <buildtool_depend>catkin</buildtool_depend>

@@ -109,10 +109,10 @@ joy: true
 # - 7: Up D-Pad
 # joy axis and button index depends on different controller, must check before using different controller
 # axis index (must unique)
-joy_speed_axis_blue: 5 # LT
-joy_angle_axis_blue: 3 # left joystick (horizon direction)
-joy_speed_axis_red: 2 # RT
-joy_angle_axis_red: 0 # right joystick (horizon direction)
+joy_speed_axis_blue: 2 # LT
+joy_angle_axis_blue: 0 # left joystick (horizon direction)
+joy_speed_axis_red: 5 # RT
+joy_angle_axis_red: 3 # right joystick (horizon direction)
 MPC_axis_idx: 7 # up button
 LSTM_axis_idx: 6 # left button
 
@@ -197,5 +197,7 @@ map_name: "de-espana"
 broadcast_transform: true
 publish_ground_truth_pose: true
 
+# Allows you to use rospy.get_time()
+use_sim_time: true
 
 
