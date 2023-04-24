@@ -1,0 +1,3 @@
+Mean Blue Position: 73.58953929999998, 31.603520500000002
+Mean Red Position: 73.0628363, 31.6027667
+Mean Number of Violations: 1.0

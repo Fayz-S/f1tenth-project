@@ -49,7 +49,7 @@ private:
 
     std::string drive_topic_blue, drive_topic_red, scan_topic_blue, scan_topic_red, pose_topic_blue, pose_topic_red,
                 map_topic, gt_pose_topic,pose_rviz_topic, odom_topic, imu_topic, data_topic, reference_line,
-                carState_topic_red, switch_topic_red;
+                carState_topic_red, switch_topic_red, carState_topic_blue;
 
     // The transformation frames used
     std::string map_frame, base_frame_blue, scan_frame_blue, base_frame_red, scan_frame_red;
@@ -75,7 +75,7 @@ private:
 
     ros::Publisher scan_pub_blue, scan_pub_red;
     ros::Publisher pose_pub;
-    ros::Publisher carState_pub_red;
+    ros::Publisher carState_pub_blue, carState_pub_red;
     ros::Publisher switch_pub_red;
     ros::Publisher odom_pub;
     ros::Publisher imu_pub;
@@ -210,6 +210,8 @@ public:
 
         n.getParam("data_topic", data_topic);
         n.getParam("carState_topic_red", carState_topic_red);
+        // Fayz: Addding blue state topic
+        n.getParam("carState_topic_blue", carState_topic_blue);
         n.getParam("reference_line", reference_line);
         n.getParam("switch_topic_red", switch_topic_red);
         n.getParam("map_name", map_name);
@@ -219,18 +221,64 @@ public:
         n.getParam("publish_ground_truth_pose", pub_gt_pose);
         n.getParam("ttc_threshold", ttc_threshold);
 
-
+        // Fayz
         // Set starting x and y positions of cars here
-        // - Straight overtaking defence scenario 1:
-            // Red car: x = 76.5, y = 31.4
-            // Blue car: x = 77, y = 31.4
 
+        // Straights Defence
+
+            // - Moving Right-Right Manoeuvres:
+                // Blue car: x = 77, y = 31.2
+                // Red car:  x = 75.8, y = 30.8
+            // - Left-Left Manoeuvres:
+                // Blue car: x = 77, y = 31.2
+                // Red car:  x = 75.8, y = 31.8
+
+            // - Left-Right Manoeuvres:
+                // Blue car: x = 77, y = 31.0
+                // Red car:  x = 75.8, y = 31.6
+        
+        // Collisions
+
+            // - Collision  Red Car Right:
+                // Blue car: x = 75.8, y = 30.6
+                // Red car:  x = 75.6, y = 31.6
+
+            // - Collision  Red Car Left:
+                // Blue car: x = 75.8, y = 31.6
+                // Red car:  x = 75.6, y = 30.6
+
+            // - Collision  Red Car Behind:
+                // Blue car: x = 74.8, y = 31.6
+                // Red car:  x = 75.8, y = 31.6
+
+            // - Collision  Red Car Ahead:
+                // Blue car: x = 75.8, y = 31.6
+                // Red car:  x = 74.8, y = 31.6
+
+            // - Static test: corner to corner:
+                // Blue car: x = 76.31, y = 31.879
+                // Red car:  x = 75.8, y = 31.6
+            // - Static test: side by side:
+                // Blue car: x = 75.8, y = 31.879
+                // Red car:  x = 75.8, y = 31.6
+    // Overtaking on Corners:
+        
+        // Corner overtaking draft 1:
+                // Blue car: x = 16.8, y = 30.6,  theta = 3.14
+                // Red car:  x = 18.0, y = 31.4,  theta = 3.14
+        
+        // Corner overtaking final 2:
+                // Blue car: x = 28.8, y = 35.0,  theta = .2
+                // Red car:  x = 27.5, y = 35.8,  theta = .15
+        
+   
 
         // monaco x:16 y:-2 t:0
         // de-espana x:18 y:31 t:3.14
         // Malaysian x:18 y:31 t:3.14
         // Circuit-Of-The-Americas x:26 y:6 t:2.9
-        state_blue = {.x=77, .y=31.4, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+
+        state_blue = {.x=28.8, .y= 35.0, .theta=.2, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_blue = 0.0;
         desired_steer_ang_blue = 0.0;
 
@@ -238,7 +286,7 @@ public:
         // de-espana x:22 y:30.5 t:3.14
         // Malaysian x:22 y:27.5 t:3.14
         // Circuit-Of-The-Americas x:30 y:3 t:2.9
-        state_red = {.x=75.8, .y=30.6, .theta=3.14, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
+        state_red = {.x=27.5, .y=35.8, .theta=.15, .velocity_x=0, .velocity_y=0, .steer_angle=0.0, .angular_velocity=0.0, .slip_angle=0.0, .st_dyn=false};
         desired_speed_red = 0.0;
         desired_steer_ang_red = 0.0;
 
@@ -273,6 +321,8 @@ public:
         pose_pub = n.advertise<geometry_msgs::PoseStamped>(gt_pose_topic, 10);
 
         carState_pub_red = n.advertise<std_msgs::String>(carState_topic_red, 1);
+        // Fayz: Added blue car state publisher
+        carState_pub_blue = n.advertise<std_msgs::String>(carState_topic_blue, 1);
 
         switch_pub_red = n.advertise<std_msgs::Bool>(switch_topic_red, 1);
 
@@ -343,6 +393,9 @@ public:
 //        ROS_INFO_STREAM("T blue "<<state_blue.theta);
 
         previous_seconds_blue = current_seconds;
+
+        // Fayz: Publishing blue car state
+        pub_carState_blue(toString(state_blue));
 
         // Publish the pose as a transformation
         pub_pose_transform_blue(timestamp);
@@ -458,7 +511,7 @@ public:
                         no_collision = false;
                         TTC = true;
 
-                        ROS_INFO("Box collider detected: BLUE");
+                        // ROS_INFO("Box collider detected: BLUE");
                     }
                 }
             }
@@ -484,7 +537,7 @@ public:
             // for machine learning, not necessarily
             save_data_blue(scan_string);
         }
-        publish_reference_line();
+        // publish_reference_line();
     }
 
     /**
@@ -612,7 +665,7 @@ public:
                         no_collision = false;
                         TTC = true;
 
-                        ROS_INFO("Box collider detected: RED");
+                        // ROS_INFO("Box collider detected: RED");
                     }
                 }
             }
@@ -1116,6 +1169,13 @@ public:
         std_msgs::String msg;
         msg.data = string;
         carState_pub_red.publish(msg);
+    }
+    // Fayz: Publishing blue car state
+
+    void pub_carState_blue(std::string string){
+        std_msgs::String msg;
+        msg.data = string;
+        carState_pub_blue.publish(msg);
     }
 };
 

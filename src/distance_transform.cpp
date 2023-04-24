@@ -10,7 +10,7 @@
 // Implementation based on the paper
 // Distance Transforms of Sampled Functions
 // Pedro F. Felzenszwalb and Daniel P. Huttenlocher
-// http://people.cs.uchicago.edu/~pff/papers/dt.pdf
+// https://cs.brown.edu/people/pfelzens/papers/dt-final.pdf
 
 using namespace racecar_simulator;
 

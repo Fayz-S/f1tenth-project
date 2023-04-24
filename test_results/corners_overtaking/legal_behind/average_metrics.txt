@@ -1,0 +1,11 @@
+Metrics for Blue car
+Mean time for passing start: 0.0
+Mean time for passing apex: 1.2308688402175902
+Mean time for passing end: 3.0370555400848387
+
+Metrics for Red car
+Mean time for passing start: 1.1460413932800293
+Mean time for passing apex: 1.9164207935333253
+Mean time for passing end: 3.3188649654388427
+
+Mean Number of Violations: 0Mean Time of Run: 6.852727675500001

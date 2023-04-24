@@ -74,6 +74,7 @@
           <rosparam command="load" file="$(find f1tenth_simulator_rules)/$(arg parameters_file)"/>
   	</node>    
 
+
   <arg name="mc_input_file" default="$(find f1tenth_simulator_rules)/node/move_forward.yaml"/>
 
   <!-- <node pkg="f1tenth_simulator_rules" name="Move_controller" type="Move_controller.py" args="$(arg mc_input_file)" output="screen">

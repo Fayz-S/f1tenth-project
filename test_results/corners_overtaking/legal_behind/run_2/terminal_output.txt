@@ -1,0 +1,644 @@
+Elapsed Time: 6.856477022
+
+Base path: /home/fayzs/Documents/diss/f1tenth
+Source space: /home/fayzs/Documents/diss/f1tenth/src
+Build space: /home/fayzs/Documents/diss/f1tenth/build
+Devel space: /home/fayzs/Documents/diss/f1tenth/devel
+Install space: /home/fayzs/Documents/diss/f1tenth/install
+####
+#### Running command: "make cmake_check_build_system" in "/home/fayzs/Documents/diss/f1tenth/build"
+####
+####
+#### Running command: "make -j8 -l8" in "/home/fayzs/Documents/diss/f1tenth/build"
+####
+[ 31%] Built target f1tenth_simulator_rules
+[ 31%] Built target std_msgs_generate_messages_cpp
+[ 31%] Built target sensor_msgs_generate_messages_cpp
+[ 31%] Built target sensor_msgs_generate_messages_py
+[ 31%] Built target nav_msgs_generate_messages_cpp
+[ 31%] Built target std_msgs_generate_messages_py
+[ 31%] Built target nav_msgs_generate_messages_py
+[ 31%] Built target nav_msgs_generate_messages_nodejs
+[ 31%] Built target nav_msgs_generate_messages_lisp
+[ 31%] Built target std_msgs_generate_messages_nodejs
+[ 31%] Built target sensor_msgs_generate_messages_lisp
+[ 31%] Built target sensor_msgs_generate_messages_nodejs
+[ 31%] Built target std_msgs_generate_messages_lisp
+[ 31%] Built target nav_msgs_generate_messages_eus
+[ 31%] Built target sensor_msgs_generate_messages_eus
+[ 31%] Built target f1tenth_simulator_rules_generate_messages_py
+[ 31%] Built target f1tenth_simulator_rules_generate_messages_cpp
+[ 31%] Built target std_msgs_generate_messages_eus
+[ 31%] Built target f1tenth_simulator_rules_generate_messages_nodejs
+[ 31%] Built target f1tenth_simulator_rules_generate_messages_lisp
+[ 50%] Built target f1tenth_simulator_rules_generate_messages_eus
+[ 50%] Built target keyboard
+[ 62%] Built target mux
+[ 87%] Built target random_walk
+[ 87%] Built target behavior_controller
+[100%] Built target simulator
+[100%] Built target f1tenth_simulator_rules_generate_messages
+... logging to /home/fayzs/.ros/log/206011bc-e1d1-11ed-9947-c9afdde7396b/roslaunch-fayz-laptop-linux-27169.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+
+xacro: in-order processing became default in ROS Melodic. You can drop the option.
+xacro: in-order processing became default in ROS Melodic. You can drop the option.
+started roslaunch server http://fayz-laptop-linux:35151/
+
+SUMMARY
+========
+
+PARAMETERS
+ * /Rule_enforcer/C_S_front: 4.718
+ * /Rule_enforcer/C_S_rear: 5.4562
+ * /Rule_enforcer/LSTM_axis_idx: 6
+ * /Rule_enforcer/LSTM_key_char: u
+ * /Rule_enforcer/LSTM_mux_idx: 6
+ * /Rule_enforcer/MPC_axis_idx: 7
+ * /Rule_enforcer/MPC_drive_topic: /mpc
+ * /Rule_enforcer/MPC_key_char: g
+ * /Rule_enforcer/MPC_mux_idx: 5
+ * /Rule_enforcer/base_frame_blue: blue/base_link
+ * /Rule_enforcer/base_frame_red: red/base_link
+ * /Rule_enforcer/brake_bool_topic: /brake_bool
+ * /Rule_enforcer/brake_button_idx: 3
+ * /Rule_enforcer/brake_drive_topic: /brake
+ * /Rule_enforcer/brake_key_char: b
+ * /Rule_enforcer/brake_mux_idx: 3
+ * /Rule_enforcer/broadcast_transform: True
+ * /Rule_enforcer/carState_topic_blue: /carState_topic_blue
+ * /Rule_enforcer/carState_topic_red: /carState_topic_red
+ * /Rule_enforcer/cube_width: 0.2
+ * /Rule_enforcer/data_button_idx: 4
+ * /Rule_enforcer/data_topic: /data
+ * /Rule_enforcer/distance_transform_topic: /dt
+ * /Rule_enforcer/drive_topic_blue: /drive_blue
+ * /Rule_enforcer/drive_topic_red: /drive_red
+ * /Rule_enforcer/empirical_Pacejka_parameters_B_f: 0.201
+ * /Rule_enforcer/empirical_Pacejka_parameters_B_r: 0.201
+ * /Rule_enforcer/empirical_Pacejka_parameters_C_f: 2.114
+ * /Rule_enforcer/empirical_Pacejka_parameters_C_r: 2.114
+ * /Rule_enforcer/empirical_Pacejka_parameters_D_f: 28.892
+ * /Rule_enforcer/empirical_Pacejka_parameters_D_r: 28.892
+ * /Rule_enforcer/empirical_drivetrain_parameters_1: 6.097
+ * /Rule_enforcer/empirical_drivetrain_parameters_2: 0.237
+ * /Rule_enforcer/empirical_drivetrain_parameters_3: 0.392
+ * /Rule_enforcer/friction_coeff: 5.923
+ * /Rule_enforcer/ground_truth_pose_topic: /gt_pose
+ * /Rule_enforcer/height_cg: 0.074
+ * /Rule_enforcer/imu_topic: /imu
+ * /Rule_enforcer/joy: True
+ * /Rule_enforcer/joy_angle_axis_blue: 0
+ * /Rule_enforcer/joy_angle_axis_red: 3
+ * /Rule_enforcer/joy_button_idx: 0
+ * /Rule_enforcer/joy_key_char: y
+ * /Rule_enforcer/joy_mux_idx: 0
+ * /Rule_enforcer/joy_speed_axis_blue: 2
+ * /Rule_enforcer/joy_speed_axis_red: 5
+ * /Rule_enforcer/joy_topic: /joy
+ * /Rule_enforcer/key_button_idx: 2
+ * /Rule_enforcer/key_mux_idx: 1
+ * /Rule_enforcer/keyboard_key_char: t
+ * /Rule_enforcer/keyboard_speed: 9
+ * /Rule_enforcer/keyboard_steer_ang: 0.2
+ * /Rule_enforcer/keyboard_topic: /key
+ * /Rule_enforcer/l_cg2front: 0.1912
+ * /Rule_enforcer/l_cg2rear: 0.139
+ * /Rule_enforcer/map_frame: map
+ * /Rule_enforcer/map_free_threshold: 0.5
+ * /Rule_enforcer/map_name: de-espana
+ * /Rule_enforcer/map_topic: /map
+ * /Rule_enforcer/mass: 3.958
+ * /Rule_enforcer/max_accel: 7.51
+ * /Rule_enforcer/max_decel: 8.26
+ * /Rule_enforcer/max_speed: 27.0
+ * /Rule_enforcer/max_steering_angle: 0.227
+ * /Rule_enforcer/max_steering_vel: 1.9
+ * /Rule_enforcer/moment_inertia: 0.15712
+ * /Rule_enforcer/mpc_goal_path: /goal_and_path
+ * /Rule_enforcer/mux_size: 99
+ * /Rule_enforcer/mux_topic: /mux
+ * /Rule_enforcer/nav_button_idx: 5
+ * /Rule_enforcer/nav_drive_topic: /nav
+ * /Rule_enforcer/nav_key_char: n
+ * /Rule_enforcer/nav_mux_idx: 4
+ * /Rule_enforcer/odom_topic: /odom
+ * /Rule_enforcer/overtaking_drive_topic: /overtake
+ * /Rule_enforcer/pose_rviz_topic: /initialpose
+ * /Rule_enforcer/pose_topic_blue: /blue/pose
+ * /Rule_enforcer/pose_topic_red: /red/pose
+ * /Rule_enforcer/publish_ground_truth_pose: True
+ * /Rule_enforcer/rand_drive_topic: /rand_drive
+ * /Rule_enforcer/random_walk_button_idx: 1
+ * /Rule_enforcer/random_walk_key_char: r
+ * /Rule_enforcer/random_walker_mux_idx: 2
+ * /Rule_enforcer/reference_line: /minimum_time
+ * /Rule_enforcer/refline_corner_apex: /refline/corner_apex
+ * /Rule_enforcer/scan_beams: 1081
+ * /Rule_enforcer/scan_distance_to_base_link: 0.275
+ * /Rule_enforcer/scan_field_of_view: 4.71238898038469
+ * /Rule_enforcer/scan_frame_blue: blue/laser
+ * /Rule_enforcer/scan_frame_red: red/laser
+ * /Rule_enforcer/scan_max_range: 10
+ * /Rule_enforcer/scan_std_dev: 0.015
+ * /Rule_enforcer/scan_topic_blue: /blue/scan
+ * /Rule_enforcer/scan_topic_red: /red/scan
+ * /Rule_enforcer/switch_topic_red: /MPC_ML
+ * /Rule_enforcer/ttc_threshold: 0.01
+ * /Rule_enforcer/update_pose_rate: 0.005
+ * /Rule_enforcer/use_sim_time: True
+ * /Rule_enforcer/wheelbase: 0.3302
+ * /Rule_enforcer/width: 0.2032
+ * /behavior_controller/C_S_front: 4.718
+ * /behavior_controller/C_S_rear: 5.4562
+ * /behavior_controller/LSTM_axis_idx: 6
+ * /behavior_controller/LSTM_key_char: u
+ * /behavior_controller/LSTM_mux_idx: 6
+ * /behavior_controller/MPC_axis_idx: 7
+ * /behavior_controller/MPC_drive_topic: /mpc
+ * /behavior_controller/MPC_key_char: g
+ * /behavior_controller/MPC_mux_idx: 5
+ * /behavior_controller/base_frame_blue: blue/base_link
+ * /behavior_controller/base_frame_red: red/base_link
+ * /behavior_controller/brake_bool_topic: /brake_bool
+ * /behavior_controller/brake_button_idx: 3
+ * /behavior_controller/brake_drive_topic: /brake
+ * /behavior_controller/brake_key_char: b
+ * /behavior_controller/brake_mux_idx: 3
+ * /behavior_controller/broadcast_transform: True
+ * /behavior_controller/carState_topic_blue: /carState_topic_blue
+ * /behavior_controller/carState_topic_red: /carState_topic_red
+ * /behavior_controller/cube_width: 0.2
+ * /behavior_controller/data_button_idx: 4
+ * /behavior_controller/data_topic: /data
+ * /behavior_controller/distance_transform_topic: /dt
+ * /behavior_controller/drive_topic_blue: /drive_blue
+ * /behavior_controller/drive_topic_red: /drive_red
+ * /behavior_controller/empirical_Pacejka_parameters_B_f: 0.201
+ * /behavior_controller/empirical_Pacejka_parameters_B_r: 0.201
+ * /behavior_controller/empirical_Pacejka_parameters_C_f: 2.114
+ * /behavior_controller/empirical_Pacejka_parameters_C_r: 2.114
+ * /behavior_controller/empirical_Pacejka_parameters_D_f: 28.892
+ * /behavior_controller/empirical_Pacejka_parameters_D_r: 28.892
+ * /behavior_controller/empirical_drivetrain_parameters_1: 6.097
+ * /behavior_controller/empirical_drivetrain_parameters_2: 0.237
+ * /behavior_controller/empirical_drivetrain_parameters_3: 0.392
+ * /behavior_controller/friction_coeff: 5.923
+ * /behavior_controller/ground_truth_pose_topic: /gt_pose
+ * /behavior_controller/height_cg: 0.074
+ * /behavior_controller/imu_topic: /imu
+ * /behavior_controller/joy: True
+ * /behavior_controller/joy_angle_axis_blue: 0
+ * /behavior_controller/joy_angle_axis_red: 3
+ * /behavior_controller/joy_button_idx: 0
+ * /behavior_controller/joy_key_char: y
+ * /behavior_controller/joy_mux_idx: 0
+ * /behavior_controller/joy_speed_axis_blue: 2
+ * /behavior_controller/joy_speed_axis_red: 5
+ * /behavior_controller/joy_topic: /joy
+ * /behavior_controller/key_button_idx: 2
+ * /behavior_controller/key_mux_idx: 1
+ * /behavior_controller/keyboard_key_char: t
+ * /behavior_controller/keyboard_speed: 9
+ * /behavior_controller/keyboard_steer_ang: 0.2
+ * /behavior_controller/keyboard_topic: /key
+ * /behavior_controller/l_cg2front: 0.1912
+ * /behavior_controller/l_cg2rear: 0.139
+ * /behavior_controller/map_frame: map
+ * /behavior_controller/map_free_threshold: 0.5
+ * /behavior_controller/map_name: de-espana
+ * /behavior_controller/map_topic: /map
+ * /behavior_controller/mass: 3.958
+ * /behavior_controller/max_accel: 7.51
+ * /behavior_controller/max_decel: 8.26
+ * /behavior_controller/max_speed: 27.0
+ * /behavior_controller/max_steering_angle: 0.227
+ * /behavior_controller/max_steering_vel: 1.9
+ * /behavior_controller/moment_inertia: 0.15712
+ * /behavior_controller/mpc_goal_path: /goal_and_path
+ * /behavior_controller/mux_size: 99
+ * /behavior_controller/mux_topic: /mux
+ * /behavior_controller/nav_button_idx: 5
+ * /behavior_controller/nav_drive_topic: /nav
+ * /behavior_controller/nav_key_char: n
+ * /behavior_controller/nav_mux_idx: 4
+ * /behavior_controller/odom_topic: /odom
+ * /behavior_controller/overtaking_drive_topic: /overtake
+ * /behavior_controller/pose_rviz_topic: /initialpose
+ * /behavior_controller/pose_topic_blue: /blue/pose
+ * /behavior_controller/pose_topic_red: /red/pose
+ * /behavior_controller/publish_ground_truth_pose: True
+ * /behavior_controller/rand_drive_topic: /rand_drive
+ * /behavior_controller/random_walk_button_idx: 1
+ * /behavior_controller/random_walk_key_char: r
+ * /behavior_controller/random_walker_mux_idx: 2
+ * /behavior_controller/reference_line: /minimum_time
+ * /behavior_controller/refline_corner_apex: /refline/corner_apex
+ * /behavior_controller/scan_beams: 1081
+ * /behavior_controller/scan_distance_to_base_link: 0.275
+ * /behavior_controller/scan_field_of_view: 4.71238898038469
+ * /behavior_controller/scan_frame_blue: blue/laser
+ * /behavior_controller/scan_frame_red: red/laser
+ * /behavior_controller/scan_max_range: 10
+ * /behavior_controller/scan_std_dev: 0.015
+ * /behavior_controller/scan_topic_blue: /blue/scan
+ * /behavior_controller/scan_topic_red: /red/scan
+ * /behavior_controller/switch_topic_red: /MPC_ML
+ * /behavior_controller/ttc_threshold: 0.01
+ * /behavior_controller/update_pose_rate: 0.005
+ * /behavior_controller/use_sim_time: True
+ * /behavior_controller/wheelbase: 0.3302
+ * /behavior_controller/width: 0.2032
+ * /f1tenth_simulator/C_S_front: 4.718
+ * /f1tenth_simulator/C_S_rear: 5.4562
+ * /f1tenth_simulator/LSTM_axis_idx: 6
+ * /f1tenth_simulator/LSTM_key_char: u
+ * /f1tenth_simulator/LSTM_mux_idx: 6
+ * /f1tenth_simulator/MPC_axis_idx: 7
+ * /f1tenth_simulator/MPC_drive_topic: /mpc
+ * /f1tenth_simulator/MPC_key_char: g
+ * /f1tenth_simulator/MPC_mux_idx: 5
+ * /f1tenth_simulator/base_frame_blue: blue/base_link
+ * /f1tenth_simulator/base_frame_red: red/base_link
+ * /f1tenth_simulator/brake_bool_topic: /brake_bool
+ * /f1tenth_simulator/brake_button_idx: 3
+ * /f1tenth_simulator/brake_drive_topic: /brake
+ * /f1tenth_simulator/brake_key_char: b
+ * /f1tenth_simulator/brake_mux_idx: 3
+ * /f1tenth_simulator/broadcast_transform: True
+ * /f1tenth_simulator/carState_topic_blue: /carState_topic_blue
+ * /f1tenth_simulator/carState_topic_red: /carState_topic_red
+ * /f1tenth_simulator/cube_width: 0.2
+ * /f1tenth_simulator/data_button_idx: 4
+ * /f1tenth_simulator/data_topic: /data
+ * /f1tenth_simulator/distance_transform_topic: /dt
+ * /f1tenth_simulator/drive_topic_blue: /drive_blue
+ * /f1tenth_simulator/drive_topic_red: /drive_red
+ * /f1tenth_simulator/empirical_Pacejka_parameters_B_f: 0.201
+ * /f1tenth_simulator/empirical_Pacejka_parameters_B_r: 0.201
+ * /f1tenth_simulator/empirical_Pacejka_parameters_C_f: 2.114
+ * /f1tenth_simulator/empirical_Pacejka_parameters_C_r: 2.114
+ * /f1tenth_simulator/empirical_Pacejka_parameters_D_f: 28.892
+ * /f1tenth_simulator/empirical_Pacejka_parameters_D_r: 28.892
+ * /f1tenth_simulator/empirical_drivetrain_parameters_1: 6.097
+ * /f1tenth_simulator/empirical_drivetrain_parameters_2: 0.237
+ * /f1tenth_simulator/empirical_drivetrain_parameters_3: 0.392
+ * /f1tenth_simulator/friction_coeff: 5.923
+ * /f1tenth_simulator/ground_truth_pose_topic: /gt_pose
+ * /f1tenth_simulator/height_cg: 0.074
+ * /f1tenth_simulator/imu_topic: /imu
+ * /f1tenth_simulator/joy: True
+ * /f1tenth_simulator/joy_angle_axis_blue: 0
+ * /f1tenth_simulator/joy_angle_axis_red: 3
+ * /f1tenth_simulator/joy_button_idx: 0
+ * /f1tenth_simulator/joy_key_char: y
+ * /f1tenth_simulator/joy_mux_idx: 0
+ * /f1tenth_simulator/joy_speed_axis_blue: 2
+ * /f1tenth_simulator/joy_speed_axis_red: 5
+ * /f1tenth_simulator/joy_topic: /joy
+ * /f1tenth_simulator/key_button_idx: 2
+ * /f1tenth_simulator/key_mux_idx: 1
+ * /f1tenth_simulator/keyboard_key_char: t
+ * /f1tenth_simulator/keyboard_speed: 9
+ * /f1tenth_simulator/keyboard_steer_ang: 0.2
+ * /f1tenth_simulator/keyboard_topic: /key
+ * /f1tenth_simulator/l_cg2front: 0.1912
+ * /f1tenth_simulator/l_cg2rear: 0.139
+ * /f1tenth_simulator/map_frame: map
+ * /f1tenth_simulator/map_free_threshold: 0.5
+ * /f1tenth_simulator/map_name: de-espana
+ * /f1tenth_simulator/map_topic: /map
+ * /f1tenth_simulator/mass: 3.958
+ * /f1tenth_simulator/max_accel: 7.51
+ * /f1tenth_simulator/max_decel: 8.26
+ * /f1tenth_simulator/max_speed: 27.0
+ * /f1tenth_simulator/max_steering_angle: 0.227
+ * /f1tenth_simulator/max_steering_vel: 1.9
+ * /f1tenth_simulator/moment_inertia: 0.15712
+ * /f1tenth_simulator/mpc_goal_path: /goal_and_path
+ * /f1tenth_simulator/mux_size: 99
+ * /f1tenth_simulator/mux_topic: /mux
+ * /f1tenth_simulator/nav_button_idx: 5
+ * /f1tenth_simulator/nav_drive_topic: /nav
+ * /f1tenth_simulator/nav_key_char: n
+ * /f1tenth_simulator/nav_mux_idx: 4
+ * /f1tenth_simulator/odom_topic: /odom
+ * /f1tenth_simulator/overtaking_drive_topic: /overtake
+ * /f1tenth_simulator/pose_rviz_topic: /initialpose
+ * /f1tenth_simulator/pose_topic_blue: /blue/pose
+ * /f1tenth_simulator/pose_topic_red: /red/pose
+ * /f1tenth_simulator/publish_ground_truth_pose: True
+ * /f1tenth_simulator/rand_drive_topic: /rand_drive
+ * /f1tenth_simulator/random_walk_button_idx: 1
+ * /f1tenth_simulator/random_walk_key_char: r
+ * /f1tenth_simulator/random_walker_mux_idx: 2
+ * /f1tenth_simulator/reference_line: /minimum_time
+ * /f1tenth_simulator/refline_corner_apex: /refline/corner_apex
+ * /f1tenth_simulator/scan_beams: 1081
+ * /f1tenth_simulator/scan_distance_to_base_link: 0.275
+ * /f1tenth_simulator/scan_field_of_view: 4.71238898038469
+ * /f1tenth_simulator/scan_frame_blue: blue/laser
+ * /f1tenth_simulator/scan_frame_red: red/laser
+ * /f1tenth_simulator/scan_max_range: 10
+ * /f1tenth_simulator/scan_std_dev: 0.015
+ * /f1tenth_simulator/scan_topic_blue: /blue/scan
+ * /f1tenth_simulator/scan_topic_red: /red/scan
+ * /f1tenth_simulator/switch_topic_red: /MPC_ML
+ * /f1tenth_simulator/ttc_threshold: 0.01
+ * /f1tenth_simulator/update_pose_rate: 0.005
+ * /f1tenth_simulator/use_sim_time: True
+ * /f1tenth_simulator/wheelbase: 0.3302
+ * /f1tenth_simulator/width: 0.2032
+ * /joy_node/deadzone: 0.2
+ * /joy_node/dev: /dev/input/js0
+ * /keyboard/C_S_front: 4.718
+ * /keyboard/C_S_rear: 5.4562
+ * /keyboard/LSTM_axis_idx: 6
+ * /keyboard/LSTM_key_char: u
+ * /keyboard/LSTM_mux_idx: 6
+ * /keyboard/MPC_axis_idx: 7
+ * /keyboard/MPC_drive_topic: /mpc
+ * /keyboard/MPC_key_char: g
+ * /keyboard/MPC_mux_idx: 5
+ * /keyboard/base_frame_blue: blue/base_link
+ * /keyboard/base_frame_red: red/base_link
+ * /keyboard/brake_bool_topic: /brake_bool
+ * /keyboard/brake_button_idx: 3
+ * /keyboard/brake_drive_topic: /brake
+ * /keyboard/brake_key_char: b
+ * /keyboard/brake_mux_idx: 3
+ * /keyboard/broadcast_transform: True
+ * /keyboard/carState_topic_blue: /carState_topic_blue
+ * /keyboard/carState_topic_red: /carState_topic_red
+ * /keyboard/cube_width: 0.2
+ * /keyboard/data_button_idx: 4
+ * /keyboard/data_topic: /data
+ * /keyboard/distance_transform_topic: /dt
+ * /keyboard/drive_topic_blue: /drive_blue
+ * /keyboard/drive_topic_red: /drive_red
+ * /keyboard/empirical_Pacejka_parameters_B_f: 0.201
+ * /keyboard/empirical_Pacejka_parameters_B_r: 0.201
+ * /keyboard/empirical_Pacejka_parameters_C_f: 2.114
+ * /keyboard/empirical_Pacejka_parameters_C_r: 2.114
+ * /keyboard/empirical_Pacejka_parameters_D_f: 28.892
+ * /keyboard/empirical_Pacejka_parameters_D_r: 28.892
+ * /keyboard/empirical_drivetrain_parameters_1: 6.097
+ * /keyboard/empirical_drivetrain_parameters_2: 0.237
+ * /keyboard/empirical_drivetrain_parameters_3: 0.392
+ * /keyboard/friction_coeff: 5.923
+ * /keyboard/ground_truth_pose_topic: /gt_pose
+ * /keyboard/height_cg: 0.074
+ * /keyboard/imu_topic: /imu
+ * /keyboard/joy: True
+ * /keyboard/joy_angle_axis_blue: 0
+ * /keyboard/joy_angle_axis_red: 3
+ * /keyboard/joy_button_idx: 0
+ * /keyboard/joy_key_char: y
+ * /keyboard/joy_mux_idx: 0
+ * /keyboard/joy_speed_axis_blue: 2
+ * /keyboard/joy_speed_axis_red: 5
+ * /keyboard/joy_topic: /joy
+ * /keyboard/key_button_idx: 2
+ * /keyboard/key_mux_idx: 1
+ * /keyboard/keyboard_key_char: t
+ * /keyboard/keyboard_speed: 9
+ * /keyboard/keyboard_steer_ang: 0.2
+ * /keyboard/keyboard_topic: /key
+ * /keyboard/l_cg2front: 0.1912
+ * /keyboard/l_cg2rear: 0.139
+ * /keyboard/map_frame: map
+ * /keyboard/map_free_threshold: 0.5
+ * /keyboard/map_name: de-espana
+ * /keyboard/map_topic: /map
+ * /keyboard/mass: 3.958
+ * /keyboard/max_accel: 7.51
+ * /keyboard/max_decel: 8.26
+ * /keyboard/max_speed: 27.0
+ * /keyboard/max_steering_angle: 0.227
+ * /keyboard/max_steering_vel: 1.9
+ * /keyboard/moment_inertia: 0.15712
+ * /keyboard/mpc_goal_path: /goal_and_path
+ * /keyboard/mux_size: 99
+ * /keyboard/mux_topic: /mux
+ * /keyboard/nav_button_idx: 5
+ * /keyboard/nav_drive_topic: /nav
+ * /keyboard/nav_key_char: n
+ * /keyboard/nav_mux_idx: 4
+ * /keyboard/odom_topic: /odom
+ * /keyboard/overtaking_drive_topic: /overtake
+ * /keyboard/pose_rviz_topic: /initialpose
+ * /keyboard/pose_topic_blue: /blue/pose
+ * /keyboard/pose_topic_red: /red/pose
+ * /keyboard/publish_ground_truth_pose: True
+ * /keyboard/rand_drive_topic: /rand_drive
+ * /keyboard/random_walk_button_idx: 1
+ * /keyboard/random_walk_key_char: r
+ * /keyboard/random_walker_mux_idx: 2
+ * /keyboard/reference_line: /minimum_time
+ * /keyboard/refline_corner_apex: /refline/corner_apex
+ * /keyboard/scan_beams: 1081
+ * /keyboard/scan_distance_to_base_link: 0.275
+ * /keyboard/scan_field_of_view: 4.71238898038469
+ * /keyboard/scan_frame_blue: blue/laser
+ * /keyboard/scan_frame_red: red/laser
+ * /keyboard/scan_max_range: 10
+ * /keyboard/scan_std_dev: 0.015
+ * /keyboard/scan_topic_blue: /blue/scan
+ * /keyboard/scan_topic_red: /red/scan
+ * /keyboard/switch_topic_red: /MPC_ML
+ * /keyboard/ttc_threshold: 0.01
+ * /keyboard/update_pose_rate: 0.005
+ * /keyboard/use_sim_time: True
+ * /keyboard/wheelbase: 0.3302
+ * /keyboard/width: 0.2032
+ * /mux_controller/C_S_front: 4.718
+ * /mux_controller/C_S_rear: 5.4562
+ * /mux_controller/LSTM_axis_idx: 6
+ * /mux_controller/LSTM_key_char: u
+ * /mux_controller/LSTM_mux_idx: 6
+ * /mux_controller/MPC_axis_idx: 7
+ * /mux_controller/MPC_drive_topic: /mpc
+ * /mux_controller/MPC_key_char: g
+ * /mux_controller/MPC_mux_idx: 5
+ * /mux_controller/base_frame_blue: blue/base_link
+ * /mux_controller/base_frame_red: red/base_link
+ * /mux_controller/brake_bool_topic: /brake_bool
+ * /mux_controller/brake_button_idx: 3
+ * /mux_controller/brake_drive_topic: /brake
+ * /mux_controller/brake_key_char: b
+ * /mux_controller/brake_mux_idx: 3
+ * /mux_controller/broadcast_transform: True
+ * /mux_controller/carState_topic_blue: /carState_topic_blue
+ * /mux_controller/carState_topic_red: /carState_topic_red
+ * /mux_controller/cube_width: 0.2
+ * /mux_controller/data_button_idx: 4
+ * /mux_controller/data_topic: /data
+ * /mux_controller/distance_transform_topic: /dt
+ * /mux_controller/drive_topic_blue: /drive_blue
+ * /mux_controller/drive_topic_red: /drive_red
+ * /mux_controller/empirical_Pacejka_parameters_B_f: 0.201
+ * /mux_controller/empirical_Pacejka_parameters_B_r: 0.201
+ * /mux_controller/empirical_Pacejka_parameters_C_f: 2.114
+ * /mux_controller/empirical_Pacejka_parameters_C_r: 2.114
+ * /mux_controller/empirical_Pacejka_parameters_D_f: 28.892
+ * /mux_controller/empirical_Pacejka_parameters_D_r: 28.892
+ * /mux_controller/empirical_drivetrain_parameters_1: 6.097
+ * /mux_controller/empirical_drivetrain_parameters_2: 0.237
+ * /mux_controller/empirical_drivetrain_parameters_3: 0.392
+ * /mux_controller/friction_coeff: 5.923
+ * /mux_controller/ground_truth_pose_topic: /gt_pose
+ * /mux_controller/height_cg: 0.074
+ * /mux_controller/imu_topic: /imu
+ * /mux_controller/joy: True
+ * /mux_controller/joy_angle_axis_blue: 0
+ * /mux_controller/joy_angle_axis_red: 3
+ * /mux_controller/joy_button_idx: 0
+ * /mux_controller/joy_key_char: y
+ * /mux_controller/joy_mux_idx: 0
+ * /mux_controller/joy_speed_axis_blue: 2
+ * /mux_controller/joy_speed_axis_red: 5
+ * /mux_controller/joy_topic: /joy
+ * /mux_controller/key_button_idx: 2
+ * /mux_controller/key_mux_idx: 1
+ * /mux_controller/keyboard_key_char: t
+ * /mux_controller/keyboard_speed: 9
+ * /mux_controller/keyboard_steer_ang: 0.2
+ * /mux_controller/keyboard_topic: /key
+ * /mux_controller/l_cg2front: 0.1912
+ * /mux_controller/l_cg2rear: 0.139
+ * /mux_controller/map_frame: map
+ * /mux_controller/map_free_threshold: 0.5
+ * /mux_controller/map_name: de-espana
+ * /mux_controller/map_topic: /map
+ * /mux_controller/mass: 3.958
+ * /mux_controller/max_accel: 7.51
+ * /mux_controller/max_decel: 8.26
+ * /mux_controller/max_speed: 27.0
+ * /mux_controller/max_steering_angle: 0.227
+ * /mux_controller/max_steering_vel: 1.9
+ * /mux_controller/moment_inertia: 0.15712
+ * /mux_controller/mpc_goal_path: /goal_and_path
+ * /mux_controller/mux_size: 99
+ * /mux_controller/mux_topic: /mux
+ * /mux_controller/nav_button_idx: 5
+ * /mux_controller/nav_drive_topic: /nav
+ * /mux_controller/nav_key_char: n
+ * /mux_controller/nav_mux_idx: 4
+ * /mux_controller/odom_topic: /odom
+ * /mux_controller/overtaking_drive_topic: /overtake
+ * /mux_controller/pose_rviz_topic: /initialpose
+ * /mux_controller/pose_topic_blue: /blue/pose
+ * /mux_controller/pose_topic_red: /red/pose
+ * /mux_controller/publish_ground_truth_pose: True
+ * /mux_controller/rand_drive_topic: /rand_drive
+ * /mux_controller/random_walk_button_idx: 1
+ * /mux_controller/random_walk_key_char: r
+ * /mux_controller/random_walker_mux_idx: 2
+ * /mux_controller/reference_line: /minimum_time
+ * /mux_controller/refline_corner_apex: /refline/corner_apex
+ * /mux_controller/scan_beams: 1081
+ * /mux_controller/scan_distance_to_base_link: 0.275
+ * /mux_controller/scan_field_of_view: 4.71238898038469
+ * /mux_controller/scan_frame_blue: blue/laser
+ * /mux_controller/scan_frame_red: red/laser
+ * /mux_controller/scan_max_range: 10
+ * /mux_controller/scan_std_dev: 0.015
+ * /mux_controller/scan_topic_blue: /blue/scan
+ * /mux_controller/scan_topic_red: /red/scan
+ * /mux_controller/switch_topic_red: /MPC_ML
+ * /mux_controller/ttc_threshold: 0.01
+ * /mux_controller/update_pose_rate: 0.005
+ * /mux_controller/use_sim_time: True
+ * /mux_controller/wheelbase: 0.3302
+ * /mux_controller/width: 0.2032
+ * /racecar_blue/robot_description: <?xml version="1....
+ * /racecar_red/robot_description: <?xml version="1....
+ * /rosdistro: noetic
+ * /rosversion: 1.16.0
+
+NODES
+  /
+    Rule_enforcer (f1tenth_simulator_rules/Rule_enforcer.py)
+    behavior_controller (f1tenth_simulator_rules/behavior_controller)
+    f1tenth_simulator (f1tenth_simulator_rules/simulator)
+    joy_node (joy/joy_node)
+    keyboard (f1tenth_simulator_rules/keyboard)
+    map_server (map_server/map_server)
+    mux_controller (f1tenth_simulator_rules/mux)
+    rviz (rviz/rviz)
+  /racecar_blue/
+    robot_state_publisher (robot_state_publisher/robot_state_publisher)
+  /racecar_red/
+    robot_state_publisher (robot_state_publisher/robot_state_publisher)
+
+auto-starting new master
+process[master]: started with pid [27198]
+ROS_MASTER_URI=http://localhost:11311
+
+setting /run_id to 206011bc-e1d1-11ed-9947-c9afdde7396b
+process[rosout-1]: started with pid [27216]
+started core service [/rosout]
+process[joy_node-2]: started with pid [27247]
+process[map_server-3]: started with pid [27248]
+process[racecar_blue/robot_state_publisher-4]: started with pid [27249]
+process[racecar_red/robot_state_publisher-5]: started with pid [27255]
+process[rviz-6]: started with pid [27257]
+process[f1tenth_simulator-7]: started with pid [27267]
+process[mux_controller-8]: started with pid [27274]
+process[behavior_controller-9]: started with pid [27281]
+process[keyboard-10]: started with pid [27287]
+[ WARN] [1682252383.993530688]: Couldn't set gain on joystick force feedback: Bad file descriptor
+process[Rule_enforcer-11]: started with pid [27298]
+[ INFO] [1682252384.182003840]: rviz version 1.14.20
+[ INFO] [1682252384.182059512]: compiled against Qt version 5.12.8
+[ INFO] [1682252384.182077878]: compiled against OGRE version 1.9.0 (Ghadamon)
+[ INFO] [1682252384.212757450]: Forcing OpenGl version 0.
+[ INFO] [1682252384.332138922]: Simulator constructed.
+[ INFO] [1682252384.334473051]: map height: 859
+[ INFO] [1682252384.334513287]: map width: 840
+[ INFO] [1682252384.641419271]: Stereo is NOT SUPPORTED
+[ INFO] [1682252384.641511550]: OpenGL device: Mesa Intel(R) UHD Graphics 620 (WHL GT2)
+[ INFO] [1682252384.641546831]: OpenGl version: 4.6 (GLSL 4.6) limited to GLSL 1.4 on Mesa system.
+[ INFO] [1682252385.210111338]: Creating 1 swatches
+Blue car has passed start of corner
+Blue: x = 31.073107, y = 35.460782
+Time of Pass: 5.528926372528076
+
+Red car has passed start of corner
+Red: x = 31.07674, y = 36.340571
+Time of Pass: 6.6711790561676025
+
+Blue car has passed apex of corner
+Blue: x = 32.505005, y = 36.172992
+Time of Pass: 6.7637646198272705
+
+Red car has passed apex of corner
+Red: x = 31.972931, y = 36.667681
+Time of Pass: 7.433838844299316
+
+Blue car has passed end of corner
+Blue: x = 33.512148, y = 38.500067
+Time of Pass: 8.570190191268921
+
+Red car has passed end of corner
+Red: x = 32.748218, y = 38.503262
+Time of Pass: 8.850790977478027
+
+^C[Rule_enforcer-11] killing on exit
+[mux_controller-8] killing on exit
+[rviz-6] killing on exit
+[behavior_controller-9] killing on exit
+[f1tenth_simulator-7] killing on exit
+[racecar_blue/robot_state_publisher-4] killing on exit
+[keyboard-10] killing on exit
+[joy_node-2] killing on exit
+[ INFO] [1682252398.110820691]: Interrupt signal (2) received.
+[racecar_red/robot_state_publisher-5] killing on exit
+[map_server-3] killing on exit
+y[rosout-1] killing on exit
+[master] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+done

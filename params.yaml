@@ -168,10 +168,12 @@ brake_bool_topic: "/brake_bool"
 mux_topic: "/mux"
 data_topic: "/data"
 carState_topic_red: "/carState_topic_red"
+carState_topic_blue: "/carState_topic_blue"
 reference_line: "/minimum_time"
 mpc_goal_path: "/goal_and_path"
 switch_topic_red: "/MPC_ML"
 
+refline_corner_apex: /refline/corner_apex
 # Topic names of various drive channels in mux.cpp
 rand_drive_topic: "/rand_drive"
 brake_drive_topic: "/brake"

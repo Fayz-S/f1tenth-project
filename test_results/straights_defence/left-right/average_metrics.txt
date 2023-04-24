@@ -1,0 +1,14 @@
+Mean Metrics for Manoeuvre 1
+Mean Red Position: 70.2434403, 31.3029108
+Mean Blue Position: 71.3481617, 31.0090014
+Mean Angle: 0.12150219999999998
+Mean Maneuvre Time: 0.3492464064
+
+Mean Metrics for Manoeuvre 2
+Mean Red Position: 60.3264219, 31.6006609
+Mean Blue Position: 61.41715380000001, 31.604762800000003
+Mean Angle: -0.10985930000000002
+Mean Maneuvre Time: 0.35551147460000004
+
+Mean Number of Violations: 1.0
+Mean Time of Run: 5.547379207600001

@@ -1,0 +1,21 @@
+---
+time: 1
+steering_angle: 0.0
+speed: 7.5
+---
+time: .5
+steering_angle: -0.5
+speed: 7.5
+---
+time: 0.5
+steering_angle: 0.0
+speed: 7.5
+---
+time: .5
+steering_angle: 0.5
+speed: 7.5
+---
+time: 1
+steering_angle: 0.0
+speed: 7.5
+...
