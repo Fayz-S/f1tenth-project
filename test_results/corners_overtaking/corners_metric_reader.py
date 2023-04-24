@@ -112,12 +112,13 @@ for i in range(1, 11):
             else:
                 raise Exception(f"This line should not appear here, parsing error")   
           
-
-with Path(os.path.join(os.path.dirname(__file__), args.file, "average_metrics.txt")).open('w') as f:
+avg_metrics_file = Path(os.path.join(os.path.dirname(__file__), args.file, "average_metrics.txt"))
+with avg_metrics_file.open("w") as f:
+    print (f"Saving metrics to {avg_metrics_file}")
     blue_metrics.save_metrics(f)
     red_metrics.save_metrics(f)
     if violation_count == 0:
-        f.write(f"Mean Number of Violations: {0}")
+        f.write(f"Mean Number of Violations: {0}\n")
     else:
         f.write(f"Mean Number of Violations: {violation_count/violation_count}\n")
     
